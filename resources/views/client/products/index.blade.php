@@ -92,7 +92,8 @@
         </div>
     </section>
 
-    <section id="deal" class="bg-primary text-white py-5">
+    <section id="deal" class="text-white py-5"
+    style="background: url('https://m.media-amazon.com/images/I/611gcLkTitL._AC_UF1000,1000_QL80_.jpg') center/cover no-repeat;">
         <div class="container text-center">
             <h2 class="display-6 fw-bold">Giảm 15% cho đơn đồng đội từ 5 áo</h2>
             <p class="lead text-white-75 mt-3">Đặt áo cho team, lớp học hoặc câu lạc bộ và nhận tư vấn size nhanh trong ngày.</p>
