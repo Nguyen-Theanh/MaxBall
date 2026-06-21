@@ -22,11 +22,16 @@
         .btn-cart:active {
             transform: scale(0.97);
         }
+        .hero-section {
+            background-image: url('https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2023/06/hinh-nen-bong-da-thumb.jpg');
+            background-size: cover;
+            background-position: center;
+            }
     </style>
 @endpush
 
 @section('content')
-    <section class="bg-dark text-white py-5">
+    <section class="hero-section text-white py-5">
         <div class="container py-5">
             <div class="row align-items-center">
                 <div class="col-lg-7">
@@ -37,7 +42,7 @@
                 </div>
                 <div class="col-lg-5 d-none d-lg-block">
                     <div class="ratio ratio-4x3 rounded-4 overflow-hidden shadow-lg">
-                        <img src="https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&w=1400&q=80" alt="Cầu thủ bóng đá trên sân" class="object-fit-cover">
+                        <img src="https://file.hstatic.net/200000722513/article/doi-tuyen-viet-nam-12-1_0c43fc569c8b4a8cb92fb870c0358a3b.jpg" alt="Cầu thủ bóng đá trên sân" class="object-fit-cover">
                     </div>
                 </div>
             </div>
