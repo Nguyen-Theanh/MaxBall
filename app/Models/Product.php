@@ -54,7 +54,9 @@ class Product extends Model
             return $this->thumbnail;
         }
 
-        return asset('storage/' . ltrim($this->thumbnail, '/'));
+        $path = ltrim($this->thumbnail, '/');
+
+        return asset('storage/' . $path);
     }
 
     public function getCategoryNameAttribute(): string

@@ -30,6 +30,8 @@ class ProductImage extends Model
             return $this->image_url;
         }
 
-        return asset('storage/' . ltrim($this->image_url, '/'));
+        $path = ltrim($this->image_url, '/');
+
+        return asset('storage/' . $path);
     }
 }
