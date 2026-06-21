@@ -34,6 +34,16 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function productImages()
+    {
+        return $this->hasMany(ProductImage::class);
+    }
+
+    public function getImageUrlsAttribute(): array
+    {
+        return $this->productImages->map->url->all();
+    }
+
     public function getThumbnailUrlAttribute(): string
     {
         if (!$this->thumbnail) {

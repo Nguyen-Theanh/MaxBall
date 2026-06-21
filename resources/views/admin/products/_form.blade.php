@@ -27,6 +27,43 @@
                     <input type="text" id="thumbnail" name="thumbnail" value="{{ old('thumbnail', $product->thumbnail) }}" class="form-control @error('thumbnail') is-invalid @enderror" placeholder="Nhap URL anh hoac duong dan trong storage">
                     @error('thumbnail') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
+
+                <div class="mb-3">
+                    <label for="image" class="form-label">Tải ảnh từ tệp</label>
+                    <input type="file" id="image" name="image" accept="image/*" class="form-control @error('image') is-invalid @enderror">
+                    @error('image') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="form-text">Không chọn ảnh mới để giữ nguyên ảnh cũ. Nếu upload ảnh mới, ảnh cũ sẽ bị thay thế.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="gallery_images" class="form-label">Ảnh chi tiết</label>
+                    <input type="file" id="gallery_images" name="gallery_images[]" multiple accept="image/*" class="form-control @error('gallery_images') is-invalid @enderror @error('gallery_images.*') is-invalid @enderror">
+                    @error('gallery_images') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    @error('gallery_images.*') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="form-text">Chọn nhiều ảnh để thêm ảnh chi tiết cho sản phẩm.</div>
+                </div>
+
+                @if ($product->productImages->isNotEmpty())
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh chi tiết hiện có</label>
+                        <div class="row g-2">
+                            @foreach ($product->productImages as $galleryImage)
+                                <div class="col-6 col-md-4">
+                                    <img src="{{ $galleryImage->url }}" alt="Ảnh chi tiết" class="img-fluid rounded border">
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if ($product->thumbnail)
+                    <div class="mb-3">
+                        <label class="form-label">Ảnh hiện tại</label>
+                        <div>
+                            <img src="{{ $product->thumbnail_url }}" alt="Ảnh hiện tại" class="img-fluid rounded" style="max-height: 200px;">
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
