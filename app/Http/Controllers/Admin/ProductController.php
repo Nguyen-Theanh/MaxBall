@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -46,13 +48,19 @@ class ProductController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatedData($request);
+
+        if ($request->hasFile('image')) {
+            $data['thumbnail'] = $request->file('image')->store('products', 'public');
+        }
+
         $data['category_id'] = $this->resolveCategoryId($request);
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['status'] = $request->boolean('status');
         $data['discount_price'] = $data['discount_price'] ?: null;
         unset($data['category_name']);
 
-        Product::create($data);
+        $product = Product::create($data);
+        $this->storeGalleryImages($product, $request);
 
         return redirect()
             ->route('admin.products.index')
@@ -70,6 +78,14 @@ class ProductController extends Controller
     public function update(Request $request, Product $product): RedirectResponse
     {
         $data = $this->validatedData($request);
+
+        if ($request->hasFile('image')) {
+            if ($product->thumbnail && !Str::startsWith($product->thumbnail, ['http://', 'https://'])) {
+                Storage::disk('public')->delete(ltrim($product->thumbnail, '/'));
+            }
+            $data['thumbnail'] = $request->file('image')->store('products', 'public');
+        }
+
         $data['category_id'] = $this->resolveCategoryId($request);
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
         $data['status'] = $request->boolean('status');
@@ -77,6 +93,7 @@ class ProductController extends Controller
         unset($data['category_name']);
 
         $product->update($data);
+        $this->storeGalleryImages($product, $request);
 
         return redirect()
             ->route('admin.products.index')
@@ -100,10 +117,30 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
             'thumbnail' => ['nullable', 'string', 'max:2048'],
+            'image' => ['nullable', 'image', 'max:3072'],
+            'gallery_images' => ['nullable', 'array'],
+            'gallery_images.*' => ['image', 'max:3072'],
             'description' => ['nullable', 'string'],
             'base_price' => ['required', 'numeric', 'min:0'],
             'discount_price' => ['nullable', 'numeric', 'min:0', 'lte:base_price'],
         ]);
+    }
+
+    private function storeGalleryImages(Product $product, Request $request): void
+    {
+        if (!$request->hasFile('gallery_images')) {
+            return;
+        }
+
+        foreach ($request->file('gallery_images') as $file) {
+            if (!$file->isValid()) {
+                continue;
+            }
+
+            $product->productImages()->create([
+                'image_url' => $file->store('products/details', 'public'),
+            ]);
+        }
     }
 
     private function resolveCategoryId(Request $request): int
