@@ -55,24 +55,22 @@
         <div class="row g-4">
             @forelse ($products as $product)
                 @php
-                    $price = $product['discount_price'] ?: $product['base_price'];
-                    $thumbnail = $product['thumbnail'] ?: 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=900&q=80';
-                    $category = $product['category_name'] ?? 'Jersey';
+                    $price = $product->discount_price ?: $product->base_price;
                 @endphp
 
                 <div class="col-12 col-md-6 col-xl-4">
                     <div class="card h-100 product-card border-0 shadow-sm">
-                        <img src="{{ $thumbnail }}" alt="{{ $product['name'] }}" class="card-img-top product-img" loading="lazy">
+                        <img src="{{ $product->thumbnail_url }}" alt="{{ $product->name }}" class="card-img-top product-img" loading="lazy">
                         <div class="card-body d-flex flex-column">
-                            <span class="badge bg-success mb-3">{{ $category }}</span>
-                            <h3 class="h5 fw-bold">{{ $product['name'] }}</h3>
-                            <p class="text-muted mb-4">{{ \Illuminate\Support\Str::limit($product['description'] ?: 'Áo đấu thiết kế hiện đại, chất liệu thoáng nhẹ và dễ vận động.', 105) }}</p>
+                            <span class="badge bg-success mb-3">{{ $product->category_name }}</span>
+                            <h3 class="h5 fw-bold">{{ $product->name }}</h3>
+                            <p class="text-muted mb-4">{{ \Illuminate\Support\Str::limit($product->description ?: 'Áo đấu thiết kế hiện đại, chất liệu thoáng nhẹ và dễ vận động.', 105) }}</p>
                             <div class="mt-auto">
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div>
                                         <p class="h5 text-danger mb-0">{{ number_format($price, 0, ',', '.') }}đ</p>
-                                        @if ($product['discount_price'])
-                                            <small class="text-muted text-decoration-line-through">{{ number_format($product['base_price'], 0, ',', '.') }}đ</small>
+                                        @if ($product->discount_price)
+                                            <small class="text-muted text-decoration-line-through">{{ number_format($product->base_price, 0, ',', '.') }}đ</small>
                                         @endif
                                     </div>
                                 </div>
