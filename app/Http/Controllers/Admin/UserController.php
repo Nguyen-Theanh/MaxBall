@@ -95,11 +95,11 @@ class UserController extends Controller
     public function destroy(Request $request, User $user): RedirectResponse
     {
         if ($request->user()->is($user)) {
-            return back()->withErrors(['user' => 'Bạn không thể xóa chính tài khỏan đang đăng nhập.']);
+            return back()->withErrors(['user' => 'Bạn không thể xóa chính tài khoản đang đăng nhập.']);
         }
 
         if ($user->role === 'admin' && $user->status && $this->activeAdminCount() <= 1) {
-            return back()->withErrors(['user' => 'Cần giữ lại ít nhất một admin đang họat động.']);
+            return back()->withErrors(['user' => 'Cần giữ lại ít nhất một admin đang hoạt động.']);
         }
 
         $user->delete();
@@ -118,10 +118,12 @@ class UserController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'phone' => ['nullable', 'regex:/^0[0-9]{9}$/'],
             'address' => ['nullable', 'string', 'max:255'],
             'role' => ['required', Rule::in(self::ROLES)],
             'password' => $passwordRules,
+        ], [
+            'phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.',
         ]);
     }
 
