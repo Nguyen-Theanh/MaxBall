@@ -10,9 +10,8 @@ class ProductController extends Controller
     {
         $products = Product::with('category')
             ->where('status', true)
-            ->orderByDesc('updated_at')
-            ->orderByDesc('id')
-            ->get();
+            ->latest()
+            ->paginate(12);
 
         return view('client.products.index', compact('products'));
     }

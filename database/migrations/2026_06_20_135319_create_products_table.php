@@ -19,9 +19,9 @@ Schema::create('products', function (Blueprint $table) {
     $table->string('thumbnail')->nullable();
     $table->text('description')->nullable();
     $table->string('slug')->nullable();
-    $table->decimal('base_price', 10, 2);
-    $table->decimal('discount_price', 10, 2)->nullable();
-    $table->integer('view_count')->default(0);
+    $table->bigInteger('base_price');
+    $table->bigInteger('discount_price')->nullable();
+        $table->integer('view_count')->default(0);
     $table->timestamps();
 });    }
 
