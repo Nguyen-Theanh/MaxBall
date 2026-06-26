@@ -24,8 +24,8 @@ class Product extends Model
 
     protected $casts = [
         'status' => 'boolean',
-        'base_price' => 'decimal:2',
-        'discount_price' => 'decimal:2',
+        'base_price' => 'integer',
+        'discount_price' => 'integer',
         'view_count' => 'integer',
     ];
 
@@ -55,5 +55,20 @@ class Product extends Model
     public function getSlugAttribute($value)
     {
         return $value ?: Str::slug($this->name);
+    }
+
+    public function getFinalPriceAttribute(): int
+    {
+        return $this->discount_price ?? $this->base_price;
+    }
+
+    public function getFormattedPriceAttribute(): string
+    {
+        return number_format($this->final_price, 0, ',', '.') . ' đ';
+    }
+
+    public function getFormattedBasePriceAttribute(): string
+    {
+        return number_format($this->base_price, 0, ',', '.') . ' đ';
     }
 }
