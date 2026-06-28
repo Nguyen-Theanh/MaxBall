@@ -5,7 +5,7 @@
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
                 <div class="mb-3">
-                    <label for="name" class="form-label">Tên sản phẩm</label>
+                    <label for="name" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
                     <input type="text" id="name" name="name" value="{{ old('name', $product->name) }}" class="form-control @error('name') is-invalid @enderror" required>
                     @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
@@ -92,7 +92,7 @@
 
                 <div class="row g-3">
                     <div class="col-12">
-                        <label for="base_price" class="form-label">Giá gốc</label>
+                        <label for="base_price" class="form-label">Giá gốc <span class="text-danger">*</span></label>
                         <input type="number" id="base_price" name="base_price" value="{{ old('base_price', $product->base_price) }}" min="0" step="1000" class="form-control @error('base_price') is-invalid @enderror" required>
                         @error('base_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
@@ -116,3 +116,33 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nameField = document.getElementById('name');
+    const slugField = document.getElementById('slug');
+    if (!nameField || !slugField) return;
+
+    const toSlug = (str) => {
+        return str
+            .normalize('NFD')
+            .replace(/\p{Diacritic}/gu, '')
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+    };
+
+    nameField.addEventListener('input', function() {
+        // only update slug automatically if user hasn't manually edited slug
+        if (!slugField.dataset.userEdited) {
+            slugField.value = toSlug(this.value);
+        }
+    });
+
+    slugField.addEventListener('input', function() {
+        this.dataset.userEdited = this.value.length > 0;
+    });
+});
+</script>
