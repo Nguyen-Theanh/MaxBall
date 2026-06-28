@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\ProductImage;
+
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -61,6 +61,7 @@ class ProductController extends Controller
 
         $product = Product::create($data);
         $this->storeGalleryImages($product, $request);
+        $this->storeVariants($product, $request->input('variants', []));
 
         return redirect()
             ->route('admin.products.index')
@@ -94,6 +95,7 @@ class ProductController extends Controller
 
         $product->update($data);
         $this->storeGalleryImages($product, $request);
+        $this->storeVariants($product, $request->input('variants', []));
 
         return redirect()
             ->route('admin.products.index')
@@ -123,7 +125,51 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'base_price' => ['required', 'numeric', 'min:0'],
             'discount_price' => ['nullable', 'numeric', 'min:0', 'lte:base_price'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'variants.*.name' => ['nullable', 'string', 'max:255'],
+            'variants.*.sku' => ['nullable', 'string', 'max:255'],
+            'variants.*.base_price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.discount_price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.stock' => ['nullable', 'integer', 'min:0'],
         ]);
+    }
+
+    private function storeVariants(Product $product, array $variants): void
+    {
+        $existingIds = $product->variants()->pluck('id')->all();
+        $receivedIds = [];
+
+        foreach ($variants as $variantData) {
+            if (empty($variantData))
+                continue;
+
+            $data = [
+                'name' => $variantData['name'] ?? null,
+                'sku' => $variantData['sku'] ?? null,
+                'base_price' => isset($variantData['base_price']) ? (int) $variantData['base_price'] : 0,
+                'discount_price' => $variantData['discount_price'] !== '' ? ($variantData['discount_price'] !== null ? (int) $variantData['discount_price'] : null) : null,
+                'stock' => isset($variantData['stock']) ? (int) $variantData['stock'] : null,
+            ];
+
+            if (!empty($variantData['id'])) {
+                $id = (int) $variantData['id'];
+                $updated = $product->variants()->where('id', $id)->update($data);
+                if ($updated) {
+                    $receivedIds[] = $id;
+                    continue;
+                }
+            }
+
+            $new = $product->variants()->create($data);
+            $receivedIds[] = $new->id;
+        }
+
+        // delete variants removed in the UI
+        $toDelete = array_diff($existingIds, $receivedIds);
+        if (!empty($toDelete)) {
+            $product->variants()->whereIn('id', $toDelete)->delete();
+        }
     }
 
     private function storeGalleryImages(Product $product, Request $request): void
