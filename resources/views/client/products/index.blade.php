@@ -49,6 +49,46 @@
         </div>
     </section>
 
+    <section class="container py-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row gy-3 align-items-center">
+                    <div class="col-12 col-lg-4">
+                        <div>
+                            <h5 class="fw-bold mb-1">Lọc sản phẩm theo giá</h5>
+                            <p class="text-muted mb-0">Nhập khoảng giá và nhấn Áp dụng để xem sản phẩm phù hợp.</p>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <form method="GET" action="{{ route('client.products.index') }}" class="row g-2 align-items-end">
+                            <div class="col-12 col-sm-4">
+                                <label for="price_min" class="form-label mb-1">Giá thấp nhất</label>
+                                <input type="number" id="price_min" name="price_min" min="0" step="1000" class="form-control" value="{{ old('price_min', $priceMin ?? '') }}" placeholder="0">
+                            </div>
+                            <div class="col-12 col-sm-4">
+                                <label for="price_max" class="form-label mb-1">Giá cao nhất</label>
+                                <input type="number" id="price_max" name="price_max" min="0" step="1000" class="form-control" value="{{ old('price_max', $priceMax ?? '') }}" placeholder="2.000.000">
+                            </div>
+                            <div class="col-12 col-sm-4 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary w-100">Áp dụng</button>
+                                <a href="{{ route('client.products.index') }}" class="btn btn-outline-secondary w-100">Xóa</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                @if(is_numeric($priceMin) || is_numeric($priceMax))
+                    <div class="mt-3 text-muted">
+                        <small>
+                            Hiển thị sản phẩm theo giá
+                            @if(is_numeric($priceMin)) từ <strong>{{ number_format($priceMin, 0, ',', '.') }}đ</strong>@endif
+                            @if(is_numeric($priceMax)) đến <strong>{{ number_format($priceMax, 0, ',', '.') }}đ</strong>@endif
+                        </small>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </section>
+
     <section id="products" class="container py-5">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4 gap-3">
             <div>
