@@ -1,123 +1,65 @@
 @extends('client.layouts.app')
 
-@section('title', 'Sản phẩm - MaxBall')
-
-@push('styles')
-    <style>
-        .product-img {
-            height: 320px;
-            width: 100%;
-            object-position: center;
-            transition: transform 0.3s ease;
-        }
-
-        .product-card:hover .product-img {
-            transform: scale(1.03);
-        }
-
-        .btn-cart {
-            transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
-        }
-
-        .btn-cart:active {
-            transform: scale(0.97);
-        }
-        .hero-section {
-            background-image: url('https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2023/06/hinh-nen-bong-da-thumb.jpg');
-            background-size: cover;
-            background-position: center;
-            }
-    </style>
-@endpush
+@section('title', 'MaxBall - Football Jersey Shop')
 
 @section('content')
-    <section class="hero-section text-white py-5">
-        <div class="container py-5">
-            <div class="row align-items-center">
-                <div class="col-lg-7">
-                    <span class="badge bg-warning text-dark mb-3 text-uppercase fw-bold">Football Jersey Shop</span>
-                    <h1 class="display-5 fw-bold">Bộ sưu tập áo bóng đá 2026</h1>
-                    <p class="lead text-white-75">Chọn nhanh các mẫu áo nổi bật, chất vải thoáng, form đẹp và sẵn sàng giao cho đội bóng của bạn.</p>
-                    <a href="#products" class="btn btn-warning btn-lg mt-3">Mua ngay</a>
+<section class="relative bg-[#0a1812] overflow-hidden">
+    <div class="absolute inset-0 opacity-40">
+        <img src="https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2023/06/hinh-nen-bong-da-thumb.jpg" alt="Hero Background" class="w-full h-full object-cover">
+    </div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 flex flex-col items-center text-center">
+        <span class="px-4 py-1.5 rounded-full bg-[#d92525]/10 text-[#d92525] border border-[#d92525]/20 text-sm font-black uppercase tracking-widest mb-6 backdrop-blur-sm">
+            Bộ sưu tập 2026
+        </span>
+        <h1 class="font-heading text-5xl md:text-7xl font-black text-white mb-6 tracking-tight leading-tight">
+            Nâng Tầm <br/><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#f5f1e8] to-gray-400">Đam Mê Của Bạn</span>
+        </h1>
+        <p class="text-lg md:text-xl text-gray-300 max-w-2xl mb-10 font-medium">
+            Chất liệu siêu nhẹ, form dáng chuẩn chuyên nghiệp. MaxBall mang đến những mẫu áo đấu đẳng cấp nhất cho mùa giải mới.
+        </p>
+        <a href="#featured" class="px-8 py-4 rounded-xl bg-white text-[#10271d] font-bold text-lg hover:bg-[#d92525] hover:text-white transition-all duration-300 shadow-[0_0_40px_rgb(255,255,255,0.2)] hover:shadow-[0_0_40px_rgb(217,37,37,0.4)] hover:-translate-y-1">
+            Khám phá ngay
+        </a>
+    </div>
+</section>
+
+<section id="featured" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div class="flex flex-col items-center mb-12 text-center">
+        <p class="text-[#d92525] font-black uppercase tracking-widest text-sm mb-2">Lựa chọn hàng đầu</p>
+        <h2 class="font-heading text-4xl font-black text-[#10271d]">Sản Phẩm Nổi Bật</h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+        @forelse ($products->take(6) as $product)
+            @php $price = $product->discount_price ?: $product->base_price; @endphp
+            <div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col h-full">
+                <div class="relative overflow-hidden bg-gray-50 aspect-[4/5]">
+                    <img src="{{ $product->thumbnail_url ?? asset('storage/'.$product->thumbnail) }}" alt="{{ $product->name }}" 
+                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                 </div>
-                <div class="col-lg-5 d-none d-lg-block">
-                    <div class="ratio ratio-4x3 rounded-4 overflow-hidden shadow-lg">
-                        <img src="https://file.hstatic.net/200000722513/article/doi-tuyen-viet-nam-12-1_0c43fc569c8b4a8cb92fb870c0358a3b.jpg" alt="Cầu thủ bóng đá trên sân" class="object-fit-cover">
+                <div class="p-6 flex flex-col flex-grow text-center">
+                    <h3 class="text-lg font-bold text-[#10271d] mb-3 group-hover:text-[#d92525] transition-colors">
+                        {{ $product->name }}
+                    </h3>
+                    <div class="mt-auto">
+                        <p class="text-xl font-black text-[#10271d]">{{ number_format($price, 0, ',', '.') }}đ</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        @empty
+            <div class="col-span-full py-10 text-center text-gray-500">Chưa có sản phẩm.</div>
+        @endforelse
+    </div>
+</section>
 
-    <section id="products" class="container py-5">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4 gap-3">
-            <div>
-                <p class="text-uppercase fw-bold text-danger mb-2">Bộ sưu tập mới</p>
-                <h2 class="display-6 fw-bold">Sản phẩm nổi bật</h2>
-            </div>
-        </div>
-
-        <div class="row g-4">
-            @forelse ($products as $product)
-                @php
-                    $price = $product->discount_price ?: $product->base_price;
-                @endphp
-
-                <div class="col-12 col-md-6 col-xl-4">
-                    <div class="card h-100 product-card border-0 shadow-sm">
-                        <img src="{{ $product->thumbnail_url }}" alt="{{ $product->name }}" class="card-img-top product-img" loading="lazy">
-                        <div class="card-body d-flex flex-column">
-                            <span class="badge bg-success mb-3">{{ $product->category_name }}</span>
-                            <h3 class="h5 fw-bold">{{ $product->name }}</h3>
-                            <p class="text-muted mb-4">{{ \Illuminate\Support\Str::limit($product->description ?: 'Áo đấu thiết kế hiện đại, chất liệu thoáng nhẹ và dễ vận động.', 105) }}</p>
-                            <div class="mt-auto">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <div>
-                                        <p class="h5 text-danger mb-0">{{ number_format($price, 0, ',', '.') }}đ</p>
-                                        @if ($product->discount_price)
-                                            <small class="text-muted text-decoration-line-through">{{ number_format($product->base_price, 0, ',', '.') }}đ</small>
-                                        @endif
-                                    </div>
-                                </div>
-                                <button type="button" class="btn btn-primary btn-cart w-100">Thêm vào giỏ</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="col-12">
-                    <div class="alert alert-warning">Chưa có sản phẩm nào trong kho, vui lòng thử lại sau.</div>
-                </div>
-            @endforelse
-        </div>
-    </section>
-
-    <section id="deal" class="text-white py-5"
-    style="background: url('https://m.media-amazon.com/images/I/611gcLkTitL._AC_UF1000,1000_QL80_.jpg') center/cover no-repeat;">
-        <div class="container text-center">
-            <h2 class="display-6 fw-bold">Giảm 15% cho đơn đồng đội từ 5 áo</h2>
-            <p class="lead text-white-75 mt-3">Đặt áo cho team, lớp học hoặc câu lạc bộ và nhận tư vấn size nhanh trong ngày.</p>
-        </div>
-    </section>
+<section class="bg-[#d92525] text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <h2 class="font-heading text-3xl md:text-4xl font-black mb-4">Giảm 15% cho đơn đồng đội</h2>
+        <p class="text-white/80 text-lg mb-8 max-w-2xl mx-auto">Đặt áo cho team, lớp học hoặc câu lạc bộ từ 5 áo trở lên. Hỗ trợ in ấn và tư vấn size nhanh chóng trong ngày.</p>
+        <button class="px-8 py-3 rounded-xl bg-[#10271d] text-white font-bold hover:bg-white hover:text-[#10271d] transition-colors duration-300">
+            Liên hệ đặt đội
+        </button>
+    </div>
+</section>
 @endsection
-
-@push('scripts')
-    <script>
-        const cartCount = document.getElementById('cart-count');
-        let count = 0;
-
-        document.querySelectorAll('.btn-cart').forEach((button) => {
-            button.addEventListener('click', () => {
-                count += 1;
-                cartCount.textContent = count;
-                button.textContent = 'Đã thêm';
-                button.style.opacity = '0.75';
-
-                window.setTimeout(() => {
-                    button.textContent = 'Thêm vào giỏ';
-                    button.style.opacity = '1';
-                }, 650);
-            });
-        });
-    </script>
-@endpush

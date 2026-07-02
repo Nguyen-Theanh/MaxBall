@@ -23,16 +23,17 @@
                                     </div>
                                     
                                     @if($category->children->count() > 0)
-                                        <ul class="list-none p-0 m-0 flex flex-col gap-3">
-                                            @foreach($category->children as $child)
-                                                <li>
-                                                    <a href="#" class="!text-[14px] font-medium !text-gray-500 hover:!text-[#d92525] !no-underline transition-colors block capitalize">
-                                                        {{ strtolower($child->name) }}
-                                                    </a>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @endif
+    <ul class="list-none p-0 m-0 flex flex-col gap-3">
+        @foreach($category->children as $child)
+            <li>
+                <a href="{{ route('client.products.index', $child->slug) }}" 
+                   class="!text-[14px] font-medium !text-gray-500 hover:!text-[#d92525] !no-underline transition-colors block capitalize">
+                    {{ strtolower($child->name) }}
+                </a>
+            </li>
+        @endforeach
+    </ul>
+@endif
                                 </div>
                             @endforeach
                         </div>

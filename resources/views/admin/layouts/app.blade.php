@@ -43,6 +43,7 @@
 
             <nav class="nav flex-column gap-2">
                 <a class="nav-link active" href="{{ route('admin.products.index') }}">Quản lý sản phẩm</a>
+                <a class="nav-link active" href="{{ route('admin.categories.index') }}">Quản lý danh mục</a>
                 <a class="nav-link" href="{{ route('client.products.index') }}" target="_blank">Xem trang client</a>
             </nav>
         </aside>
