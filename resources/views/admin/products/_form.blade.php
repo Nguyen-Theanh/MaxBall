@@ -116,7 +116,7 @@
                         <option value="">Chọn danh mục</option>
                         @foreach ($categories as $category)
                             <option value="{{ $category->id }}" @selected((int) old('category_id', $product->category_id) === $category->id)>
-                                {{ $category->name }}
+                                {{ $category->display_name }}
                             </option>
                         @endforeach
                     </select>

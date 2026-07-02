@@ -212,6 +212,15 @@ class ProductController extends Controller
 
     private function categories()
     {
-        return Category::orderBy('name')->get();
+        // Lấy tất cả danh mục kèm theo thông tin danh mục cha
+        $categories = Category::with('parent')->get();
+        
+        // Tạo thêm một trường tên hiển thị đẹp mắt (VD: Giày Đá Bóng > Nike)
+        return $categories->map(function ($category) {
+            $category->display_name = $category->parent_id 
+                ? $category->parent->name . ' ➡️ ' . $category->name 
+                : '⭐ ' . $category->name; // Đánh dấu sao cho danh mục gốc
+            return $category;
+        })->sortBy('parent_id'); // Sắp xếp để nhóm các danh mục lại với nhau
     }
 }
