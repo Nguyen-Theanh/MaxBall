@@ -36,6 +36,22 @@
     @include('client.partials.header')
 
     <main class="flex-1">
+        @if (session('success'))
+            <div class="mx-auto mt-4 max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+                    {{ session('success') }}
+                </div>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="mx-auto mt-4 max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+                    {{ $errors->first() }}
+                </div>
+            </div>
+        @endif
+
         @yield('content')
     </main>
 

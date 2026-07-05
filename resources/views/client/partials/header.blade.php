@@ -21,12 +21,12 @@
                                     <div class="!text-[14px] font-bold !text-[#10271d] uppercase border-b border-gray-200 pb-3 mb-4">
                                         {{ $category->name }}
                                     </div>
-                                    
+
                                     @if($category->children->count() > 0)
     <ul class="list-none p-0 m-0 flex flex-col gap-3">
         @foreach($category->children as $child)
             <li>
-                <a href="{{ route('client.products.index', $child->slug) }}" 
+                <a href="{{ route('client.products.index', $child->slug) }}"
                    class="!text-[14px] font-medium !text-gray-500 hover:!text-[#d92525] !no-underline transition-colors block capitalize">
                     {{ strtolower($child->name) }}
                 </a>
@@ -46,13 +46,39 @@
             <a href="#footer" class="transition !text-[#10271d] hover:!text-[#d92525] !no-underline">Liên hệ</a>
         </div>
 
-        <button type="button" class="relative flex h-11 w-11 items-center justify-center rounded-full bg-[#10271d] text-white shadow-lg shadow-[#10271d]/20 border-0" aria-label="Gio hang">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-                <path d="M3 6h18"></path>
-                <path d="M16 10a4 4 0 0 1-8 0"></path>
-            </svg>
-            <span id="cart-count" class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#d92525] px-1 text-xs font-bold text-white">0</span>
-        </button>
+        <div class="flex items-center gap-3">
+            @auth
+                <a href="{{ route('account.show') }}" class="hidden rounded-full border border-[#10271d]/20 bg-white px-4 py-2 text-sm font-bold !text-[#10271d] !no-underline transition hover:bg-[#10271d] hover:!text-white sm:inline-block">
+                    {{ auth()->user()->name }}
+                </a>
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('admin.dashboard') }}" class="hidden rounded-full bg-[#d92525] px-4 py-2 text-sm font-bold !text-white !no-underline transition hover:bg-[#10271d] lg:inline-block">
+                        Admin
+                    </a>
+                @endif
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" class="rounded-full border border-[#10271d]/20 bg-white px-4 py-2 text-sm font-bold !text-[#10271d] transition hover:bg-[#10271d] hover:!text-white">
+                        Đăng xuất
+                    </button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" class="hidden rounded-full border border-[#10271d]/20 bg-white px-4 py-2 text-sm font-bold !text-[#10271d] !no-underline transition hover:bg-[#10271d] hover:!text-white sm:inline-block">
+                    Đăng nhập
+                </a>
+                <a href="{{ route('register') }}" class="hidden rounded-full bg-[#10271d] px-4 py-2 text-sm font-bold !text-white !no-underline transition hover:bg-[#d92525] sm:inline-block">
+                    Đăng ký
+                </a>
+            @endauth
+
+            <button type="button" class="relative flex h-11 w-11 items-center justify-center rounded-full bg-[#10271d] text-white shadow-lg shadow-[#10271d]/20 border-0" aria-label="Gio hang">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                    <path d="M3 6h18"></path>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <span id="cart-count" class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#d92525] px-1 text-xs font-bold text-white">0</span>
+            </button>
+        </div>
     </nav>
 </header>

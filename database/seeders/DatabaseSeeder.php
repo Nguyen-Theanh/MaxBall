@@ -15,13 +15,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::query()->firstOrCreate(
+        $admin = User::query()->firstOrCreate(
             ['email' => 'test@example.com'],
             [
                 'name' => 'Test User',
                 'password' => 'password',
             ]
         );
+
+        $admin->forceFill([
+            'role' => 'admin',
+            'status' => true,
+        ])->save();
 
         $this->call([
             ProductSeeder::class,

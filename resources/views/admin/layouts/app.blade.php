@@ -42,9 +42,10 @@
             </a>
 
             <nav class="nav flex-column gap-2">
-                <a class="nav-link active" href="{{ route('admin.products.index') }}">Quản lý sản phẩm</a>
-                <a class="nav-link active" href="{{ route('admin.categories.index') }}">Quản lý danh mục</a>
-                <a class="nav-link" href="{{ route('client.products.index') }}" target="_blank">Xem trang client</a>
+                <a class="nav-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}" href="{{ route('admin.products.index') }}">Quản lý san pham</a>
+                <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">Quản lý danh mục</a>
+                <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Quản lý người dùng</a>
+                <a class="nav-link" href="{{ route('client.products.index') }}">Xem trang client</a>
             </nav>
         </aside>
 
@@ -54,6 +55,19 @@
                     <div>
                         <h1 class="h4 mb-0">@yield('page_title', 'Admin')</h1>
                     </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        @auth
+                            <span class="text-muted small">{{ auth()->user()->name }}</span>
+                            <form method="POST" action="{{ route('logout') }}" class="m-0">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-dark">Đăng xuất</button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-sm btn-outline-dark">Đăng nhập</a>
+                            <a href="{{ route('register') }}" class="btn btn-sm btn-dark">Đăng ký</a>
+                        @endauth
+                    </div>
                 </div>
             </header>
 
@@ -61,6 +75,13 @@
                 @if (session('success'))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dong"></button>
+                    </div>
+                @endif
+
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ $errors->first() }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dong"></button>
                     </div>
                 @endif
