@@ -35,7 +35,7 @@ class ProductController extends Controller
             $category = Category::where('slug', $slug)->firstOrFail();
             $query->where('category_id', $category->id);
             $categoryName = $category->name;
-            
+
             $products = $query->paginate(12)->withQueryString();
 
             // Trả về file mới không có banner
@@ -47,5 +47,20 @@ class ProductController extends Controller
 
         // Trả về file cũ có đầy đủ banner Hero Section
         return view('client.products.index', compact('products', 'categoryName'));
+    }
+    public function show($slug)
+    {
+        $product = \App\Models\Product::with(['category', 'productImages', 'variants'])
+            ->where('slug', $slug)
+            ->where('status', 1)
+            ->firstOrFail();
+
+        $relatedProducts = \App\Models\Product::where('status', 1)
+            ->where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->limit(4)
+            ->get();
+
+        return view('client.products.show', compact('product', 'relatedProducts'));
     }
 }
