@@ -11,42 +11,74 @@
             </div>
 
             <div class="grid gap-8 lg:grid-cols-[380px_1fr]">
-                <form method="POST" action="{{ route('account.update') }}" class="rounded-2xl bg-white p-6 shadow-xl shadow-[#10271d]/10 ring-1 ring-black/5">
-                    @csrf
-                    @method('PUT')
+                <div class="space-y-8">
+                    <form method="POST" action="{{ route('account.update') }}" class="rounded-2xl bg-white p-6 shadow-xl shadow-[#10271d]/10 ring-1 ring-black/5">
+                        @csrf
+                        @method('PUT')
 
-                    <h2 class="mb-5 text-xl font-black text-[#10271d]">Thông tin giao hàng</h2>
+                        <h2 class="mb-5 text-xl font-black text-[#10271d]">Thông tin giao hàng</h2>
 
-                    <div class="space-y-5">
-                        <div>
-                            <label for="name" class="mb-2 block text-sm font-bold text-gray-700">Họ tên</label>
-                            <input id="name" name="name" value="{{ old('name', $user->name) }}" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10" required>
-                            @error('name') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                        <div class="space-y-5">
+                            <div>
+                                <label for="name" class="mb-2 block text-sm font-bold text-gray-700">Họ tên</label>
+                                <input id="name" name="name" value="{{ old('name', $user->name) }}" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10" required>
+                                @error('name') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="email" class="mb-2 block text-sm font-bold text-gray-700">Email</label>
+                                <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10" required>
+                                @error('email') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="phone" class="mb-2 block text-sm font-bold text-gray-700">Số điện thoại</label>
+                                <input id="phone" name="phone" value="{{ old('phone', $user->phone) }}" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10">
+                                @error('phone') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="address" class="mb-2 block text-sm font-bold text-gray-700">Địa chỉ</label>
+                                <textarea id="address" name="address" rows="4" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10">{{ old('address', $user->address) }}</textarea>
+                                @error('address') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <button type="submit" class="w-full rounded-xl bg-[#10271d] px-5 py-3 font-extrabold text-white transition hover:bg-[#d92525]">
+                                Lưu thông tin
+                            </button>
                         </div>
+                    </form>
 
-                        <div>
-                            <label for="email" class="mb-2 block text-sm font-bold text-gray-700">Email</label>
-                            <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10" required>
-                            @error('email') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                    <form method="POST" action="{{ route('account.password.update') }}" class="rounded-2xl bg-white p-6 shadow-xl shadow-[#10271d]/10 ring-1 ring-black/5">
+                        @csrf
+                        @method('PUT')
+
+                        <h2 class="mb-5 text-xl font-black text-[#10271d]">Đổi mật khẩu</h2>
+
+                        <div class="space-y-5">
+                            <div>
+                                <label for="current_password" class="mb-2 block text-sm font-bold text-gray-700">Mật khẩu hiện tại</label>
+                                <input type="password" id="current_password" name="current_password" autocomplete="current-password" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10" required>
+                                @error('current_password') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="password" class="mb-2 block text-sm font-bold text-gray-700">Mật khẩu mới</label>
+                                <input type="password" id="password" name="password" autocomplete="new-password" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10" required>
+                                @error('password') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="password_confirmation" class="mb-2 block text-sm font-bold text-gray-700">Nhập lại mật khẩu mới</label>
+                                <input type="password" id="password_confirmation" name="password_confirmation" autocomplete="new-password" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10" required>
+                            </div>
+
+                            <button type="submit" class="w-full rounded-xl bg-[#10271d] px-5 py-3 font-extrabold text-white transition hover:bg-[#d92525]">
+                                Đổi mật khẩu
+                            </button>
                         </div>
-
-                        <div>
-                            <label for="phone" class="mb-2 block text-sm font-bold text-gray-700">Số điện thoại</label>
-                            <input id="phone" name="phone" value="{{ old('phone', $user->phone) }}" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10">
-                            @error('phone') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label for="address" class="mb-2 block text-sm font-bold text-gray-700">Địa chỉ</label>
-                            <textarea id="address" name="address" rows="4" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10">{{ old('address', $user->address) }}</textarea>
-                            @error('address') <p class="mt-2 text-sm font-semibold text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <button type="submit" class="w-full rounded-xl bg-[#10271d] px-5 py-3 font-extrabold text-white transition hover:bg-[#d92525]">
-                            Lưu thông tin
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
 
                 <div class="rounded-2xl bg-white p-6 shadow-xl shadow-[#10271d]/10 ring-1 ring-black/5">
                     <div class="mb-5 flex items-center justify-between gap-4">

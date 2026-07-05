@@ -18,7 +18,7 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label for="phone" class="form-label">Số điện thọai</label>
+                        <label for="phone" class="form-label">Số điện thoại</label>
                         <input id="phone" name="phone" value="{{ old('phone', $user->phone) }}" class="form-control @error('phone') is-invalid @enderror">
                         @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
