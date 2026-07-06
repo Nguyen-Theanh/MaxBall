@@ -6,7 +6,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
             <!-- Col 1: Brand -->
             <div>
-                <a href="{{ route('client.products.index') }}" class="font-heading text-3xl font-black text-white mb-6 flex items-center gap-2 !no-underline">
+                <a href="{{ route('client.home') }}" class="font-heading text-3xl font-black text-white mb-6 flex items-center gap-2 !no-underline">
                     <i class="fa-solid fa-futbol text-[#d92525]"></i> MaxBall
                 </a>
                 <p class="text-sm leading-relaxed mb-6">
@@ -32,9 +32,9 @@
             <div>
                 <h4 class="text-white font-bold text-lg mb-6 uppercase tracking-wider">Khám Phá</h4>
                 <ul class="space-y-3">
-                    <li><a href="{{ route('client.products.index') }}#products" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Tất cả sản phẩm</a></li>
-                    <li><a href="{{ route('client.products.index') }}#deal" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Khuyến mãi & Ưu đãi đội</a></li>
-                    <li><a href="#about-us" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Về MaxBall</a></li>
+                    <li><a href="{{ route('client.products.index') }}" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Tất cả sản phẩm</a></li>
+                    <li><a href="{{ route('client.home') }}#deal" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Khuyến mãi & Ưu đãi đội</a></li>
+                    <li><a href="{{ route('client.home') }}#about-us" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Về MaxBall</a></li>
                     <li><a href="#" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Hướng dẫn chọn size</a></li>
                     <li><a href="#" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Chính sách đổi trả</a></li>
                 </ul>

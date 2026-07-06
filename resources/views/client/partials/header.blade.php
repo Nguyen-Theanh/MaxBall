@@ -1,7 +1,7 @@
 <header class="fixed top-0 w-full z-50 transition-all duration-300" id="main-header">
     <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <!-- Logo -->
-        <a href="{{ route('client.products.index') }}" class="font-heading text-4xl font-black !text-white !no-underline flex items-center gap-2 group transition-transform hover:scale-105" id="header-logo">
+        <a href="{{ route('client.home') }}" class="font-heading text-4xl font-black !text-white !no-underline flex items-center gap-2 group transition-transform hover:scale-105" id="header-logo">
             <i class="fa-solid fa-futbol text-[#d92525] group-hover:rotate-180 transition-transform duration-700"></i>
             MaxBall
         </a>
@@ -9,7 +9,7 @@
         <!-- Menu Links -->
         <div class="hidden items-center gap-10 text-[15px] font-bold uppercase tracking-[0.1em] lg:flex">
             <div class="relative group py-4">
-                <a href="{{ route('client.products.index') }}#products" class="transition !text-white hover:!text-[#d92525] !no-underline flex items-center gap-1 nav-link">
+                <a href="{{ route('client.products.index') }}" class="transition !text-white hover:!text-[#d92525] !no-underline flex items-center gap-1 nav-link">
                     Sản phẩm
                     <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 group-hover:rotate-180"></i>
                 </a>
@@ -27,7 +27,7 @@
                                         <ul class="list-none p-0 m-0 flex flex-col gap-2">
                                             @foreach($category->children as $child)
                                                 <li>
-                                                    <a href="{{ route('client.products.index', $child->slug) }}"
+                                                    <a href="{{ route('client.category.show', $child->slug) }}"
                                                        class="!text-[14px] font-medium !text-gray-600 hover:!text-[#d92525] hover:pl-2 !no-underline transition-all duration-300 block capitalize">
                                                         {{ strtolower($child->name) }}
                                                     </a>
@@ -43,8 +43,8 @@
                     @endif
                 </div>
             </div>
-            <a href="{{ route('client.products.index') }}#deal" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Khuyến mãi</a>
-            <a href="#about-us" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Về chúng tôi</a>
+            <a href="{{ route('client.home') }}#deal" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Khuyến mãi</a>
+            <a href="{{ route('client.home') }}#about-us" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Về chúng tôi</a>
             <a href="#footer" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Liên hệ</a>
         </div>
 

@@ -9,44 +9,49 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request, $slug = null)
+    public function home()
+    {
+        $products = Product::where('status', 1)->latest()->take(8)->get();
+        return view('client.products.index', compact('products'));
+    }
+
+    public function index(Request $request)
     {
         $query = Product::query()->where('status', 1);
         $categoryName = 'Tất cả sản phẩm';
 
-        // Lọc giá (dùng chung cho cả trang chủ và trang danh mục)
         if ($request->filled('min_price')) {
             $query->where('base_price', '>=', $request->min_price);
         }
         if ($request->filled('max_price')) {
             $query->where('base_price', '<=', $request->max_price);
         }
-
-        // TÍNH NĂNG MỚI: TÌM KIẾM THEO TÊN
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
+        $products = $query->paginate(12)->withQueryString();
+        return view('client.products.listing', compact('products', 'categoryName'));
+    }
 
+    public function category(Request $request, $slug)
+    {
+        $category = Category::where('slug', $slug)->firstOrFail();
+        $query = Product::where('status', 1)->where('category_id', $category->id);
+        $categoryName = $category->name;
 
-        // KIỂM TRA ĐIỀU KIỆN ĐỂ TRẢ VỀ ĐÚNG FILE VIEW
-        if ($slug) {
-            // TRƯỜNG HỢP 1: Có slug (VD: /products/ao-quoc-gia) -> Vào trang Danh mục
-            $category = Category::where('slug', $slug)->firstOrFail();
-            $query->where('category_id', $category->id);
-            $categoryName = $category->name;
-
-            $products = $query->paginate(12)->withQueryString();
-
-            // Trả về file mới không có banner
-            return view('client.products.listing', compact('products', 'categoryName'));
+        if ($request->filled('min_price')) {
+            $query->where('base_price', '>=', $request->min_price);
+        }
+        if ($request->filled('max_price')) {
+            $query->where('base_price', '<=', $request->max_price);
+        }
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // TRƯỜNG HỢP 2: Không có slug (VD: / hoặc /products) -> Vào trang Chủ
         $products = $query->paginate(12)->withQueryString();
-
-        // Trả về file cũ có đầy đủ banner Hero Section
-        return view('client.products.index', compact('products', 'categoryName'));
+        return view('client.products.listing', compact('products', 'categoryName'));
     }
     public function show($slug)
     {

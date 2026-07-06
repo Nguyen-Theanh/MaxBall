@@ -9,9 +9,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use Illuminate\Support\Facades\Route;
 
 // Client
-Route::get('/', function () {
-    return redirect()->route('client.products.index');
-});
+Route::get('/', [ClientProductController::class, 'home'])->name('client.home');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
@@ -30,13 +28,17 @@ Route::middleware('auth')->group(function () {
     Route::put('/account/password', [AccountController::class, 'updatePassword'])->name('account.password.update');
 });
 
-// Trang chi tiết sản phẩm
-Route::get('/product/{slug}', [ClientProductController::class, 'show'])
-    ->name('client.products.show');
-
-// Trang danh sách sản phẩm
-Route::get('/products/{slug?}', [ClientProductController::class, 'index'])
+// Trang danh sách tất cả sản phẩm
+Route::get('/san-pham', [ClientProductController::class, 'index'])
     ->name('client.products.index');
+
+// Trang danh mục sản phẩm
+Route::get('/danh-muc/{slug}', [ClientProductController::class, 'category'])
+    ->name('client.category.show');
+
+// Trang chi tiết sản phẩm
+Route::get('/san-pham/{slug}', [ClientProductController::class, 'show'])
+    ->name('client.products.show');
 
 // Admin
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
