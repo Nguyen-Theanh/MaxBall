@@ -3,106 +3,151 @@
 @section('title', $categoryName . ' - MaxBall')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="mb-10 border-b border-gray-200 pb-6">
-        <h1 class="font-heading text-4xl md:text-5xl font-black text-[#10271d] capitalize tracking-tight">{{ $categoryName }}</h1>
-        <p class="text-gray-500 mt-3 text-lg font-medium">Khám phá bộ sưu tập {{ $products->total() }} sản phẩm cao cấp</p>
+
+<!-- Dark Hero Banner for Category (fixes Navbar issue) -->
+<section class="relative h-[400px] w-full overflow-hidden bg-[#0a1812] flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/60 z-10"></div>
+    <img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=2070&auto=format&fit=crop" alt="Category Banner" class="w-full h-full object-cover">
+    
+    <div class="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-4 mt-16">
+        <span class="px-4 py-1.5 rounded-full bg-[#d92525]/20 text-[#d92525] border border-[#d92525]/30 text-sm font-black uppercase tracking-[0.2em] mb-4 backdrop-blur-md" data-aos="fade-down">
+            Bộ Sưu Tập
+        </span>
+        <h1 class="font-heading text-5xl md:text-6xl font-black text-white capitalize tracking-tight" data-aos="fade-up" data-aos-delay="100">
+            {{ $categoryName }}
+        </h1>
+        <p class="text-gray-300 mt-4 text-lg font-medium" data-aos="fade-up" data-aos-delay="200">
+            Khám phá {{ $products->total() }} sản phẩm cao cấp dành riêng cho bạn
+        </p>
     </div>
+</section>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-10">
-        <aside class="col-span-1">
-            <div class="sticky top-[100px] bg-white p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-                <h3 class="font-bold text-lg mb-5 text-[#10271d] flex items-center gap-2 uppercase tracking-wider">
-                    Bộ lọc
-                </h3>
+<div class="bg-[#fcfaf6] py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-10">
+            <!-- Sidebar -->
+            <aside class="col-span-1" data-aos="fade-right">
+                <div class="sticky top-[100px] bg-white p-6 rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100">
+                    <h3 class="font-bold text-lg mb-6 text-[#10271d] flex items-center gap-2 uppercase tracking-wider border-b border-gray-100 pb-4">
+                        <i class="fa-solid fa-filter text-[#d92525]"></i> Bộ Lọc
+                    </h3>
 
-                <form action="{{ url()->current() }}" method="GET" class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Tên sản phẩm</label>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="VD: Áo sân khách..."
-                               class="w-full rounded-xl border-gray-200 bg-gray-50 px-4 py-3 text-sm transition focus:border-[#10271d] focus:bg-white focus:ring-2 focus:ring-[#10271d]/20 outline-none">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Khoảng giá (VNĐ)</label>
-                        <div class="flex items-center gap-2">
-                            <input type="number" name="min_price" value="{{ request('min_price') }}" placeholder="Từ"
-                                   class="w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-3 text-sm transition focus:border-[#10271d] focus:bg-white focus:ring-2 focus:ring-[#10271d]/20 outline-none">
-                            <span class="text-gray-400">-</span>
-                            <input type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Đến"
-                                   class="w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-3 text-sm transition focus:border-[#10271d] focus:bg-white focus:ring-2 focus:ring-[#10271d]/20 outline-none">
+                    <form action="{{ url()->current() }}" method="GET" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Tên sản phẩm</label>
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Ví dụ: Áo đấu..."
+                                       class="w-full rounded-xl border-gray-200 bg-gray-50 pl-11 pr-4 py-3 text-sm transition focus:border-[#d92525] focus:bg-white focus:ring-2 focus:ring-[#d92525]/20 outline-none">
+                            </div>
                         </div>
-                    </div>
 
-                    <button type="submit" class="w-full bg-[#10271d] hover:bg-[#1a4030] text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-[#10271d]/20 active:scale-95">
-                        Áp dụng
-                    </button>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Khoảng giá (VNĐ)</label>
+                            <div class="flex items-center gap-2">
+                                <input type="number" name="min_price" value="{{ request('min_price') }}" placeholder="Từ"
+                                       class="w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-3 text-sm transition focus:border-[#d92525] focus:bg-white focus:ring-2 focus:ring-[#d92525]/20 outline-none">
+                                <span class="text-gray-400">-</span>
+                                <input type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Đến"
+                                       class="w-full rounded-xl border-gray-200 bg-gray-50 px-3 py-3 text-sm transition focus:border-[#d92525] focus:bg-white focus:ring-2 focus:ring-[#d92525]/20 outline-none">
+                            </div>
+                        </div>
 
-                    @if(request()->anyFilled(['search', 'min_price', 'max_price']))
-                        <a href="{{ url()->current() }}" class="block text-center mt-4 text-sm font-semibold text-gray-500 hover:text-[#d92525] transition underline">
-                            Xóa bộ lọc
-                        </a>
-                    @endif
-                </form>
-            </div>
-        </aside>
+                        <button type="submit" class="w-full bg-[#10271d] hover:bg-[#d92525] text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-[#10271d]/20 hover:shadow-[#d92525]/30">
+                            Áp dụng bộ lọc
+                        </button>
 
-        <main class="col-span-1 lg:col-span-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                @forelse ($products as $product)
-                    @php
-                        $price = $product->discount_price ?: $product->base_price;
-                    @endphp
+                        @if(request()->anyFilled(['search', 'min_price', 'max_price']))
+                            <a href="{{ url()->current() }}" class="block text-center mt-4 text-sm font-semibold text-gray-500 hover:text-[#d92525] transition underline">
+                                Khôi phục mặc định
+                            </a>
+                        @endif
+                    </form>
+                </div>
+            </aside>
 
-                    <a href="{{ route('client.products.show', $product->slug) }}"
-                       class="group bg-white rounded-2xl overflow-hidden shadow-[0_2px_10px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 border border-gray-100 flex flex-col h-full no-underline">
+            <!-- Product Grid -->
+            <main class="col-span-1 lg:col-span-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    @forelse ($products as $index => $product)
+                        @php
+                            $price = $product->discount_price ?: $product->base_price;
+                            $delay = ($index % 3) * 100;
+                        @endphp
 
-                        <div class="relative overflow-hidden bg-gray-50 aspect-[4/5]">
-                            <img src="{{ $product->thumbnail_url ?? asset('storage/'.$product->thumbnail) }}"
-                                 alt="{{ $product->name }}"
-                                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                 loading="lazy">
-
-                            @if ($product->discount_price)
-                                <div class="absolute top-4 right-4 bg-[#d92525] text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full z-10 shadow-lg shadow-[#d92525]/40">
+                        <div data-aos="fade-up" data-aos-delay="{{ $delay }}" class="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col h-full transform hover:-translate-y-2">
+                            
+                            @if($product->discount_price)
+                                <div class="absolute top-4 left-4 z-10 bg-[#d92525] text-white text-xs font-bold px-3 py-1 rounded-full uppercase shadow-md">
                                     Sale
                                 </div>
                             @endif
-                        </div>
 
-                        <div class="p-5 flex flex-col flex-grow">
-                            <span class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">{{ $categoryName }}</span>
+                            <div class="relative overflow-hidden bg-gray-100 aspect-square">
+                                @php
+                                    $imgSrc = $product->thumbnail_url;
+                                    if (!$imgSrc && $product->thumbnail) {
+                                        $imgSrc = Str::startsWith($product->thumbnail, ['http://', 'https://']) ? $product->thumbnail : asset('storage/'.$product->thumbnail);
+                                    }
+                                    if (!$imgSrc) {
+                                        $imgSrc = 'https://placehold.co/600x600/f3f4f6/a1a1aa?text=Chua+Co+Anh';
+                                    }
+                                @endphp
+                                <img src="{{ $imgSrc }}"
+                                     alt="{{ $product->name }}"
+                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                
+                                <!-- Overlay Actions -->
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
+                                    <button class="w-12 h-12 bg-white rounded-full text-[#10271d] hover:bg-[#d92525] hover:text-white transition-colors flex items-center justify-center shadow-lg" title="Thêm vào giỏ hàng">
+                                        <i class="fa-solid fa-cart-plus"></i>
+                                    </button>
+                                    <a href="{{ route('client.products.show', $product->slug) }}" class="w-12 h-12 bg-white rounded-full text-[#10271d] hover:bg-[#d92525] hover:text-white transition-colors flex items-center justify-center shadow-lg" title="Xem chi tiết">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
 
-                            <h3 class="text-lg font-bold text-[#10271d] leading-snug line-clamp-2 group-hover:text-[#d92525] transition-colors">
-                                {{ $product->name }}
-                            </h3>
-
-                            <div class="mt-auto pt-5 flex items-end justify-between">
-                                <div>
-                                    <p class="text-lg font-black text-[#10271d]">{{ number_format($price, 0, ',', '.') }}đ</p>
-
-                                    @if ($product->discount_price)
-                                        <p class="text-sm text-gray-400 line-through mt-[-4px]">{{ number_format($product->base_price, 0, ',', '.') }}đ</p>
+                            <div class="p-6 flex flex-col flex-grow text-center">
+                                <a href="{{ route('client.products.show', $product->slug) }}" class="text-lg font-bold text-[#10271d] mb-2 group-hover:text-[#d92525] transition-colors line-clamp-2 no-underline">
+                                    {{ $product->name }}
+                                </a>
+                                <div class="mt-auto pt-4 border-t border-gray-100 flex flex-col items-center justify-center gap-1">
+                                    <span class="text-xl font-black text-[#d92525]">
+                                        {{ number_format($price, 0, ',', '.') }}đ
+                                    </span>
+                                    @if($product->discount_price)
+                                        <span class="text-sm text-gray-400 line-through">
+                                            {{ number_format($product->base_price, 0, ',', '.') }}đ
+                                        </span>
                                     @endif
                                 </div>
-
-                                <span class="h-10 px-4 rounded-xl bg-[#f5f1e8] text-[#10271d] font-bold text-sm hover:bg-[#10271d] hover:text-white transition-all duration-300 flex items-center">
-                                    Mua
-                                </span>
                             </div>
                         </div>
-                    </a>
-                @empty
-                    <div class="col-span-full py-20 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                        <p class="text-lg text-gray-500 font-medium">Không tìm thấy sản phẩm nào.</p>
-                    </div>
-                @endforelse
-            </div>
+                    @empty
+                        <div class="col-span-full py-20 text-center bg-white rounded-3xl border border-gray-200 shadow-sm">
+                            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-50 text-gray-300 mb-4">
+                                <i class="fa-regular fa-folder-open text-4xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Chưa có sản phẩm</h3>
+                            <p class="text-gray-500">Danh mục này hiện tại chưa có sản phẩm nào, vui lòng quay lại sau.</p>
+                            <a href="{{ route('client.products.index') }}" class="inline-block mt-6 px-6 py-3 bg-[#10271d] text-white rounded-full font-semibold hover:bg-[#d92525] transition-colors">
+                                Khám phá danh mục khác
+                            </a>
+                        </div>
+                    @endforelse
+                </div>
 
-            <div class="mt-12 flex justify-center">
-                {{ $products->links() }}
-            </div>
-        </main>
+                <!-- Pagination -->
+                @if($products->hasPages())
+                    <div class="mt-16 flex justify-center">
+                        <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+                            {{ $products->links() }}
+                        </div>
+                    </div>
+                @endif
+            </main>
+        </div>
     </div>
 </div>
 @endsection

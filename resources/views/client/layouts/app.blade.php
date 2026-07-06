@@ -30,6 +30,15 @@
         .font-heading { font-family: 'Fraunces', serif; }
     </style>
 
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    
+    <!-- AOS CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     @stack('styles')
 </head>
 <body class="flex flex-col min-h-screen bg-cream text-gray-900">
@@ -58,5 +67,18 @@
     @include('client.partials.footer')
 
     @stack('scripts')
+    
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
+    <!-- AOS JS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: false,
+            offset: 100,
+        });
+    </script>
 </body>
 </html>
