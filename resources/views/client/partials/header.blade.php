@@ -44,8 +44,8 @@
                 </div>
             </div>
             <a href="{{ route('client.home') }}#deal" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Khuyến mãi</a>
-            <a href="{{ route('client.home') }}#about-us" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Về chúng tôi</a>
-            <a href="#footer" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Liên hệ</a>
+            <a href="{{ route('client.about') }}" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Về chúng tôi</a>
+            <a href="{{ route('client.contact') }}" class="transition !text-white hover:!text-[#d92525] !no-underline nav-link">Liên hệ</a>
         </div>
 
         <!-- Actions -->

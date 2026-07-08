@@ -44,6 +44,7 @@
             <nav class="nav flex-column gap-2">
                 <a class="nav-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}" href="{{ route('admin.products.index') }}">Quản lý sản phẩm</a>
                 <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">Quản lý danh mục</a>
+                <a class="nav-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}" href="{{ route('admin.contacts.index') }}">Quản lý liên hệ</a>
                 <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Quản lý người dùng</a>
                 <a class="nav-link" href="{{ route('client.products.index') }}">Xem trang client</a>
             </nav>

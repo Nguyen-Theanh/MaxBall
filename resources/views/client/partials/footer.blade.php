@@ -34,7 +34,7 @@
                 <ul class="space-y-3">
                     <li><a href="{{ route('client.products.index') }}" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Tất cả sản phẩm</a></li>
                     <li><a href="{{ route('client.home') }}#deal" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Khuyến mãi & Ưu đãi đội</a></li>
-                    <li><a href="{{ route('client.home') }}#about-us" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Về MaxBall</a></li>
+                    <li><a href="{{ route('client.about') }}" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Về MaxBall</a></li>
                     <li><a href="#" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Hướng dẫn chọn size</a></li>
                     <li><a href="#" class="hover:text-[#d92525] transition-colors flex items-center gap-2"><i class="fa-solid fa-angle-right text-xs"></i> Chính sách đổi trả</a></li>
                 </ul>
