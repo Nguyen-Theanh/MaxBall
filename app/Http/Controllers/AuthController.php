@@ -33,8 +33,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()
-            ->route('client.products.index')
-            ->with('success', 'Dang ky thanh cong.');
+            ->route('client.home');
     }
 
     public function showLogin(): View
@@ -66,8 +65,7 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()
-            ->intended(route('client.products.index'))
-            ->with('success', 'Dang nhap thanh cong.');
+            ->intended(route('client.home'));
     }
 
     public function logout(Request $request): RedirectResponse
@@ -78,7 +76,6 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()
-            ->route('client.products.index')
-            ->with('success', 'Da dang xuat.');
+            ->route('client.home');
     }
 }

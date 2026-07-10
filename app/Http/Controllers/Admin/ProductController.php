@@ -42,6 +42,7 @@ class ProductController extends Controller
         return view('admin.products.create', [
             'product' => new Product(['status' => true]),
             'categories' => $this->categories(),
+            'attributes' => \App\Models\Attribute::with('values')->get(),
         ]);
     }
 
@@ -73,6 +74,7 @@ class ProductController extends Controller
         return view('admin.products.edit', [
             'product' => $product,
             'categories' => $this->categories(),
+            'attributes' => \App\Models\Attribute::with('values')->get(),
         ]);
     }
 

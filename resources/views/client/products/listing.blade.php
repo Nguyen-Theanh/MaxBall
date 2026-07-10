@@ -93,9 +93,11 @@
                                         $imgSrc = 'https://placehold.co/600x600/f3f4f6/a1a1aa?text=Chua+Co+Anh';
                                     }
                                 @endphp
-                                <img src="{{ $imgSrc }}"
-                                     alt="{{ $product->name }}"
-                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                <a href="{{ route('client.products.show', $product->slug) }}" class="block w-full h-full">
+                                    <img src="{{ $imgSrc }}"
+                                         alt="{{ $product->name }}"
+                                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                </a>
                                 
                                 <!-- Overlay Actions -->
                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">

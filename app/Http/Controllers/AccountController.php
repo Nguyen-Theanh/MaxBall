@@ -19,9 +19,16 @@ class AccountController extends Controller
             ->orderByDesc('created_at')
             ->paginate(8);
 
+        $addresses = $request->user()
+            ->addresses()
+            ->orderByDesc('is_default')
+            ->orderByDesc('created_at')
+            ->get();
+
         return view('client.account.show', [
             'user' => $request->user(),
             'orders' => $orders,
+            'addresses' => $addresses,
         ]);
     }
 

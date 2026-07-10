@@ -24,27 +24,60 @@
                             @php
                                 $variant = is_array($v) ? (object) $v : $v;
                             @endphp
-                            <div class="card mb-2 variant-row" data-index="{{ $vIndex }}">
-                                <div class="card-body p-2">
+                            <div class="card mb-3 variant-row shadow-sm border-0 bg-light" data-index="{{ $vIndex }}">
+                                <div class="card-body p-3">
                                     <input type="hidden" name="variants[{{ $vIndex }}][id]" value="{{ $variant->id ?? '' }}">
-                                    <div class="row g-2">
-                                        <div class="col-4">
-                                            <input type="text" name="variants[{{ $vIndex }}][name]" value="{{ old("variants.$vIndex.name", $variant->name ?? '') }}" class="form-control" placeholder="Tên (size/color)">
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0 text-primary fw-bold variant-title">
+                                            {{ old("variants.$vIndex.name", $variant->name ?? 'Biến thể mới') ?: 'Biến thể mới' }}
+                                        </h6>
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-variant">Xóa</button>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Phân loại / Thuộc tính</label>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach($attributes ?? [] as $attr)
+                                                    <select class="form-select form-select-sm variant-attr-select" style="width: auto; min-width: 120px;" onchange="updateVariantName(this)">
+                                                        <option value="">- {{ $attr->name }} -</option>
+                                                        @foreach($attr->values as $val)
+                                                            <option value="{{ $val->value }}">{{ $val->value }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                @endforeach
+                                            </div>
+                                            <input type="hidden" name="variants[{{ $vIndex }}][name]" value="{{ old("variants.$vIndex.name", $variant->name ?? '') }}" class="variant-name-input">
                                         </div>
-                                        <div class="col-2">
-                                            <input type="text" name="variants[{{ $vIndex }}][sku]" value="{{ old("variants.$vIndex.sku", $variant->sku ?? '') }}" class="form-control" placeholder="SKU">
+                                        
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Mã SKU</label>
+                                            <input type="text" name="variants[{{ $vIndex }}][sku]" value="{{ old("variants.$vIndex.sku", $variant->sku ?? '') }}" class="form-control form-control-sm" placeholder="Nhập SKU">
                                         </div>
-                                        <div class="col-2">
-                                            <input type="number" name="variants[{{ $vIndex }}][base_price]" value="{{ old("variants.$vIndex.base_price", $variant->base_price ?? '') }}" class="form-control" placeholder="Giá">
+                                        
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Giá bán</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" class="form-control format-number" placeholder="0" value="{{ old("variants.$vIndex.base_price", $variant->base_price ?? '') ? number_format(old("variants.$vIndex.base_price", $variant->base_price ?? '')) : '' }}">
+                                                <input type="hidden" name="variants[{{ $vIndex }}][base_price]" value="{{ old("variants.$vIndex.base_price", $variant->base_price ?? '') }}">
+                                                <span class="input-group-text">đ</span>
+                                            </div>
                                         </div>
-                                        <div class="col-2">
-                                            <input type="number" name="variants[{{ $vIndex }}][discount_price]" value="{{ old("variants.$vIndex.discount_price", $variant->discount_price ?? '') }}" class="form-control" placeholder="KM">
+                                        
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Giá khuyến mãi</label>
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" class="form-control format-number" placeholder="0" value="{{ old("variants.$vIndex.discount_price", $variant->discount_price ?? '') ? number_format(old("variants.$vIndex.discount_price", $variant->discount_price ?? '')) : '' }}">
+                                                <input type="hidden" name="variants[{{ $vIndex }}][discount_price]" value="{{ old("variants.$vIndex.discount_price", $variant->discount_price ?? '') }}">
+                                                <span class="input-group-text">đ</span>
+                                            </div>
                                         </div>
-                                        <div class="col-1">
-                                            <input type="number" name="variants[{{ $vIndex }}][stock]" value="{{ old("variants.$vIndex.stock", $variant->stock ?? '') }}" class="form-control" placeholder="SL">
-                                        </div>
-                                        <div class="col-1">
-                                            <button type="button" class="btn btn-sm btn-danger remove-variant">×</button>
+                                        
+                                        <div class="col-md-3">
+                                            <label class="form-label small text-muted mb-1">Số lượng</label>
+                                            <input type="text" class="form-control form-control-sm format-number" placeholder="0" value="{{ old("variants.$vIndex.stock", $variant->stock ?? '') ? number_format(old("variants.$vIndex.stock", $variant->stock ?? '')) : '' }}">
+                                            <input type="hidden" name="variants[{{ $vIndex }}][stock]" value="{{ old("variants.$vIndex.stock", $variant->stock ?? '') }}">
                                         </div>
                                     </div>
                                 </div>
@@ -131,14 +164,23 @@
 
                 <div class="row g-3" id="product-price-section">
                     <div class="col-12">
-                        <label for="base_price" class="form-label">Giá gốc <span class="text-danger">*</span></label>
-                        <input type="number" id="base_price" name="base_price" value="{{ old('base_price', $product->base_price) }}" min="0" step="1000" class="form-control @error('base_price') is-invalid @enderror" required>
-                        @error('base_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <label class="form-label">Giá gốc chung <span class="text-danger">*</span></label>
+                        <small class="text-muted d-block mb-2">Giá hiển thị đại diện ở danh sách sản phẩm (giá tham khảo)</small>
+                        <div class="input-group">
+                            <input type="text" class="form-control format-number" required value="{{ old('base_price', $product->base_price) ? number_format(old('base_price', $product->base_price)) : '' }}">
+                            <input type="hidden" name="base_price" id="base_price_hidden" value="{{ old('base_price', $product->base_price) }}">
+                            <span class="input-group-text">đ</span>
+                        </div>
+                        @error('base_price') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-12">
-                        <label for="discount_price" class="form-label">Giá khuyến mãi</label>
-                        <input type="number" id="discount_price" name="discount_price" value="{{ old('discount_price', $product->discount_price) }}" min="0" step="1000" class="form-control @error('discount_price') is-invalid @enderror">
-                        @error('discount_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <label class="form-label">Giá khuyến mãi chung</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control format-number" value="{{ old('discount_price', $product->discount_price) ? number_format(old('discount_price', $product->discount_price)) : '' }}">
+                            <input type="hidden" name="discount_price" value="{{ old('discount_price', $product->discount_price) }}">
+                            <span class="input-group-text">đ</span>
+                        </div>
+                        @error('discount_price') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                     </div>
                 </div>
 
@@ -158,6 +200,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    window.windowAttributes = @json($attributes ?? []);
+    
     const nameField = document.getElementById('name');
     const slugField = document.getElementById('slug');
     if (!nameField || !slugField) return;
@@ -194,29 +238,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function createVariantRow(index, data = {}) {
         const div = document.createElement('div');
-        div.className = 'card mb-2 variant-row';
+        div.className = 'card mb-3 variant-row shadow-sm border-0 bg-light';
         div.dataset.index = index;
         div.innerHTML = `
-            <div class="card-body p-2">
+            <div class="card-body p-3">
                 <input type="hidden" name="variants[${index}][id]" value="${data.id || ''}">
-                <div class="row g-2">
-                    <div class="col-4">
-                        <input type="text" name="variants[${index}][name]" value="${data.name || ''}" class="form-control" placeholder="Tên (size/color)">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0 text-primary fw-bold variant-title">
+                        ${data.name || 'Biến thể mới'}
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-variant">Xóa</button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1">Phân loại / Thuộc tính</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            ${windowAttributes.map(attr => `
+                                <select class="form-select form-select-sm variant-attr-select" style="width: auto; min-width: 120px;" onchange="updateVariantName(this)">
+                                    <option value="">- ${attr.name} -</option>
+                                    ${attr.values.map(val => `<option value="${val.value}">${val.value}</option>`).join('')}
+                                </select>
+                            `).join('')}
+                        </div>
+                        <input type="hidden" name="variants[${index}][name]" value="${data.name || ''}" class="variant-name-input">
                     </div>
-                    <div class="col-2">
-                        <input type="text" name="variants[${index}][sku]" value="${data.sku || ''}" class="form-control" placeholder="SKU">
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Mã SKU</label>
+                        <input type="text" name="variants[${index}][sku]" value="${data.sku || ''}" class="form-control form-control-sm" placeholder="Nhập SKU">
                     </div>
-                    <div class="col-2">
-                        <input type="number" name="variants[${index}][base_price]" value="${data.base_price || ''}" class="form-control" placeholder="Giá">
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Giá bán</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control format-number" placeholder="0" value="${data.base_price ? new Intl.NumberFormat('en-US').format(data.base_price) : ''}">
+                            <input type="hidden" name="variants[${index}][base_price]" value="${data.base_price || ''}">
+                            <span class="input-group-text">đ</span>
+                        </div>
                     </div>
-                    <div class="col-2">
-                        <input type="number" name="variants[${index}][discount_price]" value="${data.discount_price || ''}" class="form-control" placeholder="KM">
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Giá khuyến mãi</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control format-number" placeholder="0" value="${data.discount_price ? new Intl.NumberFormat('en-US').format(data.discount_price) : ''}">
+                            <input type="hidden" name="variants[${index}][discount_price]" value="${data.discount_price || ''}">
+                            <span class="input-group-text">đ</span>
+                        </div>
                     </div>
-                    <div class="col-1">
-                        <input type="number" name="variants[${index}][stock]" value="${data.stock || ''}" class="form-control" placeholder="SL">
-                    </div>
-                    <div class="col-1">
-                        <button type="button" class="btn btn-sm btn-danger remove-variant">×</button>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Số lượng</label>
+                        <input type="text" class="form-control form-control-sm format-number" placeholder="0" value="${data.stock ? new Intl.NumberFormat('en-US').format(data.stock) : ''}">
+                        <input type="hidden" name="variants[${index}][stock]" value="${data.stock || ''}">
                     </div>
                 </div>
             </div>`;
@@ -234,14 +307,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function checkVariantVisibility() {
-        const priceSection = document.getElementById('product-price-section');
-        const variantRows = variantsContainer ? variantsContainer.querySelectorAll('.variant-row').length : 0;
-
-        if (variantRows > 0) {
-            priceSection.style.display = 'none';
-        } else {
-            priceSection.style.display = 'grid';
-        }
+        // The general price section is now always visible
+        // so the user can edit the reference price shown outside.
     }
 
     if (variantsContainer) {
@@ -256,6 +323,47 @@ document.addEventListener('DOMContentLoaded', function() {
             bindRemove(row.querySelector('.remove-variant'));
             checkVariantVisibility();
         });
+    }
+});
+
+function updateVariantName(selectElement) {
+    const row = selectElement.closest('.variant-row');
+    const selects = row.querySelectorAll('.variant-attr-select');
+    const nameInput = row.querySelector('.variant-name-input');
+    
+    let parts = [];
+    selects.forEach(s => {
+        if (s.value) parts.push(s.value);
+    });
+    
+    
+    const newName = parts.join(' - ');
+    nameInput.value = newName;
+    
+    const title = row.querySelector('.variant-title');
+    if(title) {
+        title.innerText = newName || 'Biến thể mới';
+    }
+}
+
+// Format numbers logic
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('format-number')) {
+        let rawValue = e.target.value.replace(/[^0-9]/g, '');
+        
+        let hiddenInput = e.target.nextElementSibling;
+        if (hiddenInput && hiddenInput.tagName === 'INPUT' && hiddenInput.type === 'hidden') {
+            hiddenInput.value = rawValue;
+        }
+
+        if (rawValue) {
+            e.target.value = new Intl.NumberFormat('en-US').format(rawValue);
+        } else {
+            e.target.value = '';
+        }
+        
+        // Form validation requires base_price hidden input to trigger required properly
+        // However, HTML5 'required' on the text input is enough to prevent empty submission
     }
 });
 </script>

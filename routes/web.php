@@ -3,9 +3,13 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Client\ProductController as ClientProductController;
 use App\Http\Controllers\Client\PageController;
 use App\Http\Controllers\Client\ContactController;
+use App\Http\Controllers\Client\CartController;
+use App\Http\Controllers\Client\CheckoutController;
+use App\Http\Controllers\Client\OrderController as ClientOrderController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +32,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/account', [AccountController::class, 'show'])->name('account.show');
     Route::put('/account', [AccountController::class, 'update'])->name('account.update');
     Route::put('/account/password', [AccountController::class, 'updatePassword'])->name('account.password.update');
+
+    // Sổ địa chỉ
+    Route::post('/account/addresses', [\App\Http\Controllers\Client\UserAddressController::class, 'store'])->name('account.addresses.store');
+    Route::put('/account/addresses/{address}', [\App\Http\Controllers\Client\UserAddressController::class, 'update'])->name('account.addresses.update');
+    Route::delete('/account/addresses/{address}', [\App\Http\Controllers\Client\UserAddressController::class, 'destroy'])->name('account.addresses.destroy');
+    Route::patch('/account/addresses/{address}/default', [\App\Http\Controllers\Client\UserAddressController::class, 'setDefault'])->name('account.addresses.setDefault');
+
+    // Giỏ hàng
+    Route::get('/gio-hang', [CartController::class, 'index'])->name('client.cart.index');
+    Route::post('/gio-hang', [CartController::class, 'store'])->name('client.cart.store');
+    Route::put('/gio-hang/{cartItem}', [CartController::class, 'update'])->name('client.cart.update');
+    Route::delete('/gio-hang/{cartItem}', [CartController::class, 'destroy'])->name('client.cart.destroy');
+
+    // Thanh toán
+    Route::get('/thanh-toan', [CheckoutController::class, 'index'])->name('client.checkout.index');
+    Route::post('/thanh-toan', [CheckoutController::class, 'store'])->name('client.checkout.store');
+    Route::get('/thanh-toan/vnpay-return', [CheckoutController::class, 'vnpayReturn'])->name('client.checkout.vnpay_return');
+
+    // Quản lý đơn hàng (Client)
+    Route::get('/don-hang', [ClientOrderController::class, 'index'])->name('client.orders.index');
+    Route::get('/don-hang/{order}', [ClientOrderController::class, 'show'])->name('client.orders.show');
+    Route::put('/don-hang/{order}/cancel', [ClientOrderController::class, 'cancel'])->name('client.orders.cancel');
 });
 
 // Trang danh sách tất cả sản phẩm
@@ -57,8 +83,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::resource('products', AdminProductController::class)->except(['show']);
     Route::resource('categories', CategoryController::class)->except(['show']);
-    Route::resource('users', AdminUserController::class)->except(['show']);
-    
+    Route::resource('users', AdminUserController::class);
+
+    // Quản lý đơn hàng
+    Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+
+    // Quản lý thuộc tính và biến thể
+    Route::resource('attributes', \App\Http\Controllers\Admin\AttributeController::class)->only(['index', 'store', 'destroy']);
+    Route::post('attributes/{attribute}/values', [\App\Http\Controllers\Admin\AttributeController::class, 'storeValue'])->name('attributes.values.store');
+    Route::delete('attribute-values/{value}', [\App\Http\Controllers\Admin\AttributeController::class, 'destroyValue'])->name('attributes.values.destroy');
+    Route::post('attribute-values/reorder', [\App\Http\Controllers\Admin\AttributeController::class, 'updateOrder'])->name('attributes.values.reorder');
+
     // Quản lý liên hệ
     Route::get('/contacts', [\App\Http\Controllers\Admin\ContactController::class, 'index'])->name('contacts.index');
     Route::get('/contacts/{contact}', [\App\Http\Controllers\Admin\ContactController::class, 'show'])->name('contacts.show');

@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attributes', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->timestamps();
+        Schema::table('attribute_values', function (Blueprint $table) {
+            $table->integer('sort_order')->default(0)->after('value');
         });
     }
 
@@ -23,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attributes');
+        Schema::table('attribute_values', function (Blueprint $table) {
+            $table->dropColumn('sort_order');
+        });
     }
 };

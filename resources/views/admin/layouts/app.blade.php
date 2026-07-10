@@ -13,6 +13,8 @@
         .admin-sidebar {
             min-height: 100vh;
             background: #111827;
+            width: 260px;
+            flex-shrink: 0;
         }
 
         .admin-sidebar .nav-link {
@@ -43,14 +45,16 @@
 
             <nav class="nav flex-column gap-2">
                 <a class="nav-link {{ request()->routeIs('admin.products.*') ? 'active' : '' }}" href="{{ route('admin.products.index') }}">Quản lý sản phẩm</a>
+                <a class="nav-link {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}" href="{{ route('admin.orders.index') }}">Quản lý đơn hàng</a>
                 <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">Quản lý danh mục</a>
+                <a class="nav-link {{ request()->routeIs('admin.attributes.*') ? 'active' : '' }}" href="{{ route('admin.attributes.index') }}">Quản lý thuộc tính</a>
                 <a class="nav-link {{ request()->routeIs('admin.contacts.*') ? 'active' : '' }}" href="{{ route('admin.contacts.index') }}">Quản lý liên hệ</a>
                 <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Quản lý người dùng</a>
                 <a class="nav-link" href="{{ route('client.products.index') }}">Xem trang client</a>
             </nav>
         </aside>
 
-        <div class="flex-grow-1">
+        <div class="flex-grow-1" style="min-width: 0;">
             <header class="border-bottom bg-white">
                 <div class="container-fluid px-4 py-3 d-flex justify-content-between align-items-center">
                     <div>

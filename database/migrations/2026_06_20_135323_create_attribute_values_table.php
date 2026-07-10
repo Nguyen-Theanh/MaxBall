@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-Schema::create('attribute_values', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-    $table->string('image_url')->nullable();
-    $table->boolean('is_main')->default(0);
-});    }
+        Schema::create('attribute_values', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('attribute_id')->constrained()->cascadeOnDelete();
+            $table->string('value');
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

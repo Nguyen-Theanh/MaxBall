@@ -46,19 +46,35 @@
 
     <main class="flex-1">
         @if (session('success'))
-            <div class="mx-auto mt-4 max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
-                    {{ session('success') }}
-                </div>
+            <div id="global-alert-success" class="fixed top-24 right-4 z-[9999] max-w-sm rounded-xl border border-green-200 bg-green-50 px-6 py-4 text-sm font-semibold text-green-800 shadow-2xl flex items-center gap-3 transition-opacity duration-500">
+                <i class="fa-solid fa-circle-check text-xl"></i>
+                {{ session('success') }}
             </div>
+            <script>
+                setTimeout(() => {
+                    const el = document.getElementById('global-alert-success');
+                    if (el) {
+                        el.style.opacity = '0';
+                        setTimeout(() => el.remove(), 500);
+                    }
+                }, 4000);
+            </script>
         @endif
 
         @if ($errors->any())
-            <div class="mx-auto mt-4 max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
-                    {{ $errors->first() }}
-                </div>
+            <div id="global-alert-error" class="fixed top-24 right-4 z-[9999] max-w-sm rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm font-semibold text-red-800 shadow-2xl flex items-center gap-3 transition-opacity duration-500">
+                <i class="fa-solid fa-circle-exclamation text-xl"></i>
+                {{ $errors->first() }}
             </div>
+            <script>
+                setTimeout(() => {
+                    const el = document.getElementById('global-alert-error');
+                    if (el) {
+                        el.style.opacity = '0';
+                        setTimeout(() => el.remove(), 500);
+                    }
+                }, 4000);
+            </script>
         @endif
 
         @yield('content')

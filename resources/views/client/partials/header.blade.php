@@ -74,10 +74,19 @@
                 </a>
             @endauth
 
-            <button type="button" class="relative flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#10271d] shadow-lg transition-transform hover:scale-110 border-0" aria-label="Giỏ hàng">
+            @php
+                $cartCount = 0;
+                if(auth()->check()) {
+                    $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+                    if($cart) {
+                        $cartCount = $cart->items()->sum('quantity');
+                    }
+                }
+            @endphp
+            <a href="{{ route('client.cart.index') ?? '#' }}" class="relative flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#10271d] shadow-lg transition-transform hover:scale-110 border-0 !no-underline" aria-label="Giỏ hàng">
                 <i class="fa-solid fa-cart-shopping text-lg"></i>
-                <span id="cart-count" class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#d92525] px-1 text-[11px] font-black text-white shadow-sm ring-2 ring-white">0</span>
-            </button>
+                <span id="cart-count" class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#d92525] px-1 text-[11px] font-black text-white shadow-sm ring-2 ring-white">{{ $cartCount }}</span>
+            </a>
         </div>
     </nav>
 </header>

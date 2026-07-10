@@ -11,9 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attributes', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
+        Schema::table('product_variants', function (Blueprint $table) {
             $table->timestamps();
         });
     }
@@ -23,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attributes');
+        Schema::table('product_variants', function (Blueprint $table) {
+            $table->dropTimestamps();
+        });
     }
 };
