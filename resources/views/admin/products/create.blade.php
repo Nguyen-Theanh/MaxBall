@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Them san pham - MaxBall')
+@section('title', 'Thêm sản phẩm - MaxBall')
 @section('page_title', 'Thêm sản phẩm')
 
 @section('content')

@@ -12,22 +12,64 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('product_variants', function (Blueprint $table) {
-            $table->string('name')->nullable()->after('product_id');
-            $table->integer('base_price')->default(0)->after('sku');
-            $table->integer('discount_price')->nullable()->after('base_price');
-        });
+        $columnsToAdd = [
+            'name' => !Schema::hasColumn('product_variants', 'name'),
+            'base_price' => !Schema::hasColumn('product_variants', 'base_price'),
+            'discount_price' => !Schema::hasColumn('product_variants', 'discount_price'),
+        ];
+
+        if (in_array(true, $columnsToAdd, true)) {
+            Schema::table('product_variants', function (Blueprint $table) use ($columnsToAdd) {
+                if ($columnsToAdd['name']) {
+                    $table->string('name')->nullable()->after('product_id');
+                }
+
+                if ($columnsToAdd['base_price']) {
+                    $table->integer('base_price')->default(0)->after('sku');
+                }
+
+                if ($columnsToAdd['discount_price']) {
+                    $table->integer('discount_price')->nullable()->after('base_price');
+                }
+            });
+        }
 
         // Migrate data
-        DB::statement("UPDATE product_variants SET name = CONCAT_WS(' - ', color, size), base_price = price");
+        if (
+            Schema::hasColumn('product_variants', 'name')
+            && Schema::hasColumn('product_variants', 'color')
+            && Schema::hasColumn('product_variants', 'size')
+        ) {
+            DB::statement("UPDATE product_variants SET name = NULLIF(CONCAT_WS(' - ', NULLIF(color, ''), NULLIF(size, '')), '') WHERE name IS NULL OR name = ''");
+        }
 
-        Schema::table('product_variants', function (Blueprint $table) {
-            $table->dropColumn(['size', 'color', 'price']);
-            $table->dropUnique('product_variants_sku_unique');
-        });
+        if (
+            Schema::hasColumn('product_variants', 'base_price')
+            && Schema::hasColumn('product_variants', 'price')
+        ) {
+            DB::statement("UPDATE product_variants SET base_price = price WHERE base_price = 0 OR base_price IS NULL");
+        }
+
+        $columnsToDrop = array_values(array_filter(['size', 'color', 'price'], function (string $column) {
+            return Schema::hasColumn('product_variants', $column);
+        }));
+
+        if (!empty($columnsToDrop)) {
+            Schema::table('product_variants', function (Blueprint $table) use ($columnsToDrop) {
+                $table->dropColumn($columnsToDrop);
+            });
+        }
+
+        if ($this->indexExists('product_variants', 'product_variants_sku_unique')) {
+            Schema::table('product_variants', function (Blueprint $table) {
+                $table->dropUnique('product_variants_sku_unique');
+            });
+        }
 
         // Make sku nullable. using DB statement to avoid needing doctrine/dbal
-        DB::statement("ALTER TABLE product_variants MODIFY sku VARCHAR(255) NULL");
+        if (Schema::hasColumn('product_variants', 'sku')) {
+            DB::statement("ALTER TABLE product_variants MODIFY sku VARCHAR(255) NULL");
+        }
     }
 
     /**
@@ -35,19 +77,58 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('product_variants', function (Blueprint $table) {
-            $table->string('size')->nullable();
-            $table->string('color')->nullable();
-            $table->decimal('price', 10, 2)->default(0);
-        });
+        $columnsToAdd = [
+            'size' => !Schema::hasColumn('product_variants', 'size'),
+            'color' => !Schema::hasColumn('product_variants', 'color'),
+            'price' => !Schema::hasColumn('product_variants', 'price'),
+        ];
 
-        DB::statement("UPDATE product_variants SET price = base_price");
+        if (in_array(true, $columnsToAdd, true)) {
+            Schema::table('product_variants', function (Blueprint $table) use ($columnsToAdd) {
+                if ($columnsToAdd['size']) {
+                    $table->string('size')->nullable();
+                }
 
-        Schema::table('product_variants', function (Blueprint $table) {
-            $table->dropColumn(['name', 'base_price', 'discount_price']);
-            $table->unique('sku');
-        });
-        
-        DB::statement("ALTER TABLE product_variants MODIFY sku VARCHAR(255) NOT NULL");
+                if ($columnsToAdd['color']) {
+                    $table->string('color')->nullable();
+                }
+
+                if ($columnsToAdd['price']) {
+                    $table->decimal('price', 10, 2)->default(0);
+                }
+            });
+        }
+
+        if (
+            Schema::hasColumn('product_variants', 'price')
+            && Schema::hasColumn('product_variants', 'base_price')
+        ) {
+            DB::statement("UPDATE product_variants SET price = base_price");
+        }
+
+        $columnsToDrop = array_values(array_filter(['name', 'base_price', 'discount_price'], function (string $column) {
+            return Schema::hasColumn('product_variants', $column);
+        }));
+
+        if (!empty($columnsToDrop)) {
+            Schema::table('product_variants', function (Blueprint $table) use ($columnsToDrop) {
+                $table->dropColumn($columnsToDrop);
+            });
+        }
+
+        if (!$this->indexExists('product_variants', 'product_variants_sku_unique')) {
+            Schema::table('product_variants', function (Blueprint $table) {
+                $table->unique('sku');
+            });
+        }
+
+        if (Schema::hasColumn('product_variants', 'sku')) {
+            DB::statement("ALTER TABLE product_variants MODIFY sku VARCHAR(255) NOT NULL");
+        }
+    }
+
+    private function indexExists(string $table, string $index): bool
+    {
+        return !empty(DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$index]));
     }
 };

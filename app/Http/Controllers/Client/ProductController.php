@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attribute;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
@@ -55,17 +56,19 @@ class ProductController extends Controller
     }
     public function show($slug)
     {
-        $product = \App\Models\Product::with(['category', 'productImages', 'variants'])
+        $product = Product::with(['category', 'productImages', 'variants'])
             ->where('slug', $slug)
             ->where('status', 1)
             ->firstOrFail();
 
-        $relatedProducts = \App\Models\Product::where('status', 1)
+        $attributes = Attribute::with('values')->orderBy('name')->get();
+
+        $relatedProducts = Product::where('status', 1)
             ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
             ->limit(4)
             ->get();
 
-        return view('client.products.show', compact('product', 'relatedProducts'));
+        return view('client.products.show', compact('product', 'relatedProducts', 'attributes'));
     }
 }

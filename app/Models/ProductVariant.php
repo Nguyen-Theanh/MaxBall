@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class ProductVariant extends Model
 {
@@ -16,6 +17,7 @@ class ProductVariant extends Model
         'base_price',
         'discount_price',
         'stock',
+        'image_url',
     ];
 
     protected $casts = [
@@ -32,5 +34,18 @@ class ProductVariant extends Model
     public function orderDetails()
     {
         return $this->hasMany(OrderDetail::class);
+    }
+
+    public function getVariantImageUrlAttribute(): ?string
+    {
+        if (!$this->image_url) {
+            return null;
+        }
+
+        if (Str::startsWith($this->image_url, ['http://', 'https://'])) {
+            return $this->image_url;
+        }
+
+        return asset('storage/' . ltrim($this->image_url, '/'));
     }
 }
