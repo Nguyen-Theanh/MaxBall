@@ -6,26 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        if (!Schema::hasColumn('product_variants', 'created_at') && !Schema::hasColumn('product_variants', 'updated_at')) {
+        if (!Schema::hasColumn('product_variants', 'image_url')) {
             Schema::table('product_variants', function (Blueprint $table) {
-                $table->timestamps();
+                $table->string('image_url')->nullable()->after('stock');
             });
         }
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        if (Schema::hasColumn('product_variants', 'created_at') && Schema::hasColumn('product_variants', 'updated_at')) {
+        if (Schema::hasColumn('product_variants', 'image_url')) {
             Schema::table('product_variants', function (Blueprint $table) {
-                $table->dropTimestamps();
+                $table->dropColumn('image_url');
             });
         }
     }

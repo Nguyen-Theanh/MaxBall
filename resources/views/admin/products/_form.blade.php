@@ -1,4 +1,54 @@
-@csrf
+﻿@csrf
+
+<style>
+    .attribute-picker {
+        max-width: 340px;
+        position: relative;
+    }
+
+    .attribute-picker-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        left: 0;
+        z-index: 20;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.14);
+    }
+
+    .attribute-picker-menu.d-none {
+        display: none;
+    }
+
+    .attribute-option {
+        width: 100%;
+        border: 0;
+        background: #fff;
+        padding: 9px 12px;
+        text-align: left;
+        color: #374151;
+    }
+
+    .attribute-option:hover,
+    .attribute-option.active {
+        background: #4055f3;
+        color: #fff;
+    }
+
+    .selected-attribute-card {
+        min-width: 260px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        border-radius: 8px;
+        padding: 12px;
+    }
+
+    .selected-attribute-values {
+        max-height: 120px;
+        overflow-y: auto;
+    }
+</style>
 
 <div class="row g-4">
     <div class="col-lg-8">
@@ -12,12 +62,51 @@
 
                 <div class="mb-3">
                     <label for="slug" class="form-label">Slug</label>
-                    <input type="text" id="slug" name="slug" value="{{ old('slug', $product->slug) }}" class="form-control @error('slug') is-invalid @enderror" placeholder="De trong se tu tao theo ten">
+                    <input type="text" id="slug" name="slug" value="{{ old('slug', $product->slug) }}" class="form-control @error('slug') is-invalid @enderror" placeholder="Để trống sẽ tự tạo theo tên">
                     @error('slug') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <div class="mb-4">
                     <label class="form-label">Biến thể sản phẩm</label>
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+                        <div>
+                            <div class="form-text mt-0">Chọn thuộc tính dùng cho biến thể, hoặc tạo thuộc tính mới ngay tại đây.</div>
+                        </div>
+
+                        <div class="d-flex gap-2 align-items-start">
+                            <button type="button" id="show-new-attribute" class="btn btn-sm btn-outline-primary">Thêm mới</button>
+                            <div class="attribute-picker">
+                                <button type="button" id="attribute-picker-toggle" class="form-select form-select-sm text-start pe-5">Thêm hiện có</button>
+                                <div id="attribute-picker-menu" class="attribute-picker-menu d-none">
+                                    <div class="p-2 border-bottom">
+                                        <input type="search" id="attribute-picker-search" class="form-control form-control-sm" placeholder="Tìm kiếm...">
+                                    </div>
+                                    <div id="attribute-picker-list" style="max-height: 220px; overflow-y: auto;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="new-attribute-panel" class="border rounded bg-white p-3 mb-3 d-none">
+                        <div class="fw-semibold text-muted small mb-2">Thuộc tính mới</div>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Tên</label>
+                                <input type="text" id="new-attribute-name" class="form-control form-control-sm" placeholder="Ví dụ: Chiều dài">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Giá trị</label>
+                                <input type="text" id="new-attribute-values" class="form-control form-control-sm" placeholder="Ví dụ: 30cm, 40cm, 50cm">
+                            </div>
+                            <div class="col-md-2 d-grid">
+                                <button type="button" id="add-new-attribute" class="btn btn-sm btn-primary">Thêm</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="selected-attributes" class="d-flex flex-wrap gap-2 mb-3"></div>
+                    <div id="new-attributes-hidden"></div>
+
                     <div id="variants-container">
                         @php $vIndex = 0; @endphp
                         @foreach(old('variants', $product->variants ?? []) as $v)
@@ -38,22 +127,13 @@
                                     <div class="row g-3">
                                         <div class="col-12">
                                             <label class="form-label small text-muted mb-1">Phân loại / Thuộc tính</label>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                @foreach($attributes ?? [] as $attr)
-                                                    <select class="form-select form-select-sm variant-attr-select" style="width: auto; min-width: 120px;" onchange="updateVariantName(this)">
-                                                        <option value="">- {{ $attr->name }} -</option>
-                                                        @foreach($attr->values as $val)
-                                                            <option value="{{ $val->value }}">{{ $val->value }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                @endforeach
-                                            </div>
+                                            <div class="d-flex flex-wrap gap-2 variant-attr-container"></div>
                                             <input type="hidden" name="variants[{{ $vIndex }}][name]" value="{{ old("variants.$vIndex.name", $variant->name ?? '') }}" class="variant-name-input">
                                         </div>
                                         
                                         <div class="col-md-3">
                                             <label class="form-label small text-muted mb-1">Mã SKU</label>
-                                            <input type="text" name="variants[{{ $vIndex }}][sku]" value="{{ old("variants.$vIndex.sku", $variant->sku ?? '') }}" class="form-control form-control-sm" placeholder="Nhập SKU">
+                                            <input type="text" name="variants[{{ $vIndex }}][sku]" value="{{ old("variants.$vIndex.sku", $variant->sku ?? '') }}" class="form-control form-control-sm variant-sku-input" placeholder="Tự động tạo SKU">
                                         </div>
                                         
                                         <div class="col-md-3">
@@ -79,13 +159,26 @@
                                             <input type="text" class="form-control form-control-sm format-number" placeholder="0" value="{{ old("variants.$vIndex.stock", $variant->stock ?? '') ? number_format(old("variants.$vIndex.stock", $variant->stock ?? '')) : '' }}">
                                             <input type="hidden" name="variants[{{ $vIndex }}][stock]" value="{{ old("variants.$vIndex.stock", $variant->stock ?? '') }}">
                                         </div>
+
+                                        <div class="col-12">
+                                            <label class="form-label small text-muted mb-1">Ảnh biến thể</label>
+                                            <input type="file" name="variants[{{ $vIndex }}][image]" accept="image/*" class="form-control form-control-sm">
+                                            @if (!empty($variant->variant_image_url))
+                                                <div class="mt-2">
+                                                    <img src="{{ $variant->variant_image_url }}" alt="Ảnh biến thể" class="rounded border" style="width: 76px; height: 76px; object-fit: cover;">
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             @php $vIndex++; @endphp
                         @endforeach
                     </div>
-                    <button type="button" id="add-variant" class="btn btn-sm btn-outline-secondary mt-2">Thêm biến thể</button>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" id="generate-variants" class="btn btn-sm btn-dark">Tạo biến thể</button>
+                        <button type="button" id="add-variant" class="btn btn-sm btn-outline-secondary">Thêm biến thể thủ công</button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -96,7 +189,7 @@
 
                 <div class="mb-3">
                     <label for="thumbnail" class="form-label">Ảnh đại diện</label>
-                    <input type="text" id="thumbnail" name="thumbnail" value="{{ old('thumbnail', $product->thumbnail) }}" class="form-control @error('thumbnail') is-invalid @enderror" placeholder="Nhap URL anh hoac duong dan trong storage">
+                    <input type="text" id="thumbnail" name="thumbnail" value="{{ old('thumbnail', $product->thumbnail) }}" class="form-control @error('thumbnail') is-invalid @enderror" placeholder="Nhập URL ảnh hoặc đường dẫn trong storage">
                     @error('thumbnail') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
@@ -198,16 +291,34 @@
     </div>
 </div>
 
+
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    window.windowAttributes = @json($attributes ?? []);
-    
+    const allAttributes = @json($attributes ?? []);
+    const selectedAttributes = [];
+    const addedAttributeKeys = new Set();
+    let newAttributeIndex = 0;
+
     const nameField = document.getElementById('name');
     const slugField = document.getElementById('slug');
-    if (!nameField || !slugField) return;
+    const variantsContainer = document.getElementById('variants-container');
+    const addVariantBtn = document.getElementById('add-variant');
+    const generateVariantsBtn = document.getElementById('generate-variants');
+    const showNewAttributeBtn = document.getElementById('show-new-attribute');
+    const newAttributePanel = document.getElementById('new-attribute-panel');
+    const newAttributeName = document.getElementById('new-attribute-name');
+    const newAttributeValues = document.getElementById('new-attribute-values');
+    const addNewAttributeBtn = document.getElementById('add-new-attribute');
+    const newAttributesHidden = document.getElementById('new-attributes-hidden');
+    const selectedAttributesContainer = document.getElementById('selected-attributes');
+    const pickerToggle = document.getElementById('attribute-picker-toggle');
+    const pickerMenu = document.getElementById('attribute-picker-menu');
+    const pickerSearch = document.getElementById('attribute-picker-search');
+    const pickerList = document.getElementById('attribute-picker-list');
 
     const toSlug = (str) => {
-        return str
+        return String(str || '')
             .normalize('NFD')
             .replace(/\p{Diacritic}/gu, '')
             .toLowerCase()
@@ -217,24 +328,220 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/-+/g, '-');
     };
 
-    nameField.addEventListener('input', function() {
-        // only update slug automatically if user hasn't manually edited slug
-        if (!slugField.dataset.userEdited) {
-            slugField.value = toSlug(this.value);
-        }
-    });
+    if (nameField && slugField) {
+        nameField.addEventListener('input', function() {
+            if (!slugField.dataset.userEdited) {
+                slugField.value = toSlug(this.value);
+            }
 
-    slugField.addEventListener('input', function() {
-        this.dataset.userEdited = this.value.length > 0;
-    });
+            refreshAutoSkus();
+        });
 
-    // Variants JS
-    const variantsContainer = document.getElementById('variants-container');
-    const addVariantBtn = document.getElementById('add-variant');
+        slugField.addEventListener('input', function() {
+            this.dataset.userEdited = this.value.length > 0;
+            refreshAutoSkus();
+        });
+    }
+
     let variantIndex = variantsContainer ? (function() {
         const els = variantsContainer.querySelectorAll('.variant-row');
         return els.length ? Number(els[els.length - 1].dataset.index) + 1 : 0;
     })() : 0;
+
+    function normalizeKey(value) {
+        return toSlug(value);
+    }
+
+    function parseValues(value) {
+        const seen = new Set();
+
+        return String(value || '')
+            .split(/[\n,;|]+/)
+            .map((item) => item.trim())
+            .filter((item) => {
+                const key = normalizeKey(item);
+
+                if (!item || seen.has(key)) {
+                    return false;
+                }
+
+                seen.add(key);
+                return true;
+            })
+            .map((item, index) => ({ id: `new-${newAttributeIndex}-${index}`, value: item }));
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function addAttribute(attribute, persist = false) {
+        const key = normalizeKey(attribute.name);
+
+        if (!key || addedAttributeKeys.has(key)) {
+            return;
+        }
+
+        const values = (attribute.values || [])
+            .map((value) => typeof value === 'string' ? { value } : value)
+            .filter((value) => value.value);
+
+        if (!values.length) {
+            return;
+        }
+
+        const normalizedAttribute = {
+            id: attribute.id || `new-${Date.now()}-${selectedAttributes.length}`,
+            name: attribute.name,
+            values: values.map((value) => ({
+                ...value,
+                selected: Boolean(persist),
+            })),
+            key,
+        };
+
+        selectedAttributes.push(normalizedAttribute);
+        addedAttributeKeys.add(key);
+
+        if (persist) {
+            const holder = document.createElement('div');
+            holder.innerHTML = `
+                <input type="hidden" name="new_attributes[${newAttributeIndex}][name]">
+                <input type="hidden" name="new_attributes[${newAttributeIndex}][values_text]">
+            `;
+            holder.querySelector(`[name="new_attributes[${newAttributeIndex}][name]"]`).value = normalizedAttribute.name;
+            holder.querySelector(`[name="new_attributes[${newAttributeIndex}][values_text]"]`).value = values.map((value) => value.value).join(', ');
+            newAttributesHidden.appendChild(holder);
+            newAttributeIndex++;
+        }
+
+        renderSelectedAttributes();
+        renderPickerList();
+        renderAllVariantAttributes();
+    }
+
+    function removeAttribute(key) {
+        const index = selectedAttributes.findIndex((attribute) => attribute.key === key);
+
+        if (index === -1) {
+            return;
+        }
+
+        selectedAttributes.splice(index, 1);
+        addedAttributeKeys.delete(key);
+        renderSelectedAttributes();
+        renderPickerList();
+        renderAllVariantAttributes();
+    }
+
+    function renderSelectedAttributes() {
+        selectedAttributesContainer.innerHTML = selectedAttributes.map((attribute) => `
+            <div class="selected-attribute-card" data-selected-attribute="${attribute.key}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold">${escapeHtml(attribute.name)}</span>
+                    <button type="button" class="btn-close" style="font-size: 0.65rem;" data-remove-attribute="${attribute.key}" aria-label="Xóa"></button>
+                </div>
+                <div class="selected-attribute-values vstack gap-1">
+                    ${attribute.values.map((value, index) => `
+                        <label class="form-check mb-0">
+                            <input type="checkbox" class="form-check-input attribute-value-check" data-attribute-key="${attribute.key}" data-value-index="${index}" ${value.selected ? 'checked' : ''}>
+                            <span class="form-check-label">${escapeHtml(value.value)}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        selectedAttributesContainer.querySelectorAll('[data-remove-attribute]').forEach((button) => {
+            button.addEventListener('click', () => removeAttribute(button.dataset.removeAttribute));
+        });
+
+        selectedAttributesContainer.querySelectorAll('.attribute-value-check').forEach((checkbox) => {
+            checkbox.addEventListener('change', function() {
+                const attribute = selectedAttributes.find((item) => item.key === this.dataset.attributeKey);
+
+                if (!attribute) {
+                    return;
+                }
+
+                const value = attribute.values[Number(this.dataset.valueIndex)];
+
+                if (value) {
+                    value.selected = this.checked;
+                }
+
+                renderAllVariantAttributes();
+            });
+        });
+    }
+    function renderPickerList() {
+        const keyword = normalizeKey(pickerSearch?.value || '');
+        const options = allAttributes.filter((attribute) => {
+            return !addedAttributeKeys.has(normalizeKey(attribute.name))
+                && (!keyword || normalizeKey(attribute.name).includes(keyword));
+        });
+
+        pickerList.innerHTML = options.length
+            ? options.map((attribute) => `<button type="button" class="attribute-option" data-attribute-id="${attribute.id}">${escapeHtml(attribute.name)}</button>`).join('')
+            : '<div class="text-muted small px-3 py-2">Không có thuộc tính phù hợp.</div>';
+
+        pickerList.querySelectorAll('[data-attribute-id]').forEach((button) => {
+            button.addEventListener('click', function() {
+                const attribute = allAttributes.find((item) => String(item.id) === String(this.dataset.attributeId));
+
+                if (attribute) {
+                    addAttribute(attribute);
+                    pickerMenu.classList.add('d-none');
+                    pickerSearch.value = '';
+                    renderPickerList();
+                }
+            });
+        });
+    }
+
+    function renderVariantAttributes(row) {
+        const container = row.querySelector('.variant-attr-container');
+
+        if (!container) {
+            return;
+        }
+
+        const oldValues = {};
+        container.querySelectorAll('.variant-attr-select').forEach((select) => {
+            oldValues[select.dataset.attributeKey] = select.value;
+        });
+
+        container.innerHTML = selectedAttributes.map((attribute) => ({
+            ...attribute,
+            values: attribute.values.filter((value) => value.selected),
+        })).filter((attribute) => attribute.values.length).map((attribute) => `
+            <select class="form-select form-select-sm variant-attr-select" data-attribute-key="${attribute.key}" style="width: auto; min-width: 150px;">
+                <option value="">- ${escapeHtml(attribute.name)} -</option>
+                ${attribute.values.map((value) => `<option value="${escapeHtml(value.value)}">${escapeHtml(value.value)}</option>`).join('')}
+            </select>
+        `).join('');
+
+        container.querySelectorAll('.variant-attr-select').forEach((select) => {
+            if (oldValues[select.dataset.attributeKey]) {
+                select.value = oldValues[select.dataset.attributeKey];
+            }
+
+            select.addEventListener('change', function() {
+                updateVariantName(row);
+            });
+        });
+
+        updateVariantName(row);
+    }
+
+    function renderAllVariantAttributes() {
+        variantsContainer.querySelectorAll('.variant-row').forEach(renderVariantAttributes);
+    }
 
     function createVariantRow(index, data = {}) {
         const div = document.createElement('div');
@@ -242,32 +549,21 @@ document.addEventListener('DOMContentLoaded', function() {
         div.dataset.index = index;
         div.innerHTML = `
             <div class="card-body p-3">
-                <input type="hidden" name="variants[${index}][id]" value="${data.id || ''}">
+                <input type="hidden" name="variants[${index}][id]" value="${escapeHtml(data.id || '')}">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0 text-primary fw-bold variant-title">
-                        ${data.name || 'Biến thể mới'}
-                    </h6>
+                    <h6 class="mb-0 text-primary fw-bold variant-title">${escapeHtml(data.name || 'Biến thể mới')}</h6>
                     <button type="button" class="btn btn-sm btn-outline-danger remove-variant">Xóa</button>
                 </div>
                 <div class="row g-3">
                     <div class="col-12">
                         <label class="form-label small text-muted mb-1">Phân loại / Thuộc tính</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            ${windowAttributes.map(attr => `
-                                <select class="form-select form-select-sm variant-attr-select" style="width: auto; min-width: 120px;" onchange="updateVariantName(this)">
-                                    <option value="">- ${attr.name} -</option>
-                                    ${attr.values.map(val => `<option value="${val.value}">${val.value}</option>`).join('')}
-                                </select>
-                            `).join('')}
-                        </div>
-                        <input type="hidden" name="variants[${index}][name]" value="${data.name || ''}" class="variant-name-input">
+                        <div class="d-flex flex-wrap gap-2 variant-attr-container"></div>
+                        <input type="hidden" name="variants[${index}][name]" value="${escapeHtml(data.name || '')}" class="variant-name-input">
                     </div>
-                    
                     <div class="col-md-3">
                         <label class="form-label small text-muted mb-1">Mã SKU</label>
-                        <input type="text" name="variants[${index}][sku]" value="${data.sku || ''}" class="form-control form-control-sm" placeholder="Nhập SKU">
+                        <input type="text" name="variants[${index}][sku]" value="${escapeHtml(data.sku || '')}" class="form-control form-control-sm variant-sku-input" placeholder="Tự động tạo SKU">
                     </div>
-                    
                     <div class="col-md-3">
                         <label class="form-label small text-muted mb-1">Giá bán</label>
                         <div class="input-group input-group-sm">
@@ -276,7 +572,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="input-group-text">đ</span>
                         </div>
                     </div>
-                    
                     <div class="col-md-3">
                         <label class="form-label small text-muted mb-1">Giá khuyến mãi</label>
                         <div class="input-group input-group-sm">
@@ -285,85 +580,224 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span class="input-group-text">đ</span>
                         </div>
                     </div>
-                    
                     <div class="col-md-3">
                         <label class="form-label small text-muted mb-1">Số lượng</label>
                         <input type="text" class="form-control form-control-sm format-number" placeholder="0" value="${data.stock ? new Intl.NumberFormat('en-US').format(data.stock) : ''}">
                         <input type="hidden" name="variants[${index}][stock]" value="${data.stock || ''}">
                     </div>
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1">Ảnh biến thể</label>
+                        <input type="file" name="variants[${index}][image]" accept="image/*" class="form-control form-control-sm">
+                    </div>
                 </div>
             </div>`;
+
+        bindVariantRow(div);
+        renderVariantAttributes(div);
+        if (data.options) {
+            applyVariantOptions(div, data.options);
+        }
+        syncVariantSku(div);
+
         return div;
     }
 
-    function bindRemove(btn) {
-        btn.addEventListener('click', function() {
-            const row = this.closest('.variant-row');
-            if (row) {
-                row.remove();
-                checkVariantVisibility();
+    function applyVariantOptions(row, options) {
+        row.querySelectorAll('.variant-attr-select').forEach((select) => {
+            if (options[select.dataset.attributeKey]) {
+                select.value = options[select.dataset.attributeKey];
             }
         });
+
+        updateVariantName(row);
     }
 
-    function checkVariantVisibility() {
-        // The general price section is now always visible
-        // so the user can edit the reference price shown outside.
+    function generateAttributeCombinations() {
+        const attributesWithSelectedValues = selectedAttributes.map((attribute) => ({
+            ...attribute,
+            values: attribute.values.filter((value) => value.selected),
+        })).filter((attribute) => attribute.values.length);
+
+        return attributesWithSelectedValues.reduce((combinations, attribute) => {
+            const next = [];
+
+            combinations.forEach((combo) => {
+                attribute.values.forEach((value) => {
+                    next.push({
+                        ...combo,
+                        [attribute.key]: value.value,
+                    });
+                });
+            });
+
+            return next;
+        }, [{}]);
     }
 
-    if (variantsContainer) {
-        variantsContainer.querySelectorAll('.remove-variant').forEach(bindRemove);
-        checkVariantVisibility();
+    function variantSignatureFromOptions(options) {
+        return Object.entries(options)
+            .filter(([, value]) => value)
+            .map(([key, value]) => `${key}:${normalizeKey(value)}`)
+            .sort()
+            .join('|');
     }
 
-    if (addVariantBtn) {
-        addVariantBtn.addEventListener('click', function() {
-            const row = createVariantRow(variantIndex++);
-            variantsContainer.appendChild(row);
-            bindRemove(row.querySelector('.remove-variant'));
-            checkVariantVisibility();
+    function variantSignatureFromRow(row) {
+        const options = {};
+
+        row.querySelectorAll('.variant-attr-select').forEach((select) => {
+            if (select.value) {
+                options[select.dataset.attributeKey] = select.value;
+            }
         });
+
+        return variantSignatureFromOptions(options);
     }
+
+    function bindVariantRow(row) {
+        row.querySelector('.remove-variant')?.addEventListener('click', function() {
+            row.remove();
+        });
+
+        const skuInput = row.querySelector('.variant-sku-input');
+        if (skuInput) {
+            skuInput.dataset.autoSku = '';
+            skuInput.dataset.manualSku = skuInput.value.trim() ? '1' : '';
+            skuInput.addEventListener('input', function() {
+                this.dataset.manualSku = this.value && this.value !== this.dataset.autoSku ? '1' : '';
+            });
+        }
+    }
+
+    function updateVariantName(row) {
+        const parts = Array.from(row.querySelectorAll('.variant-attr-select'))
+            .map((select) => select.value)
+            .filter(Boolean);
+
+        if (!parts.length) {
+            syncVariantSku(row);
+            return;
+        }
+
+        const newName = parts.join(' - ');
+        const nameInput = row.querySelector('.variant-name-input');
+        const title = row.querySelector('.variant-title');
+
+        if (nameInput) {
+            nameInput.value = newName;
+        }
+
+        if (title) {
+            title.innerText = newName || 'Biến thể mới';
+        }
+
+        syncVariantSku(row);
+    }
+
+    function refreshAutoSkus() {
+        variantsContainer.querySelectorAll('.variant-row').forEach(syncVariantSku);
+    }
+
+    function syncVariantSku(row) {
+        const skuInput = row.querySelector('.variant-sku-input');
+
+        if (!skuInput || skuInput.dataset.manualSku === '1') {
+            return;
+        }
+
+        const index = Number(row.dataset.index || 0) + 1;
+        const variantName = row.querySelector('.variant-name-input')?.value || '';
+        const base = (slugField?.value || toSlug(nameField?.value || '') || 'san-pham').toUpperCase();
+        const suffix = toSlug(variantName || `var-${index}`).toUpperCase();
+        const sku = `${base}-${suffix}`.replace(/-+/g, '-').replace(/^-|-$/g, '');
+
+        skuInput.value = sku;
+        skuInput.dataset.autoSku = sku;
+    }
+
+    showNewAttributeBtn?.addEventListener('click', function() {
+        newAttributePanel.classList.toggle('d-none');
+        newAttributeName.focus();
+    });
+
+    addNewAttributeBtn?.addEventListener('click', function() {
+        const name = newAttributeName.value.trim();
+        const values = parseValues(newAttributeValues.value);
+
+        if (!name || !values.length) {
+            return;
+        }
+
+        addAttribute({ name, values }, true);
+        newAttributeName.value = '';
+        newAttributeValues.value = '';
+        newAttributePanel.classList.add('d-none');
+    });
+
+    pickerToggle?.addEventListener('click', function() {
+        pickerMenu.classList.toggle('d-none');
+        pickerSearch.focus();
+        renderPickerList();
+    });
+
+    pickerSearch?.addEventListener('input', renderPickerList);
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.attribute-picker')) {
+            pickerMenu?.classList.add('d-none');
+        }
+    });
+
+    variantsContainer?.querySelectorAll('.variant-row').forEach((row) => {
+        bindVariantRow(row);
+        renderVariantAttributes(row);
+        syncVariantSku(row);
+    });
+
+    generateVariantsBtn?.addEventListener('click', function() {
+        const hasSelectedValues = selectedAttributes.some((attribute) => attribute.values.some((value) => value.selected));
+
+        if (!hasSelectedValues) {
+            return;
+        }
+
+        const existingSignatures = new Set(
+            Array.from(variantsContainer.querySelectorAll('.variant-row'))
+                .map(variantSignatureFromRow)
+                .filter(Boolean)
+        );
+
+        generateAttributeCombinations().forEach((options) => {
+            const signature = variantSignatureFromOptions(options);
+
+            if (!signature || existingSignatures.has(signature)) {
+                return;
+            }
+
+            existingSignatures.add(signature);
+            const row = createVariantRow(variantIndex++, { options });
+            variantsContainer.appendChild(row);
+        });
+    });
+
+    addVariantBtn?.addEventListener('click', function() {
+        const row = createVariantRow(variantIndex++);
+        variantsContainer.appendChild(row);
+    });
+
+    renderPickerList();
 });
 
-function updateVariantName(selectElement) {
-    const row = selectElement.closest('.variant-row');
-    const selects = row.querySelectorAll('.variant-attr-select');
-    const nameInput = row.querySelector('.variant-name-input');
-    
-    let parts = [];
-    selects.forEach(s => {
-        if (s.value) parts.push(s.value);
-    });
-    
-    
-    const newName = parts.join(' - ');
-    nameInput.value = newName;
-    
-    const title = row.querySelector('.variant-title');
-    if(title) {
-        title.innerText = newName || 'Biến thể mới';
-    }
-}
-
-// Format numbers logic
 document.addEventListener('input', function(e) {
     if (e.target.classList.contains('format-number')) {
         let rawValue = e.target.value.replace(/[^0-9]/g, '');
-        
         let hiddenInput = e.target.nextElementSibling;
+
         if (hiddenInput && hiddenInput.tagName === 'INPUT' && hiddenInput.type === 'hidden') {
             hiddenInput.value = rawValue;
         }
 
-        if (rawValue) {
-            e.target.value = new Intl.NumberFormat('en-US').format(rawValue);
-        } else {
-            e.target.value = '';
-        }
-        
-        // Form validation requires base_price hidden input to trigger required properly
-        // However, HTML5 'required' on the text input is enough to prevent empty submission
+        e.target.value = rawValue ? new Intl.NumberFormat('en-US').format(rawValue) : '';
     }
 });
 </script>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attribute as ProductAttributeOption;
 use App\Models\Category;
 use App\Models\Product;
 
@@ -42,7 +43,7 @@ class ProductController extends Controller
         return view('admin.products.create', [
             'product' => new Product(['status' => true]),
             'categories' => $this->categories(),
-            'attributes' => \App\Models\Attribute::with('values')->get(),
+            'attributes' => $this->variantAttributes(),
         ]);
     }
 
@@ -61,8 +62,9 @@ class ProductController extends Controller
         unset($data['category_name']);
 
         $product = Product::create($data);
+        $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
-        $this->storeVariants($product, $request->input('variants', []));
+        $this->storeVariants($product, $request->input('variants', []), $request);
 
         return redirect()
             ->route('admin.products.index')
@@ -74,7 +76,7 @@ class ProductController extends Controller
         return view('admin.products.edit', [
             'product' => $product,
             'categories' => $this->categories(),
-            'attributes' => \App\Models\Attribute::with('values')->get(),
+            'attributes' => $this->variantAttributes(),
         ]);
     }
 
@@ -96,8 +98,9 @@ class ProductController extends Controller
         unset($data['category_name']);
 
         $product->update($data);
+        $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
-        $this->storeVariants($product, $request->input('variants', []));
+        $this->storeVariants($product, $request->input('variants', []), $request);
 
         return redirect()
             ->route('admin.products.index')
@@ -127,6 +130,9 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'base_price' => ['required', 'numeric', 'min:0'],
             'discount_price' => ['nullable', 'numeric', 'min:0', 'lte:base_price'],
+            'new_attributes' => ['nullable', 'array'],
+            'new_attributes.*.name' => ['nullable', 'string', 'max:255'],
+            'new_attributes.*.values_text' => ['nullable', 'string', 'max:2000'],
             'variants' => ['nullable', 'array'],
             'variants.*.id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'variants.*.name' => ['nullable', 'string', 'max:255'],
@@ -134,33 +140,47 @@ class ProductController extends Controller
             'variants.*.base_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.discount_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0'],
+            'variants.*.image' => ['nullable', 'image', 'max:3072'],
         ]);
     }
 
-    private function storeVariants(Product $product, array $variants): void
+    private function storeVariants(Product $product, array $variants, Request $request): void
     {
         $existingIds = $product->variants()->pluck('id')->all();
         $receivedIds = [];
 
-        foreach ($variants as $variantData) {
+        foreach ($variants as $variantIndex => $variantData) {
             if (empty($variantData))
                 continue;
 
             $data = [
                 'name' => $variantData['name'] ?? null,
-                'sku' => $variantData['sku'] ?? null,
+                'sku' => trim($variantData['sku'] ?? '') ?: $this->generateVariantSku($product, $variantData['name'] ?? '', (int) $variantIndex),
                 'base_price' => isset($variantData['base_price']) ? (int) $variantData['base_price'] : 0,
-                'discount_price' => $variantData['discount_price'] !== '' ? ($variantData['discount_price'] !== null ? (int) $variantData['discount_price'] : null) : null,
+                'discount_price' => ($variantData['discount_price'] ?? '') !== '' ? ($variantData['discount_price'] !== null ? (int) $variantData['discount_price'] : null) : null,
                 'stock' => isset($variantData['stock']) ? (int) $variantData['stock'] : null,
             ];
 
+            $variantImage = $request->file("variants.{$variantIndex}.image");
+
             if (!empty($variantData['id'])) {
                 $id = (int) $variantData['id'];
-                $updated = $product->variants()->where('id', $id)->update($data);
-                if ($updated) {
+                $variant = $product->variants()->where('id', $id)->first();
+
+                if ($variant) {
+                    if ($variantImage && $variantImage->isValid()) {
+                        $this->deleteVariantImage($variant->image_url);
+                        $data['image_url'] = $variantImage->store('products/variants', 'public');
+                    }
+
+                    $variant->update($data);
                     $receivedIds[] = $id;
                     continue;
                 }
+            }
+
+            if ($variantImage && $variantImage->isValid()) {
+                $data['image_url'] = $variantImage->store('products/variants', 'public');
             }
 
             $new = $product->variants()->create($data);
@@ -170,8 +190,68 @@ class ProductController extends Controller
         // delete variants removed in the UI
         $toDelete = array_diff($existingIds, $receivedIds);
         if (!empty($toDelete)) {
+            $product->variants()->whereIn('id', $toDelete)->get()->each(function ($variant) {
+                $this->deleteVariantImage($variant->image_url);
+            });
             $product->variants()->whereIn('id', $toDelete)->delete();
         }
+    }
+
+    private function deleteVariantImage(?string $path): void
+    {
+        if (!$path || Str::startsWith($path, ['http://', 'https://'])) {
+            return;
+        }
+
+        Storage::disk('public')->delete(ltrim($path, '/'));
+    }
+
+    private function storeInlineAttributes(array $attributes): void
+    {
+        foreach ($attributes as $attributeData) {
+            $name = trim($attributeData['name'] ?? '');
+            $values = $this->parseAttributeValues($attributeData['values_text'] ?? '');
+
+            if ($name === '' || empty($values)) {
+                continue;
+            }
+
+            $attribute = ProductAttributeOption::firstOrCreate(['name' => $name]);
+            $nextSortOrder = (int) $attribute->values()->max('sort_order') + 1;
+
+            foreach ($values as $value) {
+                $attribute->values()->firstOrCreate(
+                    ['value' => $value],
+                    ['sort_order' => $nextSortOrder++]
+                );
+            }
+        }
+    }
+
+    private function parseAttributeValues(?string $valuesText): array
+    {
+        $values = preg_split('/[\r\n,;|]+/u', (string) $valuesText);
+        $unique = [];
+
+        foreach ($values as $value) {
+            $value = trim($value);
+
+            if ($value === '') {
+                continue;
+            }
+
+            $unique[Str::ascii(Str::lower($value))] = $value;
+        }
+
+        return array_values($unique);
+    }
+
+    private function generateVariantSku(Product $product, ?string $variantName, int $index): string
+    {
+        $base = Str::upper(Str::slug($product->slug ?: $product->name, '-'));
+        $variant = Str::upper(Str::slug((string) $variantName, '-'));
+
+        return trim($base . '-' . ($variant ?: 'VAR-' . ($index + 1)), '-');
     }
 
     private function storeGalleryImages(Product $product, Request $request): void
@@ -214,15 +294,18 @@ class ProductController extends Controller
 
     private function categories()
     {
-        // Lấy tất cả danh mục kèm theo thông tin danh mục cha
         $categories = Category::with('parent')->get();
-        
-        // Tạo thêm một trường tên hiển thị đẹp mắt (VD: Giày Đá Bóng > Nike)
+
         return $categories->map(function ($category) {
-            $category->display_name = $category->parent_id 
-                ? $category->parent->name . ' ➡️ ' . $category->name 
-                : '⭐ ' . $category->name; // Đánh dấu sao cho danh mục gốc
+            $category->display_name = $category->parent_id
+                ? $category->parent->name . ' > ' . $category->name
+                : $category->name;
+
             return $category;
-        })->sortBy('parent_id'); // Sắp xếp để nhóm các danh mục lại với nhau
+        })->sortBy('parent_id');
+    }
+    private function variantAttributes()
+    {
+        return ProductAttributeOption::with('values')->orderBy('name')->get();
     }
 }
