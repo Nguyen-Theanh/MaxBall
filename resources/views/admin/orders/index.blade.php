@@ -28,7 +28,7 @@
             <form action="{{ route('admin.orders.index') }}" method="GET" class="d-flex gap-2">
                 <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
                     <option value="">Tất cả trạng thái</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
                     <option value="shipping" {{ request('status') == 'shipping' ? 'selected' : '' }}>Đang giao hàng</option>
                     <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
                     <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
@@ -72,14 +72,28 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($order->order_status == 'pending')
-                                        <span class="badge bg-warning text-dark">Chờ xử lý</span>
-                                    @elseif($order->order_status == 'shipping')
-                                        <span class="badge bg-info text-dark">Đang giao hàng</span>
-                                    @elseif($order->order_status == 'completed')
-                                        <span class="badge bg-success">Hoàn thành</span>
-                                    @elseif($order->order_status == 'cancelled')
-                                        <span class="badge bg-danger">Đã hủy</span>
+                                    @if(in_array($order->order_status, ['completed', 'cancelled']))
+                                        @if($order->order_status == 'completed')
+                                            <span class="badge bg-success px-2 py-2">Hoàn thành</span>
+                                        @else
+                                            <span class="badge bg-danger px-2 py-2">Đã hủy</span>
+                                        @endif
+                                    @else
+                                        <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST" class="m-0">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="order_status" class="form-select form-select-sm" style="min-width: 140px;" onchange="confirmAndSubmit(this)">
+                                                @if($order->order_status == 'pending')
+                                                    <option value="pending" selected>Chờ xác nhận</option>
+                                                    <option value="shipping">Đang giao hàng</option>
+                                                    <option value="cancelled">Hủy đơn hàng</option>
+                                                @elseif($order->order_status == 'shipping')
+                                                    <option value="shipping" selected>Đang giao hàng</option>
+                                                    <option value="completed">Hoàn thành</option>
+                                                    <option value="cancelled">Hủy đơn hàng</option>
+                                                @endif
+                                            </select>
+                                        </form>
                                     @endif
                                 </td>
                                 <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
@@ -104,4 +118,23 @@
         </div>
     </div>
 </div>
+
+<script>
+function confirmAndSubmit(selectElement) {
+    const status = selectElement.value;
+    let shouldSubmit = true;
+    
+    if (status === 'completed') {
+        shouldSubmit = confirm('Xác nhận: Đơn hàng đã giao thành công và chuyển sang trạng thái Hoàn thành?');
+    } else if (status === 'cancelled') {
+        shouldSubmit = confirm('CẢNH BÁO: Bạn có chắc chắn muốn Hủy đơn hàng này? Thao tác này không thể hoàn tác và kho hàng sẽ được hoàn lại.');
+    }
+    
+    if (shouldSubmit) {
+        selectElement.closest('form').submit();
+    } else {
+        selectElement.closest('form').reset();
+    }
+}
+</script>
 @endsection

@@ -36,26 +36,38 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'order_status' => 'required|in:pending,shipping,completed,cancelled',
-            'payment_status' => 'required|in:pending,paid,failed'
+            'order_status' => 'required|in:pending,shipping,completed,cancelled'
         ]);
 
-        // If cancelling, restore stock
-        if ($request->order_status === 'cancelled' && $order->order_status !== 'cancelled') {
-            foreach ($order->details as $detail) {
-                $detail->variant->increment('stock', $detail->quantity);
-            }
-        } 
-        // If un-cancelling, deduct stock (optional, but good for completeness, assuming we allow it)
-        elseif ($order->order_status === 'cancelled' && $request->order_status !== 'cancelled') {
-            foreach ($order->details as $detail) {
-                $detail->variant->decrement('stock', $detail->quantity);
-            }
+        $currentStatus = $order->order_status;
+        $newStatus = $request->order_status;
+
+        // Terminal states cannot be changed
+        if (in_array($currentStatus, ['completed', 'cancelled'])) {
+            return back()->with('error', 'Không thể thay đổi trạng thái của đơn hàng đã Hoàn thành hoặc Đã hủy.');
         }
 
+        // Validate sequence
+        $validTransitions = [
+            'pending' => ['shipping', 'cancelled'],
+            'shipping' => ['completed', 'cancelled'],
+        ];
+
+        if (!in_array($newStatus, $validTransitions[$currentStatus] ?? [])) {
+            return back()->with('error', 'Trạng thái chuyển đổi không hợp lệ.');
+        }
+
+        // If cancelling, restore stock
+        if ($newStatus === 'cancelled') {
+            foreach ($order->details as $detail) {
+                if ($detail->variant) {
+                    $detail->variant->increment('stock', $detail->quantity);
+                }
+            }
+        } 
+
         $order->update([
-            'order_status' => $request->order_status,
-            'payment_status' => $request->payment_status,
+            'order_status' => $newStatus,
         ]);
 
         return back()->with('success', 'Đã cập nhật trạng thái đơn hàng thành công.');

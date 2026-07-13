@@ -44,7 +44,7 @@
                                 @elseif($order->order_status == 'cancelled') bg-red-100 text-red-800
                                 @endif
                             ">
-                                @if($order->order_status == 'pending') Chờ xử lý
+                                @if($order->order_status == 'pending') Chờ xác nhận
                                 @elseif($order->order_status == 'shipping') Đang giao hàng
                                 @elseif($order->order_status == 'completed') Hoàn thành
                                 @elseif($order->order_status == 'cancelled') Đã hủy
