@@ -5,6 +5,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Client\ProductController as ClientProductController;
+use App\Http\Controllers\Client\PaymentController;
 use App\Http\Controllers\Client\PageController;
 use App\Http\Controllers\Client\ContactController;
 use App\Http\Controllers\Client\CartController;
@@ -49,6 +50,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/thanh-toan', [CheckoutController::class, 'index'])->name('client.checkout.index');
     Route::post('/thanh-toan', [CheckoutController::class, 'store'])->name('client.checkout.store');
     Route::get('/thanh-toan/vnpay-return', [CheckoutController::class, 'vnpayReturn'])->name('client.checkout.vnpay_return');
+    Route::get('/thanh-toan/momo-return', [CheckoutController::class, 'momoReturn'])->name('client.checkout.momo_return');
+
+    // QR Payment Routes
+    Route::get('/thanh-toan/qr/{order_code}', [PaymentController::class, 'showQr'])->name('client.checkout.payment_qr');
+    Route::get('/thanh-toan/check-status/{order_code}', [PaymentController::class, 'checkStatus'])->name('client.checkout.check_status');
+    Route::get('/thanh-toan/thanh-cong/{order_code}', [PaymentController::class, 'success'])->name('client.checkout.success');
 
     // Quản lý đơn hàng (Client)
     Route::get('/don-hang', [ClientOrderController::class, 'index'])->name('client.orders.index');
@@ -75,11 +82,11 @@ Route::get('/danh-muc/{slug}', [ClientProductController::class, 'category'])
 Route::get('/san-pham/{slug}', [ClientProductController::class, 'show'])
     ->name('client.products.show');
 
+use App\Http\Controllers\Admin\DashboardController;
+
 // Admin
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-    Route::get('/', function () {
-        return redirect()->route('admin.products.index');
-    })->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('products', AdminProductController::class)->except(['show']);
     Route::resource('categories', CategoryController::class)->except(['show']);
@@ -102,3 +109,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::patch('/contacts/{contact}/status', [\App\Http\Controllers\Admin\ContactController::class, 'updateStatus'])->name('contacts.updateStatus');
     Route::delete('/contacts/{contact}', [\App\Http\Controllers\Admin\ContactController::class, 'destroy'])->name('contacts.destroy');
 });
+
+// Webhook Route (No CSRF needed, configure in bootstrap/app.php)
+Route::post('/webhook/sepay', [App\Http\Controllers\Client\PaymentController::class, 'sepayWebhook'])->name('webhook.sepay');

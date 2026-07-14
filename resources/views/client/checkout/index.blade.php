@@ -60,10 +60,10 @@
                         </label>
                         
                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                            <input type="radio" name="payment_method" value="vnpay" class="w-5 h-5 text-red-600 focus:ring-red-600">
+                            <input type="radio" name="payment_method" value="vietqr" class="w-5 h-5 text-red-600 focus:ring-red-600">
                             <div class="ml-3 flex items-center gap-2">
-                                <span class="block text-sm font-bold text-gray-900">Thanh toán qua VNPAY</span>
-                                <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/9/06ncktiwd6dc1694418196384.png" alt="VNPAY" class="h-6 object-contain">
+                                <span class="block text-sm font-bold text-gray-900">Chuyển khoản (VietQR / App Ngân Hàng / MoMo)</span>
+                                <img src="https://vietqr.net/portal/v2/img/logo-vietqr.png" alt="VietQR" class="h-6 object-contain">
                             </div>
                         </label>
                         @error('payment_method')
