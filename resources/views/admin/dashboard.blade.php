@@ -2,188 +2,215 @@
 
 @section('title', 'Tổng quan (Dashboard)')
 
-@push('styles')
-<style>
-    .card-metric {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: none;
-        border-radius: 15px;
-        overflow: hidden;
-    }
-    .card-metric:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-    .metric-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-    }
-    .bg-gradient-primary { background: linear-gradient(135deg, #4e73df 0%, #224abe 100%); color: white; }
-    .bg-gradient-success { background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); color: white; }
-    .bg-gradient-info { background: linear-gradient(135deg, #36b9cc 0%, #258391 100%); color: white; }
-    .bg-gradient-warning { background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%); color: white; }
-
-    /* Animations */
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-up {
-        animation: fadeInUp 0.6s ease-out forwards;
-        opacity: 0;
-    }
-    .delay-100 { animation-delay: 0.1s; }
-    .delay-200 { animation-delay: 0.2s; }
-    .delay-300 { animation-delay: 0.3s; }
-    .delay-400 { animation-delay: 0.4s; }
-</style>
-@endpush
-
 @section('content')
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 animate-fade-up">
-        <h1 class="h3 mb-0 text-gray-800 fw-bold">Tổng quan hệ thống</h1>
-        <a href="#" class="btn btn-sm btn-primary shadow-sm"><i class="fas fa-download fa-sm text-white-50"></i> Xuất Báo Cáo</a>
+<div class="space-y-6">
+    <!-- Welcome Header -->
+    <div class="flex justify-between items-end animate-slide-up">
+        <div>
+            <h1 class="text-3xl text-gray-800 font-light mb-1">
+                Good Morning, <span class="font-bold">{{ auth()->user()->name ?? 'Admin' }}</span>
+            </h1>
+            <p class="text-gray-500 text-sm">Your performance summary this week</p>
+        </div>
+        <div class="hidden sm:flex gap-3">
+            <button class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                Share
+            </button>
+            <button class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print
+            </button>
+            <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-xl text-white hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Divider / Tabs -->
+    <div class="border-b border-gray-200 animate-slide-up delay-100">
+        <nav class="-mb-px flex space-x-8">
+            <a href="#" class="border-blue-600 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Overview</a>
+            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Audiences</a>
+            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Demographics</a>
+            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">More</a>
+        </nav>
     </div>
 
     <!-- Metrics Row -->
-    <div class="row mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up delay-200">
+        
         <!-- Doanh thu -->
-        <div class="col-xl-3 col-md-6 mb-4 animate-fade-up delay-100">
-            <div class="card card-metric h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs fw-bold text-success text-uppercase mb-1">Tổng Doanh Thu</div>
-                            <div class="h4 mb-0 fw-bold text-gray-800">{{ number_format($totalRevenue, 0, ',', '.') }}đ</div>
-                        </div>
-                        <div class="metric-icon bg-gradient-success shadow">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                    </div>
-                </div>
+        <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100/50 hover:-translate-y-1 transition-transform duration-300">
+            <h3 class="text-gray-500 text-sm font-medium mb-1">Tổng Doanh Thu</h3>
+            <div class="text-3xl font-bold text-gray-800 mb-2">{{ number_format($totalRevenue, 0, ',', '.') }}đ</div>
+            <div class="flex items-center text-sm">
+                <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                <span class="text-green-500 font-medium">+5.2%</span>
+                <span class="text-gray-400 ml-2">vs last week</span>
             </div>
         </div>
 
         <!-- Tổng đơn hàng -->
-        <div class="col-xl-3 col-md-6 mb-4 animate-fade-up delay-200">
-            <div class="card card-metric h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">Tổng Đơn Hàng</div>
-                            <div class="h4 mb-0 fw-bold text-gray-800">{{ number_format($totalOrders) }}</div>
-                        </div>
-                        <div class="metric-icon bg-gradient-primary shadow">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                    </div>
-                </div>
+        <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100/50 hover:-translate-y-1 transition-transform duration-300">
+            <h3 class="text-gray-500 text-sm font-medium mb-1">Tổng Đơn Hàng</h3>
+            <div class="text-3xl font-bold text-gray-800 mb-2">{{ number_format($totalOrders) }}</div>
+            <div class="flex items-center text-sm">
+                <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                <span class="text-green-500 font-medium">+1.8%</span>
+                <span class="text-gray-400 ml-2">vs last week</span>
             </div>
         </div>
 
-        <!-- Đơn hàng chờ xác nhận -->
-        <div class="col-xl-3 col-md-6 mb-4 animate-fade-up delay-300">
-            <div class="card card-metric h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs fw-bold text-warning text-uppercase mb-1">Chờ Xác Nhận</div>
-                            <div class="h4 mb-0 fw-bold text-gray-800">{{ number_format($pendingOrders) }}</div>
-                        </div>
-                        <div class="metric-icon bg-gradient-warning shadow">
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                    </div>
-                </div>
+        <!-- Chờ xác nhận -->
+        <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100/50 hover:-translate-y-1 transition-transform duration-300">
+            <h3 class="text-gray-500 text-sm font-medium mb-1">Chờ Xác Nhận</h3>
+            <div class="text-3xl font-bold text-gray-800 mb-2">{{ number_format($pendingOrders) }}</div>
+            <div class="flex items-center text-sm">
+                <svg class="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                <span class="text-red-500 font-medium">-0.4%</span>
+                <span class="text-gray-400 ml-2">vs last week</span>
             </div>
         </div>
 
-        <!-- Khách hàng -->
-        <div class="col-xl-3 col-md-6 mb-4 animate-fade-up delay-400">
-            <div class="card card-metric h-100 shadow-sm border-0">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-xs fw-bold text-info text-uppercase mb-1">Tổng Khách Hàng</div>
-                            <div class="h4 mb-0 fw-bold text-gray-800">{{ number_format($totalCustomers) }}</div>
-                        </div>
-                        <div class="metric-icon bg-gradient-info shadow">
-                            <i class="fas fa-users"></i>
-                        </div>
-                    </div>
-                </div>
+        <!-- Tổng khách hàng -->
+        <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100/50 hover:-translate-y-1 transition-transform duration-300">
+            <h3 class="text-gray-500 text-sm font-medium mb-1">Tổng Khách Hàng</h3>
+            <div class="text-3xl font-bold text-gray-800 mb-2">{{ number_format($totalCustomers) }}</div>
+            <div class="flex items-center text-sm">
+                <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                <span class="text-green-500 font-medium">+12.5%</span>
+                <span class="text-gray-400 ml-2">vs last month</span>
             </div>
         </div>
+
     </div>
 
     <!-- Charts Row -->
-    <div class="row mb-4">
-        <div class="col-xl-8 col-lg-7 animate-fade-up delay-200">
-            <div class="card shadow border-0 h-100" style="border-radius: 15px;">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white border-0" style="border-radius: 15px 15px 0 0;">
-                    <h6 class="m-0 fw-bold text-primary">Biểu Đồ Doanh Thu (30 Ngày)</h6>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up delay-300">
+        
+        <!-- Main Chart -->
+        <div class="lg:col-span-2 bg-white rounded-3xl p-6 card-shadow border border-gray-100/50">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">Performance Line Chart</h2>
+                    <p class="text-sm text-gray-500 mt-1">Biểu đồ doanh thu trong 30 ngày qua</p>
                 </div>
-                <div class="card-body">
-                    <div class="chart-area" style="height: 350px;">
-                        <canvas id="revenueChart"></canvas>
+                <div class="flex items-center gap-4 text-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-blue-600"></span>
+                        <span class="text-gray-500">Doanh thu</span>
                     </div>
                 </div>
+            </div>
+            <div class="relative h-72 w-full">
+                <canvas id="revenueChart"></canvas>
             </div>
         </div>
 
-        <!-- Recent Orders -->
-        <div class="col-xl-4 col-lg-5 animate-fade-up delay-300">
-            <div class="card shadow border-0 h-100" style="border-radius: 15px;">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white border-0" style="border-radius: 15px 15px 0 0;">
-                    <h6 class="m-0 fw-bold text-primary">Đơn Hàng Mới Nhất</h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush border-top-0">
-                        @forelse($recentOrders as $order)
-                            <a href="{{ route('admin.orders.show', $order->id) }}" class="list-group-item list-group-item-action p-3 border-bottom-0 border-top">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1 fw-bold text-dark">#{{ $order->order_code }}</h6>
-                                        <p class="mb-0 text-muted small"><i class="fas fa-user-circle me-1"></i> {{ $order->customer_name }}</p>
-                                    </div>
-                                    <div class="text-end">
-                                        <div class="text-danger fw-bold">{{ number_format($order->total_amount, 0, ',', '.') }}đ</div>
-                                        <small class="text-muted">{{ $order->created_at->diffForHumans() }}</small>
-                                    </div>
-                                </div>
-                            </a>
-                        @empty
-                            <div class="p-4 text-center text-muted">
-                                Không có đơn hàng nào gần đây.
-                            </div>
-                        @endforelse
+        <!-- Status Summary -->
+        <div class="bg-blue-600 rounded-3xl p-6 shadow-lg relative overflow-hidden text-white flex flex-col justify-between group cursor-default">
+            <!-- Decorative circle -->
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
+            
+            <div class="relative z-10">
+                <h2 class="text-xl font-bold mb-2">Status Summary</h2>
+                <p class="text-blue-100 text-sm mb-6">Tổng quan trạng thái xử lý đơn hàng</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-blue-200 text-sm mb-1">Chờ xác nhận</div>
+                        <div class="text-4xl font-light">{{ number_format($pendingOrders) }}</div>
+                    </div>
+                    <div class="h-px w-full bg-white/20 my-2"></div>
+                    <div>
+                        <div class="text-blue-200 text-sm mb-1">Đã hoàn thành</div>
+                        <div class="text-2xl font-light">{{ App\Models\Order::where('order_status', 'completed')->count() }}</div>
                     </div>
                 </div>
-                <div class="card-footer bg-white text-center border-0" style="border-radius: 0 0 15px 15px;">
-                    <a href="{{ route('admin.orders.index') }}" class="text-primary text-decoration-none fw-bold small">Xem tất cả đơn hàng <i class="fas fa-arrow-right ms-1"></i></a>
-                </div>
+            </div>
+
+            <!-- Mini decorative wave SVG -->
+            <div class="absolute bottom-0 left-0 right-0 h-24 opacity-50 pointer-events-none">
+                <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none">
+                    <path fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="3" d="M0,160L48,170.7C96,181,192,203,288,208C384,213,480,203,576,170.7C672,139,768,85,864,85.3C960,85,1056,139,1152,149.3C1248,160,1344,128,1392,112L1440,96"></path>
+                </svg>
             </div>
         </div>
+
     </div>
+
+    <!-- Recent Orders Table -->
+    <div class="bg-white rounded-3xl p-6 card-shadow border border-gray-100/50 animate-slide-up delay-400">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Đơn Hàng Mới Nhất</h2>
+            <a href="{{ route('admin.orders.index') }}" class="text-sm text-blue-600 font-medium hover:text-blue-800 transition-colors bg-blue-50 px-4 py-2 rounded-lg">Xem tất cả</a>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-gray-400 text-sm uppercase border-b border-gray-100">
+                        <th class="pb-3 font-medium px-4">Mã Đơn</th>
+                        <th class="pb-3 font-medium px-4">Khách Hàng</th>
+                        <th class="pb-3 font-medium px-4">Tổng Tiền</th>
+                        <th class="pb-3 font-medium px-4">Trạng Thái</th>
+                        <th class="pb-3 font-medium px-4 text-right">Thời Gian</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    @forelse($recentOrders as $order)
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
+                            <td class="py-4 px-4 font-semibold text-gray-800">
+                                <a href="{{ route('admin.orders.show', $order->id) }}" class="hover:text-blue-600 transition-colors">#{{ $order->order_code }}</a>
+                            </td>
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                        {{ substr($order->customer_name, 0, 1) }}
+                                    </div>
+                                    <span class="font-medium text-gray-700">{{ $order->customer_name }}</span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-4 font-bold text-gray-900">{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
+                            <td class="py-4 px-4">
+                                @if($order->order_status == 'pending')
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Chờ xác nhận</span>
+                                @elseif($order->order_status == 'processing')
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Đang xử lý</span>
+                                @elseif($order->order_status == 'shipped')
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Đang giao</span>
+                                @elseif($order->order_status == 'completed')
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Hoàn thành</span>
+                                @else
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Đã hủy</span>
+                                @endif
+                            </td>
+                            <td class="py-4 px-4 text-right text-gray-500">{{ $order->created_at->diffForHumans() }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-gray-500">Không có đơn hàng nào.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const ctx = document.getElementById('revenueChart').getContext('2d');
         
         // Gradient cho background
-        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(78, 115, 223, 0.5)');
-        gradient.addColorStop(1, 'rgba(78, 115, 223, 0.05)');
+        let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(37, 99, 235, 0.2)'); // blue-600 with opacity
+        gradient.addColorStop(1, 'rgba(37, 99, 235, 0)');
 
         const dataLabels = {!! json_encode($labels) !!};
         const dataValues = {!! json_encode($data) !!};
@@ -193,18 +220,18 @@
             data: {
                 labels: dataLabels,
                 datasets: [{
-                    label: 'Doanh thu (VNĐ)',
+                    label: 'Doanh thu',
                     data: dataValues,
                     backgroundColor: gradient,
-                    borderColor: 'rgba(78, 115, 223, 1)',
+                    borderColor: '#2563eb', // blue-600
                     borderWidth: 3,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: 'rgba(78, 115, 223, 1)',
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#2563eb',
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     pointHoverRadius: 6,
                     fill: true,
-                    tension: 0.4 // Làm cong đường đồ thị
+                    tension: 0.4 // Làm cong đường đồ thị (bezier curve)
                 }]
             },
             options: {
@@ -215,23 +242,17 @@
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: '#fff',
-                        titleColor: '#858796',
-                        bodyColor: '#5a5c69',
-                        borderColor: '#dddfeb',
+                        backgroundColor: '#ffffff',
+                        titleColor: '#1f2937',
+                        bodyColor: '#4b5563',
+                        borderColor: '#e5e7eb',
                         borderWidth: 1,
-                        padding: 15,
+                        padding: 12,
                         displayColors: false,
                         callbacks: {
                             label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.parsed.y);
-                                }
-                                return label;
+                                let value = context.parsed.y;
+                                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
                             }
                         }
                     }
@@ -243,21 +264,26 @@
                             drawBorder: false
                         },
                         ticks: {
-                            maxTicksLimit: 7
+                            color: '#9ca3af',
+                            font: {
+                                family: "'Inter', sans-serif",
+                                size: 11
+                            }
                         }
                     },
                     y: {
                         grid: {
-                            color: "rgb(234, 236, 244)",
-                            zeroLineColor: "rgb(234, 236, 244)",
+                            color: '#f3f4f6',
                             drawBorder: false,
-                            borderDash: [2],
-                            zeroLineBorderDash: [2]
+                            borderDash: [5, 5]
                         },
                         ticks: {
-                            maxTicksLimit: 5,
-                            padding: 10,
-                            callback: function(value, index, values) {
+                            color: '#9ca3af',
+                            font: {
+                                family: "'Inter', sans-serif",
+                                size: 11
+                            },
+                            callback: function(value) {
                                 if (value >= 1000000) {
                                     return (value / 1000000) + 'Tr';
                                 } else if (value >= 1000) {
@@ -267,7 +293,11 @@
                             }
                         }
                     }
-                }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
             }
         });
     });
