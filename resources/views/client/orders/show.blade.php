@@ -135,8 +135,16 @@
                 <form action="{{ route('client.orders.cancel', $order->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');">
                     @csrf
                     @method('PUT')
-                    <button type="submit" class="w-full text-center bg-white text-red-600 border border-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors">
-                        Hủy Đơn Hàng
+                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50 transition-colors">
+                        Hủy đơn hàng
+                    </button>
+                </form>
+            @elseif($order->order_status == 'shipping')
+                <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?');">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                        Đã nhận được hàng
                     </button>
                 </form>
             @endif

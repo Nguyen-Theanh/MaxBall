@@ -59,8 +59,9 @@ Route::middleware('auth')->group(function () {
 
     // Quản lý đơn hàng (Client)
     Route::get('/don-hang', [ClientOrderController::class, 'index'])->name('client.orders.index');
-    Route::get('/don-hang/{order}', [ClientOrderController::class, 'show'])->name('client.orders.show');
-    Route::put('/don-hang/{order}/cancel', [ClientOrderController::class, 'cancel'])->name('client.orders.cancel');
+    Route::get('/don-hang/{id}', [ClientOrderController::class, 'show'])->name('client.orders.show');
+    Route::put('/don-hang/{id}/cancel', [ClientOrderController::class, 'cancel'])->name('client.orders.cancel');
+    Route::put('/don-hang/{id}/confirm-receipt', [ClientOrderController::class, 'confirmReceipt'])->name('client.orders.confirmReceipt');
 });
 
 // Trang danh sách tất cả sản phẩm
@@ -96,6 +97,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::patch('/orders/{order}/payment-status', [AdminOrderController::class, 'updatePaymentStatus'])->name('orders.updatePaymentStatus');
 
     // Quản lý thuộc tính và biến thể
     Route::resource('attributes', \App\Http\Controllers\Admin\AttributeController::class)->only(['index', 'store', 'destroy']);

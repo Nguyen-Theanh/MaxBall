@@ -69,7 +69,18 @@
                                     @elseif($order->payment_status == 'failed')
                                         <span class="badge bg-danger">Thất bại</span>
                                     @else
-                                        <span class="badge bg-warning text-dark">Chưa thanh toán (COD)</span>
+                                        @if($order->payment_method == 'cod' && $order->order_status == 'shipping')
+                                            <form action="{{ route('admin.orders.updatePaymentStatus', $order->id) }}" method="POST" class="m-0">
+                                                @csrf
+                                                @method('PATCH')
+                                                <select name="payment_status" class="form-select form-select-sm" onchange="if(confirm('Xác nhận đã thu tiền COD cho đơn hàng này?')) this.form.submit(); else this.value='pending';">
+                                                    <option value="pending" selected>Chưa thanh toán (COD)</option>
+                                                    <option value="paid">Đã thanh toán (COD)</option>
+                                                </select>
+                                            </form>
+                                        @else
+                                            <span class="badge bg-warning text-dark">Chưa thanh toán (COD)</span>
+                                        @endif
                                     @endif
                                 </td>
                                 <td>
@@ -95,7 +106,9 @@
                                                     <option value="cancelled">Hủy đơn hàng</option>
                                                 @elseif($order->order_status == 'shipping')
                                                     <option value="shipping" selected>Đang giao hàng</option>
-                                                    <option value="completed">Hoàn thành</option>
+                                                    @if($order->payment_status == 'paid')
+                                                        <option value="completed">Hoàn thành</option>
+                                                    @endif
                                                     <option value="cancelled">Hủy đơn hàng</option>
                                                 @endif
                                             </select>

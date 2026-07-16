@@ -102,6 +102,14 @@
                                         Hủy đơn
                                     </button>
                                 </form>
+                            @elseif($order->order_status == 'shipping')
+                                <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?');">
+                                    @csrf
+                                    @method('PUT')
+                                    <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-bold rounded hover:bg-green-700 transition-colors shadow-sm">
+                                        Đã nhận được hàng
+                                    </button>
+                                </form>
                             @endif
                         </div>
                     </div>
