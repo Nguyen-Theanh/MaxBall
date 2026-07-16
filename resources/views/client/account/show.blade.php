@@ -266,7 +266,7 @@
                                         @if($order->order_status == 'pending')
                                             CHỜ XÁC NHẬN
                                         @elseif($order->order_status == 'processing')
-                                            ĐANG XỬ LÝ
+                                            ĐÃ XÁC NHẬN
                                         @elseif($order->order_status == 'shipping')
                                             ĐANG GIAO HÀNG
                                         @elseif($order->order_status == 'completed')

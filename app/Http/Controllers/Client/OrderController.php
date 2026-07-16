@@ -45,4 +45,20 @@ class OrderController extends Controller
 
         return back()->with('success', 'Đã hủy đơn hàng thành công!');
     }
+
+    public function confirmReceipt($id)
+    {
+        $order = Order::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($order->order_status !== 'shipping') {
+            return back()->with('error', 'Không thể xác nhận đơn hàng này.');
+        }
+
+        $order->update([
+            'order_status' => 'completed',
+            'payment_status' => 'paid'
+        ]);
+
+        return back()->with('success', 'Cảm ơn bạn đã xác nhận nhận hàng thành công!');
+    }
 }

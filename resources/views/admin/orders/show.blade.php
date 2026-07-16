@@ -39,13 +39,24 @@
                         <div class="mb-4">
                             <label class="form-label fw-bold">Trạng thái thanh toán</label>
                             <div>
-                                @if($order->payment_status == 'paid')
-                                    <span class="badge bg-success px-3 py-2">Đã thanh toán</span>
-                                @elseif($order->payment_status == 'failed')
-                                    <span class="badge bg-danger px-3 py-2">Thất bại</span>
-                                @else
-                                    <span class="badge bg-warning text-dark px-3 py-2">Chưa thanh toán</span>
-                                @endif
+                                    @if($order->payment_status == 'paid')
+                                        <span class="badge bg-success px-3 py-2">Đã thanh toán ({{ strtoupper($order->payment_method) }})</span>
+                                    @elseif($order->payment_status == 'failed')
+                                        <span class="badge bg-danger px-3 py-2">Thất bại</span>
+                                    @else
+                                        @if($order->payment_method == 'cod' && $order->order_status == 'shipping')
+                                            <form action="{{ route('admin.orders.updatePaymentStatus', $order->id) }}" method="POST" class="m-0">
+                                                @csrf
+                                                @method('PATCH')
+                                                <select name="payment_status" class="form-select form-select-sm d-inline-block w-auto" onchange="if(confirm('Xác nhận đã thu tiền COD cho đơn hàng này?')) this.form.submit(); else this.value='pending';">
+                                                    <option value="pending" selected>Chưa thanh toán (COD)</option>
+                                                    <option value="paid">Đã thanh toán (COD)</option>
+                                                </select>
+                                            </form>
+                                        @else
+                                            <span class="badge bg-warning text-dark px-3 py-2">Chưa thanh toán (COD)</span>
+                                        @endif
+                                    @endif
                             </div>
                         </div>
                         
@@ -63,11 +74,18 @@
                                 <select name="order_status" class="form-select" id="orderStatusSelect">
                                     @if($order->order_status == 'pending')
                                         <option value="pending" selected>Chờ xác nhận</option>
+                                        <option value="processing">Đã xác nhận</option>
+                                        <option value="shipping">Đang giao hàng</option>
+                                        <option value="cancelled">Hủy đơn hàng</option>
+                                    @elseif($order->order_status == 'processing')
+                                        <option value="processing" selected>Đã xác nhận</option>
                                         <option value="shipping">Đang giao hàng</option>
                                         <option value="cancelled">Hủy đơn hàng</option>
                                     @elseif($order->order_status == 'shipping')
                                         <option value="shipping" selected>Đang giao hàng</option>
-                                        <option value="completed">Hoàn thành</option>
+                                        @if($order->payment_status == 'paid')
+                                            <option value="completed">Hoàn thành</option>
+                                        @endif
                                         <option value="cancelled">Hủy đơn hàng</option>
                                     @endif
                                 </select>

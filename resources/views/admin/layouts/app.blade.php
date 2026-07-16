@@ -124,7 +124,7 @@
         <div class="h-20 flex items-center px-8 border-b border-gray-50">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 text-decoration-none">
                 <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                <span class="text-2xl font-bold text-gray-800 tracking-tight">Star<span class="text-blue-600">Admin</span></span>
+                <span class="text-2xl font-bold text-blue-600 tracking-tight">Admin</span>
             </a>
         </div>
 

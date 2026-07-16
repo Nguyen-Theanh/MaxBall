@@ -130,8 +130,8 @@
                         window.location.href = successUrl;
                     }, 1500);
                 } else {
-                    // Tiếp tục polling sau 3 giây
-                    setTimeout(checkPaymentStatus, 3000);
+                    // Tiếp tục polling sau 2 giây
+                    setTimeout(checkPaymentStatus, 2000);
                 }
             })
             .catch(error => {
@@ -143,7 +143,7 @@
 
     // Bắt đầu polling ngay khi trang tải xong
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(checkPaymentStatus, 3000);
+        setTimeout(checkPaymentStatus, 2000);
     });
 </script>
 @endpush

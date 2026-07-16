@@ -19,10 +19,10 @@
                 <div class="bg-white rounded-3xl shadow-xl shadow-[#10271d]/5 border border-gray-100 overflow-hidden">
                     <!-- Header -->
                     <div class="hidden sm:grid grid-cols-12 gap-4 p-6 border-b border-gray-100 bg-gray-50/50 text-xs font-black uppercase tracking-wider text-gray-500">
-                        <div class="col-span-6 pl-2">Sản phẩm</div>
+                        <div class="col-span-5 pl-2">Sản phẩm</div>
                         <div class="col-span-2 text-center">Đơn giá</div>
                         <div class="col-span-2 text-center">Số lượng</div>
-                        <div class="col-span-2 text-right pr-2">Thành tiền</div>
+                        <div class="col-span-3 text-right pr-2">Thành tiền</div>
                     </div>
                     
                     @php $totalPrice = 0; @endphp
@@ -45,7 +45,7 @@
                             @endphp
                             
                             <div class="grid grid-cols-1 sm:grid-cols-12 gap-6 p-6 items-center hover:bg-gray-50/50 transition-colors group">
-                                <div class="col-span-1 sm:col-span-6 flex gap-5 items-start">
+                                <div class="col-span-1 sm:col-span-5 flex gap-5 items-start">
                                     <a href="{{ route('client.products.show', $product->slug) }}" class="shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white">
                                         <img src="{{ $thumbnail }}" alt="{{ $product->name }}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover object-center group-hover:scale-105 transition-transform duration-500">
                                     </a>
@@ -83,7 +83,7 @@
                                     </form>
                                 </div>
                                 
-                                <div class="hidden sm:flex col-span-2 justify-end items-center gap-4">
+                                <div class="hidden sm:flex col-span-3 justify-end items-center gap-4">
                                     <span class="font-black text-[#d92525] text-lg">{{ number_format($subtotal, 0, ',', '.') }}đ</span>
                                     <form action="{{ route('client.cart.destroy', $item->id) }}" method="POST">
                                         @csrf

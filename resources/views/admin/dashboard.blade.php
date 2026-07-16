@@ -8,22 +8,22 @@
     <div class="flex justify-between items-end animate-slide-up">
         <div>
             <h1 class="text-3xl text-gray-800 font-light mb-1">
-                Good Morning, <span class="font-bold">{{ auth()->user()->name ?? 'Admin' }}</span>
+                Chào buổi sáng, <span class="font-bold">{{ auth()->user()->name ?? 'Admin' }}</span>
             </h1>
-            <p class="text-gray-500 text-sm">Your performance summary this week</p>
+            <p class="text-gray-500 text-sm">Tóm tắt hiệu suất của bạn tuần này</p>
         </div>
         <div class="hidden sm:flex gap-3">
             <button class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                Share
+                Chia sẻ
             </button>
             <button class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Print
+                In
             </button>
             <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-xl text-white hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Export
+                Xuất
             </button>
         </div>
     </div>
@@ -31,10 +31,10 @@
     <!-- Divider / Tabs -->
     <div class="border-b border-gray-200 animate-slide-up delay-100">
         <nav class="-mb-px flex space-x-8">
-            <a href="#" class="border-blue-600 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Overview</a>
-            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Audiences</a>
-            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Demographics</a>
-            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">More</a>
+            <a href="#" class="border-blue-600 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Tổng quan</a>
+            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Khách hàng</a>
+            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Nhân khẩu học</a>
+            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Thêm</a>
         </nav>
     </div>
 
@@ -48,7 +48,7 @@
             <div class="flex items-center text-sm">
                 <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                 <span class="text-green-500 font-medium">+5.2%</span>
-                <span class="text-gray-400 ml-2">vs last week</span>
+                <span class="text-gray-400 ml-2">so với tuần trước</span>
             </div>
         </div>
 
@@ -59,7 +59,7 @@
             <div class="flex items-center text-sm">
                 <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                 <span class="text-green-500 font-medium">+1.8%</span>
-                <span class="text-gray-400 ml-2">vs last week</span>
+                <span class="text-gray-400 ml-2">so với tuần trước</span>
             </div>
         </div>
 
@@ -70,7 +70,7 @@
             <div class="flex items-center text-sm">
                 <svg class="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
                 <span class="text-red-500 font-medium">-0.4%</span>
-                <span class="text-gray-400 ml-2">vs last week</span>
+                <span class="text-gray-400 ml-2">so với tuần trước</span>
             </div>
         </div>
 
@@ -81,7 +81,7 @@
             <div class="flex items-center text-sm">
                 <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                 <span class="text-green-500 font-medium">+12.5%</span>
-                <span class="text-gray-400 ml-2">vs last month</span>
+                <span class="text-gray-400 ml-2">so với tháng trước</span>
             </div>
         </div>
 
@@ -94,7 +94,7 @@
         <div class="lg:col-span-2 bg-white rounded-3xl p-6 card-shadow border border-gray-100/50">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900">Performance Line Chart</h2>
+                    <h2 class="text-xl font-bold text-gray-900">Biểu đồ hiệu suất</h2>
                     <p class="text-sm text-gray-500 mt-1">Biểu đồ doanh thu trong 30 ngày qua</p>
                 </div>
                 <div class="flex items-center gap-4 text-sm">
@@ -115,7 +115,7 @@
             <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
             
             <div class="relative z-10">
-                <h2 class="text-xl font-bold mb-2">Status Summary</h2>
+                <h2 class="text-xl font-bold mb-2">Tóm tắt trạng thái</h2>
                 <p class="text-blue-100 text-sm mb-6">Tổng quan trạng thái xử lý đơn hàng</p>
                 
                 <div class="space-y-4">
@@ -178,9 +178,9 @@
                                 @if($order->order_status == 'pending')
                                     <span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Chờ xác nhận</span>
                                 @elseif($order->order_status == 'processing')
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Đang xử lý</span>
-                                @elseif($order->order_status == 'shipped')
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Đang giao</span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Đã xác nhận</span>
+                                @elseif($order->order_status == 'shipping')
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Đang giao hàng</span>
                                 @elseif($order->order_status == 'completed')
                                     <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Hoàn thành</span>
                                 @else

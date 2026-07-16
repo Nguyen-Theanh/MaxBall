@@ -36,7 +36,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'order_status' => 'required|in:pending,shipping,completed,cancelled'
+            'order_status' => 'required|in:pending,processing,shipping,completed,cancelled'
         ]);
 
         $currentStatus = $order->order_status;
@@ -49,9 +49,15 @@ class OrderController extends Controller
 
         // Validate sequence
         $validTransitions = [
-            'pending' => ['shipping', 'cancelled'],
+            'pending' => ['processing', 'shipping', 'cancelled'],
+            'processing' => ['shipping', 'cancelled'],
             'shipping' => ['completed', 'cancelled'],
         ];
+
+        // Prevent completion if not paid
+        if ($newStatus === 'completed' && $order->payment_status !== 'paid') {
+            return back()->with('error', 'Đơn hàng phải được thanh toán trước khi hoàn thành.');
+        }
 
         if (!in_array($newStatus, $validTransitions[$currentStatus] ?? [])) {
             return back()->with('error', 'Trạng thái chuyển đổi không hợp lệ.');
@@ -71,5 +77,22 @@ class OrderController extends Controller
         ]);
 
         return back()->with('success', 'Đã cập nhật trạng thái đơn hàng thành công.');
+    }
+
+    public function updatePaymentStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'payment_status' => 'required|in:paid,failed,pending'
+        ]);
+
+        if ($order->payment_status === 'paid') {
+            return back()->with('error', 'Đơn hàng này đã được thanh toán trước đó.');
+        }
+
+        $order->update([
+            'payment_status' => $request->payment_status
+        ]);
+
+        return back()->with('success', 'Đã cập nhật trạng thái thanh toán thành công.');
     }
 }

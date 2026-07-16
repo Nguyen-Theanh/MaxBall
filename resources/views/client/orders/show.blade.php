@@ -91,12 +91,14 @@
                         <p class="text-xs text-gray-500 uppercase font-bold mb-1">Trạng thái giao hàng</p>
                         <span class="inline-block px-3 py-1 text-sm font-bold uppercase rounded-full 
                             @if($order->order_status == 'pending') bg-yellow-100 text-yellow-800
-                            @elseif($order->order_status == 'shipping') bg-blue-100 text-blue-800
+                            @elseif($order->order_status == 'processing') bg-blue-100 text-blue-800
+                            @elseif($order->order_status == 'shipping') bg-indigo-100 text-indigo-800
                             @elseif($order->order_status == 'completed') bg-green-100 text-green-800
                             @elseif($order->order_status == 'cancelled') bg-red-100 text-red-800
                             @endif
                         ">
                             @if($order->order_status == 'pending') Chờ xác nhận
+                            @elseif($order->order_status == 'processing') Đã xác nhận
                             @elseif($order->order_status == 'shipping') Đang giao hàng
                             @elseif($order->order_status == 'completed') Hoàn thành
                             @elseif($order->order_status == 'cancelled') Đã hủy
@@ -129,16 +131,25 @@
                 </div>
             </div>
             
-            @if($order->order_status == 'pending')
-                <form action="{{ route('client.orders.cancel', $order->id) }}" method="POST"
-                      data-confirm="Đơn hàng sẽ được chuyển sang trạng thái đã hủy. Bạn có chắc chắn muốn tiếp tục?"
-                      data-confirm-title="Hủy đơn hàng"
-                      data-confirm-label="Hủy đơn"
-                      data-confirm-variant="warning">
+@if(in_array($order->order_status, ['pending', 'processing']))
+    <form action="{{ route('client.orders.cancel', $order->id) }}"
+          method="POST"
+          data-confirm="Đơn hàng sẽ được chuyển sang trạng thái đã hủy. Bạn có chắc chắn muốn tiếp tục?"
+          data-confirm-title="Hủy đơn hàng"
+          data-confirm-label="Hủy đơn"
+          data-confirm-variant="warning">
                     @csrf
                     @method('PUT')
-                    <button type="submit" class="w-full text-center bg-white text-red-600 border border-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors">
-                        Hủy Đơn Hàng
+                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50 transition-colors">
+                        Hủy đơn hàng
+                    </button>
+                </form>
+            @elseif($order->order_status == 'shipping')
+                <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?');">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                        Đã nhận được hàng
                     </button>
                 </form>
             @endif

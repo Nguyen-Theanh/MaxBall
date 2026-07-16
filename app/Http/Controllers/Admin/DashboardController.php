@@ -14,14 +14,18 @@ class DashboardController extends Controller
     public function index()
     {
         // 1. Thống kê tổng quan
-        $totalRevenue = Order::where('payment_status', 'paid')->sum('total_amount');
+        // Chỉ tính doanh thu các đơn hàng đã Hoàn thành và Đã thanh toán
+        $totalRevenue = Order::where('order_status', 'completed')
+            ->where('payment_status', 'paid')
+            ->sum('total_amount');
         $totalOrders = Order::count();
         $pendingOrders = Order::where('order_status', 'pending')->count();
         $totalCustomers = User::where('role', 'customer')->count();
 
         // 2. Dữ liệu biểu đồ doanh thu trong 30 ngày gần nhất
         $thirtyDaysAgo = Carbon::now()->subDays(30);
-        $revenueData = Order::where('payment_status', 'paid')
+        $revenueData = Order::where('order_status', 'completed')
+            ->where('payment_status', 'paid')
             ->where('created_at', '>=', $thirtyDaysAgo)
             ->select(
                 DB::raw('DATE(created_at) as date'),
