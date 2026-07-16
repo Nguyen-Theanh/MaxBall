@@ -36,7 +36,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'order_status' => 'required|in:pending,shipping,completed,cancelled'
+            'order_status' => 'required|in:pending,processing,shipping,completed,cancelled'
         ]);
 
         $currentStatus = $order->order_status;
@@ -49,7 +49,8 @@ class OrderController extends Controller
 
         // Validate sequence
         $validTransitions = [
-            'pending' => ['shipping', 'cancelled'],
+            'pending' => ['processing', 'shipping', 'cancelled'],
+            'processing' => ['shipping', 'cancelled'],
             'shipping' => ['completed', 'cancelled'],
         ];
 

@@ -63,6 +63,11 @@
                                 <select name="order_status" class="form-select" id="orderStatusSelect">
                                     @if($order->order_status == 'pending')
                                         <option value="pending" selected>Chờ xác nhận</option>
+                                        <option value="processing">Đã xác nhận</option>
+                                        <option value="shipping">Đang giao hàng</option>
+                                        <option value="cancelled">Hủy đơn hàng</option>
+                                    @elseif($order->order_status == 'processing')
+                                        <option value="processing" selected>Đã xác nhận</option>
                                         <option value="shipping">Đang giao hàng</option>
                                         <option value="cancelled">Hủy đơn hàng</option>
                                     @elseif($order->order_status == 'shipping')

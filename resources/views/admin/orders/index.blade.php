@@ -29,6 +29,7 @@
                 <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
                     <option value="">Tất cả trạng thái</option>
                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
+                    <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>Đã xác nhận</option>
                     <option value="shipping" {{ request('status') == 'shipping' ? 'selected' : '' }}>Đang giao hàng</option>
                     <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
                     <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
@@ -85,6 +86,11 @@
                                             <select name="order_status" class="form-select form-select-sm" style="min-width: 140px;" onchange="confirmAndSubmit(this)">
                                                 @if($order->order_status == 'pending')
                                                     <option value="pending" selected>Chờ xác nhận</option>
+                                                    <option value="processing">Đã xác nhận</option>
+                                                    <option value="shipping">Đang giao hàng</option>
+                                                    <option value="cancelled">Hủy đơn hàng</option>
+                                                @elseif($order->order_status == 'processing')
+                                                    <option value="processing" selected>Đã xác nhận</option>
                                                     <option value="shipping">Đang giao hàng</option>
                                                     <option value="cancelled">Hủy đơn hàng</option>
                                                 @elseif($order->order_status == 'shipping')

@@ -39,16 +39,16 @@
                         <div class="mt-4 sm:mt-0 text-right">
                             <span class="inline-block px-3 py-1 text-xs font-bold uppercase rounded-full 
                                 @if($order->order_status == 'pending') bg-yellow-100 text-yellow-800
-                                @elseif($order->order_status == 'shipping') bg-blue-100 text-blue-800
+                                @elseif($order->order_status == 'processing') bg-blue-100 text-blue-800
+                                @elseif($order->order_status == 'shipping') bg-indigo-100 text-indigo-800
                                 @elseif($order->order_status == 'completed') bg-green-100 text-green-800
-                                @elseif($order->order_status == 'cancelled') bg-red-100 text-red-800
-                                @endif
+                                @else bg-red-100 text-red-800 @endif
                             ">
                                 @if($order->order_status == 'pending') Chờ xác nhận
+                                @elseif($order->order_status == 'processing') Đã xác nhận
                                 @elseif($order->order_status == 'shipping') Đang giao hàng
                                 @elseif($order->order_status == 'completed') Hoàn thành
-                                @elseif($order->order_status == 'cancelled') Đã hủy
-                                @endif
+                                @else Đã hủy @endif
                             </span>
                         </div>
                     </div>
@@ -94,7 +94,7 @@
                                 Xem chi tiết
                             </a>
                             
-                            @if($order->order_status == 'pending')
+                            @if(in_array($order->order_status, ['pending', 'processing']))
                                 <form action="{{ route('client.orders.cancel', $order->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');">
                                     @csrf
                                     @method('PUT')
