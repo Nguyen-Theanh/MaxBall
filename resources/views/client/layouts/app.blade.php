@@ -82,6 +82,8 @@
 
     @include('client.partials.footer')
 
+    @include('shared.confirm-dialog')
+
     @stack('scripts')
     
     <!-- Swiper JS -->

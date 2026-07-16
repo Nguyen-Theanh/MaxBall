@@ -50,7 +50,11 @@
                                         </button>
                                     </form>
 
-                                    <form method="POST" action="{{ route('admin.contacts.destroy', $contact) }}" class="d-inline" onsubmit="return confirm('Xóa liên hệ này?')">
+                                    <form method="POST" action="{{ route('admin.contacts.destroy', $contact) }}" class="d-inline"
+                                          data-confirm="Liên hệ này sẽ bị xóa vĩnh viễn. Bạn có chắc chắn muốn tiếp tục?"
+                                          data-confirm-title="Xóa liên hệ"
+                                          data-confirm-label="Xóa liên hệ"
+                                          data-confirm-variant="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>

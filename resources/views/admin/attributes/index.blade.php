@@ -48,7 +48,11 @@
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold">{{ $attribute->name }}</h5>
-                        <form method="POST" action="{{ route('admin.attributes.destroy', $attribute) }}" onsubmit="return confirm('Xóa thuộc tính này sẽ xóa luôn toàn bộ giá trị của nó. Bạn có chắc chắn?')">
+                        <form method="POST" action="{{ route('admin.attributes.destroy', $attribute) }}"
+                              data-confirm="Toàn bộ giá trị thuộc tính liên quan cũng sẽ bị xóa. Thao tác này không thể hoàn tác."
+                              data-confirm-title="Xóa thuộc tính"
+                              data-confirm-label="Xóa thuộc tính"
+                              data-confirm-variant="danger">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-outline-danger">Xóa thuộc tính</button>
@@ -62,7 +66,11 @@
                                         <path d="M7 2a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM7 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
                                     </svg>
                                     {{ $value->value }}
-                                    <form method="POST" action="{{ route('admin.attributes.values.destroy', $value) }}" class="d-inline" onsubmit="return confirm('Xóa giá trị này?')">
+                                    <form method="POST" action="{{ route('admin.attributes.values.destroy', $value) }}" class="d-inline"
+                                          data-confirm="Giá trị thuộc tính này sẽ bị xóa. Bạn có chắc chắn muốn tiếp tục?"
+                                          data-confirm-title="Xóa giá trị thuộc tính"
+                                          data-confirm-label="Xóa"
+                                          data-confirm-variant="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn-close" style="font-size: 0.5rem;"></button>
@@ -114,11 +122,17 @@
                             body: JSON.stringify({ order: order })
                         }).then(res => res.json()).then(data => {
                             if (!data.success) {
-                                alert('Có lỗi xảy ra khi lưu vị trí!');
+                                window.AppConfirm.alert({
+                                    title: 'Không thể lưu thứ tự',
+                                    message: 'Có lỗi xảy ra khi lưu vị trí. Vui lòng thử lại.',
+                                });
                             }
                         }).catch(err => {
                             console.error(err);
-                            alert('Lỗi kết nối!');
+                            window.AppConfirm.alert({
+                                title: 'Lỗi kết nối',
+                                message: 'Không thể kết nối để lưu vị trí. Vui lòng kiểm tra kết nối và thử lại.',
+                            });
                         });
                     }
                 });

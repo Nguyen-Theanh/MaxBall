@@ -13,9 +13,23 @@ class UserAddress extends Model
         'user_id',
         'receiver_name',
         'receiver_phone',
+        'address_line',
+        'province_code',
+        'province_name',
+        'ward_code',
+        'ward_name',
         'address_detail',
         'is_default',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'province_code' => 'integer',
+            'ward_code' => 'integer',
+            'is_default' => 'boolean',
+        ];
+    }
 
     public function user()
     {

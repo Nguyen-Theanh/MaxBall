@@ -1,18 +1,22 @@
 <?php
 
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccountController;
-use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\AttributeController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
-use App\Http\Controllers\Client\ProductController as ClientProductController;
-use App\Http\Controllers\Client\PaymentController;
-use App\Http\Controllers\Client\PageController;
-use App\Http\Controllers\Client\ContactController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Client\CartController;
 use App\Http\Controllers\Client\CheckoutController;
+use App\Http\Controllers\Client\ContactController;
 use App\Http\Controllers\Client\OrderController as ClientOrderController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Client\PageController;
+use App\Http\Controllers\Client\PaymentController;
+use App\Http\Controllers\Client\ProductController as ClientProductController;
+use App\Http\Controllers\Client\UserAddressController;
+use App\Http\Controllers\Client\VietnamAddressController;
 use Illuminate\Support\Facades\Route;
 
 // Client
@@ -30,15 +34,20 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/api/vietnam-address/provinces', [VietnamAddressController::class, 'provinces'])
+        ->name('api.vietnam-address.provinces');
+    Route::get('/api/vietnam-address/wards', [VietnamAddressController::class, 'wards'])
+        ->name('api.vietnam-address.wards');
+
     Route::get('/account', [AccountController::class, 'show'])->name('account.show');
     Route::put('/account', [AccountController::class, 'update'])->name('account.update');
     Route::put('/account/password', [AccountController::class, 'updatePassword'])->name('account.password.update');
 
     // Sổ địa chỉ
-    Route::post('/account/addresses', [\App\Http\Controllers\Client\UserAddressController::class, 'store'])->name('account.addresses.store');
-    Route::put('/account/addresses/{address}', [\App\Http\Controllers\Client\UserAddressController::class, 'update'])->name('account.addresses.update');
-    Route::delete('/account/addresses/{address}', [\App\Http\Controllers\Client\UserAddressController::class, 'destroy'])->name('account.addresses.destroy');
-    Route::patch('/account/addresses/{address}/default', [\App\Http\Controllers\Client\UserAddressController::class, 'setDefault'])->name('account.addresses.setDefault');
+    Route::post('/account/addresses', [UserAddressController::class, 'store'])->name('account.addresses.store');
+    Route::put('/account/addresses/{address}', [UserAddressController::class, 'update'])->name('account.addresses.update');
+    Route::delete('/account/addresses/{address}', [UserAddressController::class, 'destroy'])->name('account.addresses.destroy');
+    Route::patch('/account/addresses/{address}/default', [UserAddressController::class, 'setDefault'])->name('account.addresses.setDefault');
 
     // Giỏ hàng
     Route::get('/gio-hang', [CartController::class, 'index'])->name('client.cart.index');
@@ -82,8 +91,6 @@ Route::get('/danh-muc/{slug}', [ClientProductController::class, 'category'])
 Route::get('/san-pham/{slug}', [ClientProductController::class, 'show'])
     ->name('client.products.show');
 
-use App\Http\Controllers\Admin\DashboardController;
-
 // Admin
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -98,17 +105,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
 
     // Quản lý thuộc tính và biến thể
-    Route::resource('attributes', \App\Http\Controllers\Admin\AttributeController::class)->only(['index', 'store', 'destroy']);
-    Route::post('attributes/{attribute}/values', [\App\Http\Controllers\Admin\AttributeController::class, 'storeValue'])->name('attributes.values.store');
-    Route::delete('attribute-values/{value}', [\App\Http\Controllers\Admin\AttributeController::class, 'destroyValue'])->name('attributes.values.destroy');
-    Route::post('attribute-values/reorder', [\App\Http\Controllers\Admin\AttributeController::class, 'updateOrder'])->name('attributes.values.reorder');
+    Route::resource('attributes', AttributeController::class)->only(['index', 'store', 'destroy']);
+    Route::post('attributes/{attribute}/values', [AttributeController::class, 'storeValue'])->name('attributes.values.store');
+    Route::delete('attribute-values/{value}', [AttributeController::class, 'destroyValue'])->name('attributes.values.destroy');
+    Route::post('attribute-values/reorder', [AttributeController::class, 'updateOrder'])->name('attributes.values.reorder');
 
     // Quản lý liên hệ
-    Route::get('/contacts', [\App\Http\Controllers\Admin\ContactController::class, 'index'])->name('contacts.index');
-    Route::get('/contacts/{contact}', [\App\Http\Controllers\Admin\ContactController::class, 'show'])->name('contacts.show');
-    Route::patch('/contacts/{contact}/status', [\App\Http\Controllers\Admin\ContactController::class, 'updateStatus'])->name('contacts.updateStatus');
-    Route::delete('/contacts/{contact}', [\App\Http\Controllers\Admin\ContactController::class, 'destroy'])->name('contacts.destroy');
+    Route::get('/contacts', [App\Http\Controllers\Admin\ContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/{contact}', [App\Http\Controllers\Admin\ContactController::class, 'show'])->name('contacts.show');
+    Route::patch('/contacts/{contact}/status', [App\Http\Controllers\Admin\ContactController::class, 'updateStatus'])->name('contacts.updateStatus');
+    Route::delete('/contacts/{contact}', [App\Http\Controllers\Admin\ContactController::class, 'destroy'])->name('contacts.destroy');
 });
 
 // Webhook Route (No CSRF needed, configure in bootstrap/app.php)
-Route::post('/webhook/sepay', [App\Http\Controllers\Client\PaymentController::class, 'sepayWebhook'])->name('webhook.sepay');
+Route::post('/webhook/sepay', [PaymentController::class, 'sepayWebhook'])->name('webhook.sepay');

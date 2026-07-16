@@ -65,7 +65,11 @@
                                 </td>
                                 <td class="text-end">
                                     <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-sm btn-outline-primary">Sửa</a>
-                                    <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="d-inline" onsubmit="return confirm('Xoa san pham nay?')">
+                                    <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="d-inline"
+                                          data-confirm="Sản phẩm sẽ bị xóa khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục?"
+                                          data-confirm-title="Xóa sản phẩm"
+                                          data-confirm-label="Xóa sản phẩm"
+                                          data-confirm-variant="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>

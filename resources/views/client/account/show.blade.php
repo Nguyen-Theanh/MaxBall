@@ -63,6 +63,7 @@
                     <form method="POST" action="{{ route('account.update') }}" class="space-y-6">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="form_context" value="profile">
 
                         <div class="flex items-center">
                             <label class="w-1/4 text-sm text-gray-500 text-right pr-6">Tên đăng nhập</label>
@@ -96,10 +97,28 @@
                         </div>
 
                         <div class="flex items-start">
-                            <label for="address" class="w-1/4 text-sm text-gray-500 text-right pr-6 mt-2">Địa chỉ</label>
+                            <div class="w-1/4 text-sm text-gray-500 text-right pr-6 mt-2">Địa chỉ nhận hàng</div>
                             <div class="w-3/4">
-                                <textarea id="address" name="address" rows="3" class="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#d92525]">{{ old('address', $user->address) }}</textarea>
-                                @error('address') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                <div class="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                                    <div class="mb-4 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-800">Địa chỉ mặc định</p>
+                                            <p class="mt-1 text-xs leading-5 text-gray-500">Địa chỉ này sẽ được tự động điền khi bạn đặt hàng.</p>
+                                        </div>
+                                        @if($defaultAddress)
+                                            <span class="shrink-0 rounded border border-[#d92525] px-2 py-1 text-[11px] font-semibold text-[#d92525]">Mặc định</span>
+                                        @endif
+                                    </div>
+
+                                    <x-vietnam-address-fields
+                                        prefix="profile-address"
+                                        field-prefix="default_address"
+                                        :required="false"
+                                        :address-line="$defaultAddress?->address_line ?? ($defaultAddress?->address_detail ?? $user->address)"
+                                        :province-code="$defaultAddress?->province_code"
+                                        :ward-code="$defaultAddress?->ward_code"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -165,7 +184,10 @@
             <!-- TAB: ADDRESS -->
             <div id="tab-address" class="tab-content p-6 md:p-8 hidden">
                 <div class="border-b pb-4 mb-6 flex justify-between items-center">
-                    <h2 class="text-xl font-medium text-gray-900">Địa Chỉ Của Tôi</h2>
+                    <div>
+                        <h2 class="text-xl font-medium text-gray-900">Địa Chỉ Nhận Hàng</h2>
+                        <p class="mt-1 text-sm text-gray-500">Quản lý các địa chỉ có thể sử dụng khi thanh toán.</p>
+                    </div>
                     <button type="button" onclick="openAddressModal()" class="bg-[#d92525] text-white px-4 py-2 rounded text-sm font-medium hover:bg-red-700 transition flex items-center gap-2">
                         <i class="fa-solid fa-plus"></i> Thêm địa chỉ mới
                     </button>
@@ -189,10 +211,14 @@
                                 <div class="flex items-center gap-3">
                                     <button type="button" onclick='openAddressModal(@json($address))' class="text-blue-600 hover:text-blue-800">Cập nhật</button>
                                     @if(!$address->is_default)
-                                        <form action="{{ route('account.addresses.destroy', $address->id) }}" method="POST" class="inline">
+                                        <form action="{{ route('account.addresses.destroy', $address->id) }}" method="POST" class="inline"
+                                              data-confirm="Địa chỉ này sẽ bị xóa khỏi sổ địa chỉ của bạn."
+                                              data-confirm-title="Xóa địa chỉ"
+                                              data-confirm-label="Xóa địa chỉ"
+                                              data-confirm-variant="danger">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" onclick="return confirm('Bạn có chắc muốn xóa địa chỉ này?')" class="text-gray-500 hover:text-red-600">Xóa</button>
+                                            <button type="submit" class="text-gray-500 hover:text-red-600">Xóa</button>
                                         </form>
                                     @endif
                                 </div>
@@ -318,7 +344,7 @@
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeAddressModal()"></div>
     
     <!-- Modal Content -->
-    <div class="relative z-10 w-full max-w-lg rounded-sm bg-white p-6 shadow-2xl transition-all">
+    <div class="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-sm bg-white p-6 shadow-2xl transition-all">
         <div class="mb-5 flex items-center justify-between border-b pb-4">
             <h3 class="text-xl font-medium text-gray-900" id="addressModalTitle">Địa chỉ mới</h3>
             <button type="button" onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600">
@@ -329,23 +355,23 @@
         <form id="addressForm" method="POST" action="{{ route('account.addresses.store') }}">
             @csrf
             <input type="hidden" name="_method" id="addressMethod" value="POST">
+            <input type="hidden" name="address_id" id="address_id" value="{{ old('address_id') }}">
+            <input type="hidden" name="form_context" value="address">
             
             <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <input type="text" id="receiver_name" name="receiver_name" placeholder="Họ và tên" class="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#d92525]" required>
+                        <input type="text" id="receiver_name" name="receiver_name" value="{{ old('receiver_name') }}" placeholder="Họ và tên" class="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#d92525]" required>
                     </div>
                     <div>
-                        <input type="text" id="receiver_phone" name="receiver_phone" placeholder="Số điện thoại" class="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#d92525]" required>
+                        <input type="text" id="receiver_phone" name="receiver_phone" value="{{ old('receiver_phone') }}" placeholder="Số điện thoại" class="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#d92525]" required>
                     </div>
                 </div>
                 
-                <div>
-                    <textarea id="address_detail" name="address_detail" rows="3" placeholder="Địa chỉ cụ thể" class="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#d92525]" required></textarea>
-                </div>
+                <x-vietnam-address-fields prefix="account-address" />
 
                 <div class="flex items-center gap-2 pt-2">
-                    <input type="checkbox" id="is_default" name="is_default" class="h-4 w-4 rounded border-gray-300 text-[#d92525] focus:ring-[#d92525]">
+                    <input type="checkbox" id="is_default" name="is_default" class="h-4 w-4 rounded border-gray-300 text-[#d92525] focus:ring-[#d92525]" @checked(old('is_default'))>
                     <label for="is_default" class="text-sm text-gray-700">Đặt làm địa chỉ mặc định</label>
                 </div>
             </div>
@@ -364,6 +390,7 @@
 @endsection
 
 @push('scripts')
+@include('client.partials.vietnam-address-script')
 <script>
     // Tab switching logic
     function switchTab(tabId) {
@@ -415,12 +442,33 @@
 
     // Initialize default tab (or based on URL hash)
     document.addEventListener('DOMContentLoaded', () => {
+        const formContext = @json(old('form_context'));
         let hash = window.location.hash.replace('#', '');
-        if (['profile', 'password', 'address', 'orders'].includes(hash)) {
+
+        if (formContext === 'address') {
+            switchTab('address');
+        } else if (formContext === 'profile') {
+            switchTab('profile');
+        } else if (['profile', 'password', 'address', 'orders'].includes(hash)) {
             switchTab(hash);
         } else {
             switchTab('profile'); // default
         }
+
+        @if(old('form_context') === 'address' && $errors->hasAny(['receiver_name', 'receiver_phone', 'address_line', 'province_code', 'ward_code']))
+            const restoredAddressId = @json(old('address_id'));
+            const form = document.getElementById('addressForm');
+
+            document.getElementById('addressModalTitle').textContent = restoredAddressId
+                ? 'Cập nhật địa chỉ'
+                : 'Địa chỉ mới';
+            document.getElementById('addressMethod').value = restoredAddressId ? 'PUT' : 'POST';
+            form.action = restoredAddressId
+                ? `/account/addresses/${restoredAddressId}`
+                : '{{ route('account.addresses.store') }}';
+            document.getElementById('addressModal').classList.remove('hidden');
+            document.getElementById('addressModal').classList.add('flex');
+        @endif
     });
 
     // Update URL hash when clicking
@@ -432,29 +480,38 @@
         });
     });
 
-    function openAddressModal(address = null) {
+    async function openAddressModal(address = null) {
         const modal = document.getElementById('addressModal');
         const form = document.getElementById('addressForm');
         const title = document.getElementById('addressModalTitle');
         const methodInput = document.getElementById('addressMethod');
+        const addressIdInput = document.getElementById('address_id');
+        const addressLineInput = document.getElementById('account-address_address_line');
+        const selector = window.VietnamAddress?.get('account-address');
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
         
         if (address) {
             title.textContent = 'Cập nhật địa chỉ';
             form.action = `/account/addresses/${address.id}`;
             methodInput.value = 'PUT';
+            addressIdInput.value = address.id;
             document.getElementById('receiver_name').value = address.receiver_name;
             document.getElementById('receiver_phone').value = address.receiver_phone;
-            document.getElementById('address_detail').value = address.address_detail;
+            addressLineInput.value = address.address_line || address.address_detail;
             document.getElementById('is_default').checked = address.is_default == 1;
+            if (selector) {
+                await selector.setSelection(address.province_code, address.ward_code);
+            }
         } else {
             title.textContent = 'Địa chỉ mới';
             form.action = '{{ route('account.addresses.store') }}';
             methodInput.value = 'POST';
             form.reset();
+            addressIdInput.value = '';
+            selector?.reset();
         }
-        
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
     }
 
     function closeAddressModal() {

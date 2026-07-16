@@ -69,7 +69,11 @@
                                 <td>{{ $user->orders_count }}</td>
                                 <td class="text-end">
                                     <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-outline-primary">Sửa</a>
-                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="d-inline" onsubmit="return confirm('Xóa user này?')">
+                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="d-inline"
+                                          data-confirm="Tài khoản người dùng này sẽ bị xóa khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục?"
+                                          data-confirm-title="Xóa người dùng"
+                                          data-confirm-label="Xóa người dùng"
+                                          data-confirm-variant="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>

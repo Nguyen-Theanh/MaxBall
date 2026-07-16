@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'vietnam_address' => [
+        'base_url' => env('VIETNAM_ADDRESS_API_URL', 'https://provinces.open-api.vn/api/v2'),
+        'ca_bundle' => env('VIETNAM_ADDRESS_API_CA_BUNDLE'),
+    ],
+
 ];

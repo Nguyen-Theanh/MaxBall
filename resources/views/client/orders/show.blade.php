@@ -130,7 +130,11 @@
             </div>
             
             @if($order->order_status == 'pending')
-                <form action="{{ route('client.orders.cancel', $order->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');">
+                <form action="{{ route('client.orders.cancel', $order->id) }}" method="POST"
+                      data-confirm="Đơn hàng sẽ được chuyển sang trạng thái đã hủy. Bạn có chắc chắn muốn tiếp tục?"
+                      data-confirm-title="Hủy đơn hàng"
+                      data-confirm-label="Hủy đơn"
+                      data-confirm-variant="warning">
                     @csrf
                     @method('PUT')
                     <button type="submit" class="w-full text-center bg-white text-red-600 border border-red-600 py-3 rounded-xl font-bold hover:bg-red-50 transition-colors">

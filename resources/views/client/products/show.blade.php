@@ -466,14 +466,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const val = Number(qtyInput.value) || 1;
 
         if (hasVariants && !selectedVariantInput.value) {
-            alert('Vui lòng chọn phân loại hàng trước.');
+            window.AppConfirm.alert({
+                title: 'Chưa chọn phân loại',
+                message: 'Vui lòng chọn đầy đủ phân loại hàng trước khi thay đổi số lượng.',
+            });
             return;
         }
 
         if (val < currentMaxStock) {
             qtyInput.value = val + 1;
         } else {
-            alert('Số lượng bạn chọn đã đạt mức tối đa của sản phẩm này.');
+            window.AppConfirm.alert({
+                title: 'Đã đạt số lượng tối đa',
+                message: 'Số lượng bạn chọn đã đạt mức tồn kho hiện tại của sản phẩm.',
+            });
         }
     });
 
@@ -489,13 +495,19 @@ document.addEventListener('DOMContentLoaded', function() {
         let val = Number(this.value) || 1;
 
         if (hasVariants && !selectedVariantInput.value) {
-            alert('Vui lòng chọn phân loại hàng trước.');
+            window.AppConfirm.alert({
+                title: 'Chưa chọn phân loại',
+                message: 'Vui lòng chọn đầy đủ phân loại hàng trước khi nhập số lượng.',
+            });
             this.value = 1;
             return;
         }
 
         if (val > currentMaxStock) {
-            alert('Số lượng bạn chọn đã đạt mức tối đa của sản phẩm này.');
+            window.AppConfirm.alert({
+                title: 'Số lượng không hợp lệ',
+                message: 'Số lượng bạn chọn vượt quá tồn kho hiện tại của sản phẩm.',
+            });
             this.value = Math.max(currentMaxStock, 1);
         } else if (val < 1) {
             this.value = 1;
@@ -505,13 +517,19 @@ document.addEventListener('DOMContentLoaded', function() {
     cartForm.addEventListener('submit', function(e) {
         if (hasVariants && !selectedVariantInput.value) {
             e.preventDefault();
-            alert('Vui lòng chọn đầy đủ phân loại trước khi thêm vào giỏ hàng hoặc mua ngay.');
+            window.AppConfirm.alert({
+                title: 'Chưa chọn phân loại',
+                message: 'Vui lòng chọn đầy đủ phân loại sản phẩm trước khi thêm vào giỏ hàng hoặc mua ngay.',
+            });
             return;
         }
 
         if (currentMaxStock <= 0) {
             e.preventDefault();
-            alert('Sản phẩm này đã hết hàng.');
+            window.AppConfirm.alert({
+                title: 'Sản phẩm đã hết hàng',
+                message: 'Phân loại bạn chọn hiện đã hết hàng. Vui lòng chọn phân loại khác.',
+            });
         }
     });
 
