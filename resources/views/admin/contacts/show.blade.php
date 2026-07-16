@@ -47,7 +47,11 @@
                             </button>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.contacts.destroy', $contact) }}" onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn liên hệ này?')">
+                        <form method="POST" action="{{ route('admin.contacts.destroy', $contact) }}"
+                              data-confirm="Liên hệ này sẽ bị xóa vĩnh viễn. Bạn có chắc chắn muốn tiếp tục?"
+                              data-confirm-title="Xóa liên hệ"
+                              data-confirm-label="Xóa liên hệ"
+                              data-confirm-variant="danger">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">

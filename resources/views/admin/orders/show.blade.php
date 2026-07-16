@@ -32,7 +32,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Cập nhật trạng thái</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST" onsubmit="return confirmStatusUpdate()">
+                    <form id="order-status-form" action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
                         @csrf
                         @method('PATCH')
                         
@@ -100,19 +100,34 @@
             </div>
 
 <script>
-function confirmStatusUpdate() {
-    const statusSelect = document.getElementById('orderStatusSelect');
-    if (!statusSelect) return true;
-    
-    const status = statusSelect.value;
+document.getElementById('order-status-form')?.addEventListener('submit', async (event) => {
+    const form = event.currentTarget;
+    const status = document.getElementById('orderStatusSelect')?.value;
+    let options = null;
+
     if (status === 'completed') {
-        return confirm('Xác nhận: Đơn hàng đã giao thành công và chuyển sang trạng thái Hoàn thành?');
+        options = {
+            title: 'Hoàn thành đơn hàng',
+            message: 'Xác nhận đơn hàng đã được giao thành công và chuyển sang trạng thái hoàn thành?',
+            confirmLabel: 'Hoàn thành',
+            variant: 'primary',
+        };
+    } else if (status === 'cancelled') {
+        options = {
+            title: 'Hủy đơn hàng',
+            message: 'Đơn hàng sẽ bị hủy và số lượng sản phẩm sẽ được hoàn lại kho. Thao tác này không thể hoàn tác.',
+            confirmLabel: 'Hủy đơn',
+            variant: 'warning',
+        };
     }
-    if (status === 'cancelled') {
-        return confirm('CẢNH BÁO: Bạn có chắc chắn muốn Hủy đơn hàng này? Thao tác này không thể hoàn tác và kho hàng sẽ được hoàn lại.');
+
+    if (!options) return;
+
+    event.preventDefault();
+    if (await window.AppConfirm.open(options)) {
+        HTMLFormElement.prototype.submit.call(form);
     }
-    return true;
-}
+});
 </script>
 
             <!-- Thông tin khách hàng -->

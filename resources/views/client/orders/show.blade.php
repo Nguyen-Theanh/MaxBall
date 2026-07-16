@@ -131,8 +131,13 @@
                 </div>
             </div>
             
-            @if(in_array($order->order_status, ['pending', 'processing']))
-                <form action="{{ route('client.orders.cancel', $order->id) }}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');">
+@if(in_array($order->order_status, ['pending', 'processing']))
+    <form action="{{ route('client.orders.cancel', $order->id) }}"
+          method="POST"
+          data-confirm="Đơn hàng sẽ được chuyển sang trạng thái đã hủy. Bạn có chắc chắn muốn tiếp tục?"
+          data-confirm-title="Hủy đơn hàng"
+          data-confirm-label="Hủy đơn"
+          data-confirm-variant="warning">
                     @csrf
                     @method('PUT')
                     <button type="submit" class="w-full sm:w-auto px-6 py-2.5 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50 transition-colors">

@@ -48,6 +48,16 @@
         max-height: 120px;
         overflow-y: auto;
     }
+
+    .variant-row.variant-row-duplicate {
+        outline: 2px solid #dc3545;
+        outline-offset: -2px;
+    }
+
+    .variant-sku-input.variant-sku-duplicate {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+    }
 </style>
 
 <div class="row g-4">
@@ -107,13 +117,21 @@
                     <div id="selected-attributes" class="d-flex flex-wrap gap-2 mb-3"></div>
                     <div id="new-attributes-hidden"></div>
 
+                    @if ($errors->has('variants.*.name') || $errors->has('variants.*.sku') || $errors->has('variants.*.id'))
+                        <div class="alert alert-danger py-2" role="alert">
+                            {{ $errors->first('variants.*.name') ?: ($errors->first('variants.*.sku') ?: $errors->first('variants.*.id')) }}
+                        </div>
+                    @endif
+                    <div id="variant-duplicate-alert" class="alert alert-danger d-none py-2" role="alert"></div>
+                    <div id="variant-generation-message" class="alert alert-info d-none py-2" role="status"></div>
+
                     <div id="variants-container">
                         @php $vIndex = 0; @endphp
                         @foreach(old('variants', $product->variants ?? []) as $v)
                             @php
                                 $variant = is_array($v) ? (object) $v : $v;
                             @endphp
-                            <div class="card mb-3 variant-row shadow-sm border-0 bg-light" data-index="{{ $vIndex }}">
+                            <div class="card mb-3 variant-row shadow-sm border-0 bg-light" data-index="{{ $vIndex }}" data-original-name="{{ old("variants.$vIndex.name", $variant->name ?? '') }}">
                                 <div class="card-body p-3">
                                     <input type="hidden" name="variants[{{ $vIndex }}][id]" value="{{ $variant->id ?? '' }}">
                                     
@@ -129,11 +147,13 @@
                                             <label class="form-label small text-muted mb-1">Phân loại / Thuộc tính</label>
                                             <div class="d-flex flex-wrap gap-2 variant-attr-container"></div>
                                             <input type="hidden" name="variants[{{ $vIndex }}][name]" value="{{ old("variants.$vIndex.name", $variant->name ?? '') }}" class="variant-name-input">
+                                            @error("variants.$vIndex.name") <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                                         </div>
                                         
                                         <div class="col-md-3">
                                             <label class="form-label small text-muted mb-1">Mã SKU</label>
-                                            <input type="text" name="variants[{{ $vIndex }}][sku]" value="{{ old("variants.$vIndex.sku", $variant->sku ?? '') }}" class="form-control form-control-sm variant-sku-input" placeholder="Tự động tạo SKU">
+                                            <input type="text" name="variants[{{ $vIndex }}][sku]" value="{{ old("variants.$vIndex.sku", $variant->sku ?? '') }}" class="form-control form-control-sm variant-sku-input @error("variants.$vIndex.sku") is-invalid @enderror" placeholder="Tự động tạo SKU">
+                                            @error("variants.$vIndex.sku") <div class="invalid-feedback">{{ $message }}</div> @enderror
                                         </div>
                                         
                                         <div class="col-md-3">
@@ -316,6 +336,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const pickerMenu = document.getElementById('attribute-picker-menu');
     const pickerSearch = document.getElementById('attribute-picker-search');
     const pickerList = document.getElementById('attribute-picker-list');
+    const duplicateAlert = document.getElementById('variant-duplicate-alert');
+    const generationMessage = document.getElementById('variant-generation-message');
+    const productForm = variantsContainer?.closest('form');
+    const submitButton = productForm?.querySelector('button[type="submit"], input[type="submit"]');
 
     const toSlug = (str) => {
         return String(str || '')
@@ -400,7 +424,9 @@ document.addEventListener('DOMContentLoaded', function() {
             name: attribute.name,
             values: values.map((value) => ({
                 ...value,
-                selected: Boolean(persist),
+                selected: Object.prototype.hasOwnProperty.call(value, 'selected')
+                    ? Boolean(value.selected)
+                    : Boolean(persist),
             })),
             key,
         };
@@ -504,6 +530,95 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function inferVariantOptions(row) {
+        const name = row.dataset.originalName
+            || row.querySelector('.variant-name-input')?.value
+            || '';
+        const remainingParts = name
+            .split(/\s+-\s+/)
+            .map((part) => part.trim())
+            .filter(Boolean);
+        const inferred = {};
+
+        selectedAttributes.forEach((attribute) => {
+            const selectedValues = attribute.values.filter((value) => value.selected);
+            const partIndex = remainingParts.findIndex((part) => {
+                return selectedValues.some((value) => normalizeKey(value.value) === normalizeKey(part));
+            });
+
+            if (partIndex === -1) {
+                return;
+            }
+
+            const matchedPart = remainingParts[partIndex];
+            const matchedValue = selectedValues.find((value) => normalizeKey(value.value) === normalizeKey(matchedPart));
+
+            if (matchedValue) {
+                inferred[attribute.key] = matchedValue.value;
+                remainingParts.splice(partIndex, 1);
+            }
+        });
+
+        return inferred;
+    }
+
+    function initializeAttributesFromExistingVariants() {
+        const rows = Array.from(variantsContainer?.querySelectorAll('.variant-row') || []);
+
+        if (!rows.length) {
+            return;
+        }
+
+        const usageByAttribute = new Map();
+
+        rows.forEach((row) => {
+            const name = row.dataset.originalName
+                || row.querySelector('.variant-name-input')?.value
+                || '';
+            const usedAttributeKeys = new Set();
+
+            name.split(/\s+-\s+/)
+                .map((part) => part.trim())
+                .filter(Boolean)
+                .forEach((part) => {
+                    const partKey = normalizeKey(part);
+                    const matchingAttribute = allAttributes.find((attribute) => {
+                        const attributeKey = normalizeKey(attribute.name);
+
+                        return !usedAttributeKeys.has(attributeKey)
+                            && (attribute.values || []).some((value) => normalizeKey(value.value) === partKey);
+                    });
+
+                    if (!matchingAttribute) {
+                        return;
+                    }
+
+                    const attributeKey = normalizeKey(matchingAttribute.name);
+                    const usedValues = usageByAttribute.get(attributeKey) || new Set();
+                    usedValues.add(partKey);
+                    usageByAttribute.set(attributeKey, usedValues);
+                    usedAttributeKeys.add(attributeKey);
+                });
+        });
+
+        allAttributes.forEach((attribute) => {
+            const attributeKey = normalizeKey(attribute.name);
+            const usedValues = usageByAttribute.get(attributeKey);
+
+            if (!usedValues?.size) {
+                return;
+            }
+
+            addAttribute({
+                ...attribute,
+                values: (attribute.values || []).map((value) => ({
+                    ...value,
+                    selected: usedValues.has(normalizeKey(value.value)),
+                })),
+            });
+        });
+    }
+
     function renderVariantAttributes(row) {
         const container = row.querySelector('.variant-attr-container');
 
@@ -515,6 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
         container.querySelectorAll('.variant-attr-select').forEach((select) => {
             oldValues[select.dataset.attributeKey] = select.value;
         });
+        const inferredValues = inferVariantOptions(row);
 
         container.innerHTML = selectedAttributes.map((attribute) => ({
             ...attribute,
@@ -527,8 +643,11 @@ document.addEventListener('DOMContentLoaded', function() {
         `).join('');
 
         container.querySelectorAll('.variant-attr-select').forEach((select) => {
-            if (oldValues[select.dataset.attributeKey]) {
-                select.value = oldValues[select.dataset.attributeKey];
+            const restoredValue = oldValues[select.dataset.attributeKey]
+                || inferredValues[select.dataset.attributeKey];
+
+            if (restoredValue) {
+                select.value = restoredValue;
             }
 
             select.addEventListener('change', function() {
@@ -547,6 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.className = 'card mb-3 variant-row shadow-sm border-0 bg-light';
         div.dataset.index = index;
+        div.dataset.originalName = data.name || '';
         div.innerHTML = `
             <div class="card-body p-3">
                 <input type="hidden" name="variants[${index}][id]" value="${escapeHtml(data.id || '')}">
@@ -642,6 +762,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .join('|');
     }
 
+    function variantNameFromOptions(options) {
+        return selectedAttributes
+            .map((attribute) => options[attribute.key] || '')
+            .filter(Boolean)
+            .join(' - ');
+    }
+
     function variantSignatureFromRow(row) {
         const options = {};
 
@@ -654,9 +781,90 @@ document.addEventListener('DOMContentLoaded', function() {
         return variantSignatureFromOptions(options);
     }
 
+    function hasCompleteVariantSelection(row) {
+        if (!selectedAttributes.length) {
+            return true;
+        }
+
+        const activeAttributes = selectedAttributes.filter((attribute) => {
+            return attribute.values.some((value) => value.selected);
+        });
+
+        if (activeAttributes.length !== selectedAttributes.length) {
+            return false;
+        }
+
+        const selects = Array.from(row.querySelectorAll('.variant-attr-select'));
+
+        return selects.length === activeAttributes.length
+            && selects.every((select) => Boolean(select.value));
+    }
+
+    function updateDuplicateVariantState() {
+        const rows = Array.from(variantsContainer?.querySelectorAll('.variant-row') || []);
+        const nameOwners = new Map();
+        const skuOwners = new Map();
+        const messages = new Set();
+
+        rows.forEach((row) => {
+            row.classList.remove('variant-row-duplicate');
+            row.querySelector('.variant-sku-input')?.classList.remove('variant-sku-duplicate');
+        });
+
+        rows.forEach((row) => {
+            const name = row.querySelector('.variant-name-input')?.value.trim() || '';
+            const nameKey = normalizeKey(name);
+            const skuInput = row.querySelector('.variant-sku-input');
+            const sku = skuInput?.value.trim() || '';
+            const skuKey = sku.toUpperCase();
+            const canCompareName = selectedAttributes.length === 0
+                || row.dataset.variantComplete === '1';
+
+            if (nameKey && canCompareName) {
+                if (nameOwners.has(nameKey)) {
+                    row.classList.add('variant-row-duplicate');
+                    nameOwners.get(nameKey).classList.add('variant-row-duplicate');
+                    messages.add(`Biến thể "${name}" đang bị trùng.`);
+                } else {
+                    nameOwners.set(nameKey, row);
+                }
+            }
+
+            if (skuKey) {
+                if (skuOwners.has(skuKey)) {
+                    row.classList.add('variant-row-duplicate');
+                    skuInput?.classList.add('variant-sku-duplicate');
+
+                    const firstRow = skuOwners.get(skuKey);
+                    firstRow.classList.add('variant-row-duplicate');
+                    firstRow.querySelector('.variant-sku-input')?.classList.add('variant-sku-duplicate');
+                    messages.add(`Mã SKU "${sku}" đang bị trùng.`);
+                } else {
+                    skuOwners.set(skuKey, row);
+                }
+            }
+        });
+
+        const hasDuplicates = messages.size > 0;
+
+        if (duplicateAlert) {
+            duplicateAlert.textContent = hasDuplicates
+                ? `${Array.from(messages).join(' ')} Vui lòng xóa hoặc chỉnh lại biến thể trùng.`
+                : '';
+            duplicateAlert.classList.toggle('d-none', !hasDuplicates);
+        }
+
+        if (submitButton) {
+            submitButton.disabled = hasDuplicates;
+        }
+
+        return !hasDuplicates;
+    }
+
     function bindVariantRow(row) {
         row.querySelector('.remove-variant')?.addEventListener('click', function() {
             row.remove();
+            updateDuplicateVariantState();
         });
 
         const skuInput = row.querySelector('.variant-sku-input');
@@ -665,6 +873,7 @@ document.addEventListener('DOMContentLoaded', function() {
             skuInput.dataset.manualSku = skuInput.value.trim() ? '1' : '';
             skuInput.addEventListener('input', function() {
                 this.dataset.manualSku = this.value && this.value !== this.dataset.autoSku ? '1' : '';
+                updateDuplicateVariantState();
             });
         }
     }
@@ -673,9 +882,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const parts = Array.from(row.querySelectorAll('.variant-attr-select'))
             .map((select) => select.value)
             .filter(Boolean);
+        const isComplete = hasCompleteVariantSelection(row);
 
-        if (!parts.length) {
+        row.dataset.variantComplete = isComplete ? '1' : '';
+
+        if (!isComplete || !parts.length) {
             syncVariantSku(row);
+            updateDuplicateVariantState();
             return;
         }
 
@@ -692,6 +905,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         syncVariantSku(row);
+        updateDuplicateVariantState();
     }
 
     function refreshAutoSkus() {
@@ -713,6 +927,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         skuInput.value = sku;
         skuInput.dataset.autoSku = sku;
+        updateDuplicateVariantState();
     }
 
     showNewAttributeBtn?.addEventListener('click', function() {
@@ -748,6 +963,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    initializeAttributesFromExistingVariants();
+
     variantsContainer?.querySelectorAll('.variant-row').forEach((row) => {
         bindVariantRow(row);
         renderVariantAttributes(row);
@@ -766,26 +983,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 .map(variantSignatureFromRow)
                 .filter(Boolean)
         );
+        const existingNames = new Set(
+            Array.from(variantsContainer.querySelectorAll('.variant-name-input'))
+                .map((input) => normalizeKey(input.value))
+                .filter(Boolean)
+        );
+        let createdCount = 0;
+        let skippedCount = 0;
 
         generateAttributeCombinations().forEach((options) => {
             const signature = variantSignatureFromOptions(options);
+            const variantName = variantNameFromOptions(options);
+            const nameKey = normalizeKey(variantName);
 
-            if (!signature || existingSignatures.has(signature)) {
+            if (!signature || existingSignatures.has(signature) || (nameKey && existingNames.has(nameKey))) {
+                skippedCount++;
                 return;
             }
 
             existingSignatures.add(signature);
-            const row = createVariantRow(variantIndex++, { options });
+            existingNames.add(nameKey);
+            const row = createVariantRow(variantIndex++, { options, name: variantName });
             variantsContainer.appendChild(row);
+            createdCount++;
         });
+
+        if (generationMessage) {
+            generationMessage.textContent = createdCount === 0 && skippedCount > 0
+                ? 'Các biến thể tương ứng đã tồn tại, hệ thống không tạo thêm bản trùng.'
+                : createdCount > 0 && skippedCount > 0
+                    ? `Đã tạo ${createdCount} biến thể mới và bỏ qua ${skippedCount} biến thể đã tồn tại.`
+                    : '';
+            generationMessage.classList.toggle('d-none', !generationMessage.textContent);
+        }
+
+        updateDuplicateVariantState();
     });
 
     addVariantBtn?.addEventListener('click', function() {
         const row = createVariantRow(variantIndex++);
         variantsContainer.appendChild(row);
+        generationMessage?.classList.add('d-none');
+        updateDuplicateVariantState();
+    });
+
+    productForm?.addEventListener('submit', function(event) {
+        if (!updateDuplicateVariantState()) {
+            event.preventDefault();
+            duplicateAlert?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     });
 
     renderPickerList();
+    updateDuplicateVariantState();
 });
 
 document.addEventListener('input', function(e) {

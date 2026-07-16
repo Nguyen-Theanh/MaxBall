@@ -139,20 +139,31 @@
 </div>
 
 <script>
-function confirmAndSubmit(selectElement) {
+async function confirmAndSubmit(selectElement) {
+    const form = selectElement.closest('form');
     const status = selectElement.value;
-    let shouldSubmit = true;
-    
+    let options = null;
+
     if (status === 'completed') {
-        shouldSubmit = confirm('Xác nhận: Đơn hàng đã giao thành công và chuyển sang trạng thái Hoàn thành?');
+        options = {
+            title: 'Hoàn thành đơn hàng',
+            message: 'Xác nhận đơn hàng đã được giao thành công và chuyển sang trạng thái hoàn thành?',
+            confirmLabel: 'Hoàn thành',
+            variant: 'primary',
+        };
     } else if (status === 'cancelled') {
-        shouldSubmit = confirm('CẢNH BÁO: Bạn có chắc chắn muốn Hủy đơn hàng này? Thao tác này không thể hoàn tác và kho hàng sẽ được hoàn lại.');
+        options = {
+            title: 'Hủy đơn hàng',
+            message: 'Đơn hàng sẽ bị hủy và số lượng sản phẩm sẽ được hoàn lại kho. Thao tác này không thể hoàn tác.',
+            confirmLabel: 'Hủy đơn',
+            variant: 'warning',
+        };
     }
-    
-    if (shouldSubmit) {
-        selectElement.closest('form').submit();
+
+    if (!options || await window.AppConfirm.open(options)) {
+        HTMLFormElement.prototype.submit.call(form);
     } else {
-        selectElement.closest('form').reset();
+        form.reset();
     }
 }
 </script>

@@ -25,8 +25,10 @@ class CheckoutController extends Controller
 
         $addresses = Auth::user()->addresses()->orderByDesc('is_default')->orderByDesc('created_at')->get();
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
+        $selectedAddressId = session('selected_address_id') ?? old('user_address_id');
+        $selectedAddress = $addresses->firstWhere('id', (int) $selectedAddressId) ?? $defaultAddress;
 
-        return view('client.checkout.index', compact('cart', 'addresses', 'defaultAddress'));
+        return view('client.checkout.index', compact('cart', 'addresses', 'defaultAddress', 'selectedAddress'));
     }
 
     public function store(Request $request)
@@ -123,4 +125,3 @@ class CheckoutController extends Controller
         }
     }
 }
-

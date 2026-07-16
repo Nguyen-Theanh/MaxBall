@@ -53,7 +53,11 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     <a href="{{ route('admin.categories.edit', $category->id) }}" class="btn btn-sm btn-outline-primary">Sửa</a>
-                                    <form action="{{ route('admin.categories.destroy', $category->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn chắc chắn muốn xóa danh mục này?');">
+                                    <form action="{{ route('admin.categories.destroy', $category->id) }}" method="POST" class="d-inline"
+                                          data-confirm="Danh mục này sẽ bị xóa khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục?"
+                                          data-confirm-title="Xóa danh mục"
+                                          data-confirm-label="Xóa danh mục"
+                                          data-confirm-variant="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
@@ -73,7 +77,11 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     <a href="{{ route('admin.categories.edit', $child->id) }}" class="btn btn-sm btn-outline-primary">Sửa</a>
-                                    <form action="{{ route('admin.categories.destroy', $child->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn chắc chắn muốn xóa danh mục con này?');">
+                                    <form action="{{ route('admin.categories.destroy', $child->id) }}" method="POST" class="d-inline"
+                                          data-confirm="Danh mục con này sẽ bị xóa khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục?"
+                                          data-confirm-title="Xóa danh mục con"
+                                          data-confirm-label="Xóa danh mục"
+                                          data-confirm-variant="danger">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>

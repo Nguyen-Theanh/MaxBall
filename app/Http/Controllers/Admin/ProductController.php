@@ -10,6 +10,7 @@ use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -56,9 +57,9 @@ class ProductController extends Controller
         }
 
         $data['category_id'] = $this->resolveCategoryId($request);
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $data['slug'] = ($data['slug'] ?? null) ?: Str::slug($data['name']);
         $data['status'] = $request->boolean('status');
-        $data['discount_price'] = $data['discount_price'] ?: null;
+        $data['discount_price'] = ($data['discount_price'] ?? null) ?: null;
         unset($data['category_name']);
 
         $product = Product::create($data);
@@ -92,9 +93,9 @@ class ProductController extends Controller
         }
 
         $data['category_id'] = $this->resolveCategoryId($request);
-        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $data['slug'] = ($data['slug'] ?? null) ?: Str::slug($data['name']);
         $data['status'] = $request->boolean('status');
-        $data['discount_price'] = $data['discount_price'] ?: null;
+        $data['discount_price'] = ($data['discount_price'] ?? null) ?: null;
         unset($data['category_name']);
 
         $product->update($data);
@@ -118,7 +119,7 @@ class ProductController extends Controller
 
     private function validatedData(Request $request): array
     {
-        return $request->validate([
+        $validator = Validator::make($request->all(), [
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'category_name' => ['nullable', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
@@ -134,14 +135,64 @@ class ProductController extends Controller
             'new_attributes.*.name' => ['nullable', 'string', 'max:255'],
             'new_attributes.*.values_text' => ['nullable', 'string', 'max:2000'],
             'variants' => ['nullable', 'array'],
-            'variants.*.id' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'variants.*.id' => ['nullable', 'integer', 'distinct', 'exists:product_variants,id'],
             'variants.*.name' => ['nullable', 'string', 'max:255'],
             'variants.*.sku' => ['nullable', 'string', 'max:255'],
             'variants.*.base_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.discount_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0'],
             'variants.*.image' => ['nullable', 'image', 'max:3072'],
+        ], [
+            'variants.*.id.distinct' => 'Một biến thể đang bị gửi lặp lại.',
         ]);
+
+        $validator->after(function ($validator) use ($request): void {
+            $seenNames = [];
+            $seenSkus = [];
+
+            foreach ($request->input('variants', []) as $index => $variant) {
+                if (! is_array($variant)) {
+                    continue;
+                }
+
+                $nameKey = $this->variantIdentityKey($variant['name'] ?? null);
+                if ($nameKey !== '') {
+                    if (isset($seenNames[$nameKey])) {
+                        $validator->errors()->add(
+                            "variants.{$index}.name",
+                            'Biến thể này đã tồn tại trong sản phẩm.'
+                        );
+                    } else {
+                        $seenNames[$nameKey] = $index;
+                    }
+                }
+
+                $skuKey = Str::upper(trim((string) ($variant['sku'] ?? '')));
+                if ($skuKey !== '') {
+                    if (isset($seenSkus[$skuKey])) {
+                        $validator->errors()->add(
+                            "variants.{$index}.sku",
+                            'Mã SKU đang bị trùng với một biến thể khác.'
+                        );
+                    } else {
+                        $seenSkus[$skuKey] = $index;
+                    }
+                }
+            }
+        });
+
+        return $validator->validate();
+    }
+
+    private function variantIdentityKey(?string $value): string
+    {
+        return Str::of((string) $value)
+            ->trim()
+            ->lower()
+            ->ascii()
+            ->replaceMatches('/\s*-\s*/', '-')
+            ->replaceMatches('/\s+/', ' ')
+            ->value();
     }
 
     private function storeVariants(Product $product, array $variants, Request $request): void
