@@ -14,6 +14,7 @@ class CategoryController extends Controller
     {
         // Chỉ lấy các danh mục gốc, kèm theo các danh mục con của nó
         $categories = Category::whereNull('parent_id')->with('children')->get();
+
         return view('admin.categories.index', compact('categories'));
     }
 
@@ -22,6 +23,7 @@ class CategoryController extends Controller
     {
         // Khi tạo danh mục con, chỉ cho phép chọn cha là 3 danh mục gốc
         $parentCategories = Category::whereNull('parent_id')->get();
+
         return view('admin.categories.create', compact('parentCategories'));
     }
 
@@ -30,27 +32,27 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'parent_id' => 'nullable|exists:categories,id'
+            'parent_id' => 'nullable|exists:categories,id',
         ]);
 
         Category::create([
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'parent_id' => $request->parent_id,
-            'status' => 1
+            'status' => 1,
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Đã thêm danh mục!');
     }
-    
+
     // 4. Hiển thị form sửa danh mục
     public function edit(Category $category)
     {
         // Lấy các danh mục gốc, nhưng loại trừ chính nó (để tránh việc 1 danh mục nhận chính nó làm cha)
         $parentCategories = Category::whereNull('parent_id')
-                                    ->where('id', '!=', $category->id)
-                                    ->get();
-                                    
+            ->where('id', '!=', $category->id)
+            ->get();
+
         return view('admin.categories.edit', compact('category', 'parentCategories'));
     }
 
@@ -59,14 +61,14 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'parent_id' => 'nullable|exists:categories,id'
+            'parent_id' => 'nullable|exists:categories,id',
         ]);
 
         $category->update([
             'name' => $request->name,
-            'slug' => \Illuminate\Support\Str::slug($request->name),
+            'slug' => Str::slug($request->name),
             'parent_id' => $request->parent_id,
-            'status' => $request->has('status') ? 1 : 0
+            'status' => $request->has('status') ? 1 : 0,
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Đã cập nhật danh mục thành công!');
@@ -75,13 +77,22 @@ class CategoryController extends Controller
     // 6. Xóa danh mục
     public function destroy(Category $category)
     {
+        if ($category->products()->exists()) {
+            return redirect()
+                ->route('admin.categories.index')
+                ->with(
+                    'error',
+                    "Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này.\nVui lòng chuyển hoặc xóa các sản phẩm trước."
+                );
+        }
+
         // Kiểm tra an toàn: Nếu danh mục này đang có danh mục con thì không cho xóa
         if ($category->children()->count() > 0) {
             return redirect()->route('admin.categories.index')->with('error', 'Không thể xóa! Danh mục này đang chứa các danh mục con.');
         }
 
         $category->delete();
-        
+
         return redirect()->route('admin.categories.index')->with('success', 'Đã xóa danh mục!');
     }
 }
