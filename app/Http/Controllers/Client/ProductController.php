@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attribute;
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -13,6 +13,7 @@ class ProductController extends Controller
     public function home()
     {
         $products = Product::where('status', 1)->latest()->take(8)->get();
+
         return view('client.products.index', compact('products'));
     }
 
@@ -28,10 +29,11 @@ class ProductController extends Controller
             $query->where('base_price', '<=', $request->max_price);
         }
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
 
         $products = $query->paginate(12)->withQueryString();
+
         return view('client.products.listing', compact('products', 'categoryName'));
     }
 
@@ -48,15 +50,31 @@ class ProductController extends Controller
             $query->where('base_price', '<=', $request->max_price);
         }
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
 
         $products = $query->paginate(12)->withQueryString();
+
         return view('client.products.listing', compact('products', 'categoryName'));
     }
+
     public function show($slug)
     {
-        $product = Product::with(['category', 'productImages', 'variants'])
+        $product = Product::with([
+            'category',
+            'productImages',
+            'variants',
+            'reviews' => fn ($query) => $query
+                ->visible()
+                ->with(['user', 'orderDetail.variant', 'media'])
+                ->latest(),
+        ])
+            ->withCount([
+                'reviews' => fn ($query) => $query->visible(),
+            ])
+            ->withAvg([
+                'reviews' => fn ($query) => $query->visible(),
+            ], 'rating')
             ->where('slug', $slug)
             ->where('status', 1)
             ->firstOrFail();

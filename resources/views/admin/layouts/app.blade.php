@@ -149,6 +149,11 @@
                 Đơn hàng
             </a>
 
+            <a href="{{ route('admin.reviews.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.036 6.264h6.586c.969 0 1.371 1.24.588 1.81l-5.328 3.87 2.035 6.264c.3.921-.755 1.688-1.539 1.118L12 18.382l-5.329 3.871c-.783.57-1.838-.197-1.539-1.118l2.036-6.264-5.329-3.87c-.783-.57-.38-1.81.588-1.81h6.586l2.036-6.264z"></path></svg>
+                Đánh giá
+            </a>
+
             <a href="{{ route('admin.categories.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                 Danh mục

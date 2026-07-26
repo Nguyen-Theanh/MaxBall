@@ -301,6 +301,7 @@
                                                 <h4 class="font-medium text-gray-900">{{ $detail->variant?->product?->name ?? 'Sản phẩm' }}</h4>
                                                 <p class="text-sm text-gray-500 mt-1">Phân loại hàng: {{ $detail->variant?->name ?? '' }}</p>
                                                 <p class="text-sm text-gray-900 mt-1">x{{ $detail->quantity }}</p>
+                                                @include('client.orders._review_status', ['order' => $order, 'detail' => $detail])
                                             </div>
                                             <div class="text-right">
                                                 <span class="text-[#d92525] font-medium">{{ number_format($detail->price, 0, ',', '.') }}đ</span>
@@ -357,6 +358,7 @@
 </div>
 
 @include('client.orders._cancel_modal')
+@include('client.orders._review_modal')
 
 <!-- Modal thêm/sửa địa chỉ -->
 <div id="addressModal" class="fixed inset-0 z-[100] hidden items-center justify-center">
@@ -470,7 +472,9 @@
         const formContext = @json(old('form_context'));
         let hash = window.location.hash.replace('#', '');
 
-        if (formContext === 'address') {
+        if (formContext === 'review') {
+            switchTab('orders');
+        } else if (formContext === 'address') {
             switchTab('address');
         } else if (formContext === 'profile') {
             switchTab('profile');

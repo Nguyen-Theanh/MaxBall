@@ -76,6 +76,7 @@
                                     </a>
                                     <p class="text-sm text-gray-500 mt-1">Phân loại: {{ $detail->variant->name }}</p>
                                     <p class="text-sm text-gray-500 mt-1">Số lượng: {{ $detail->quantity }}</p>
+                                    @include('client.orders._review_status', ['order' => $order, 'detail' => $detail, 'compact' => true])
                                 </div>
                                 <div class="font-bold text-gray-900">
                                     {{ number_format($detail->price, 0, ',', '.') }}đ
@@ -135,4 +136,5 @@
 </div>
 
 @include('client.orders._cancel_modal')
+@include('client.orders._review_modal')
 @endsection

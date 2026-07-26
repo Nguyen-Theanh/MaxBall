@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Services\UserAddressData;
+use App\Support\OrderCancellationReasons;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AccountController extends Controller
@@ -18,7 +19,7 @@ class AccountController extends Controller
     {
         $orders = $request->user()
             ->orders()
-            ->with(['details.variant.product'])
+            ->with(['details.variant.product', 'details.review'])
             ->orderByDesc('created_at')
             ->paginate(8);
 
@@ -28,12 +29,14 @@ class AccountController extends Controller
             ->orderByDesc('created_at')
             ->get();
         $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
+        $customerCancellationReasons = OrderCancellationReasons::customer();
 
         return view('client.account.show', [
             'user' => $request->user(),
             'orders' => $orders,
             'addresses' => $addresses,
             'defaultAddress' => $defaultAddress,
+            'customerCancellationReasons' => $customerCancellationReasons,
         ]);
     }
 
@@ -81,6 +84,7 @@ class AccountController extends Controller
                 $payload = $resolvedAddress + [
                     'receiver_name' => $profileData['name'],
                     'receiver_phone' => $profileData['phone'],
+                    'receiver_email' => $profileData['email'],
                     'is_default' => true,
                 ];
 
@@ -91,7 +95,10 @@ class AccountController extends Controller
                     $user->addresses()->create($payload);
                 }
             } elseif ($defaultAddress) {
-                $contactData = ['receiver_name' => $profileData['name']];
+                $contactData = [
+                    'receiver_name' => $profileData['name'],
+                    'receiver_email' => $profileData['email'],
+                ];
 
                 if (filled($profileData['phone'] ?? null)) {
                     $contactData['receiver_phone'] = $profileData['phone'];

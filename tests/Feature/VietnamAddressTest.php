@@ -44,6 +44,7 @@ class VietnamAddressTest extends TestCase
             ->post(route('account.addresses.store'), [
                 'receiver_name' => 'Nguyễn Văn An',
                 'receiver_phone' => '0901234567',
+                'receiver_email' => $user->email,
                 'address_line' => '123 Nguyễn Huệ',
                 'province_code' => 79,
                 'ward_code' => 26734,
@@ -53,6 +54,7 @@ class VietnamAddressTest extends TestCase
 
         $this->assertDatabaseHas('user_addresses', [
             'user_id' => $user->id,
+            'receiver_email' => $user->email,
             'address_line' => '123 Nguyễn Huệ',
             'province_code' => 79,
             'province_name' => 'Thành phố Hồ Chí Minh',
@@ -68,6 +70,7 @@ class VietnamAddressTest extends TestCase
             ->put(route('account.addresses.update', $address), [
                 'receiver_name' => 'Nguyễn Văn An',
                 'receiver_phone' => '0901234567',
+                'receiver_email' => $user->email,
                 'address_line' => '456 Lê Lợi',
                 'province_code' => 79,
                 'ward_code' => 26734,
@@ -77,6 +80,7 @@ class VietnamAddressTest extends TestCase
 
         $this->assertDatabaseHas('user_addresses', [
             'id' => $address->id,
+            'receiver_email' => $user->email,
             'address_line' => '456 Lê Lợi',
             'address_detail' => '456 Lê Lợi, Phường Sài Gòn, Thành phố Hồ Chí Minh',
         ]);
@@ -92,6 +96,7 @@ class VietnamAddressTest extends TestCase
             ->post(route('account.addresses.store'), [
                 'receiver_name' => 'Nguyễn Văn An',
                 'receiver_phone' => '0901234567',
+                'receiver_email' => $user->email,
                 'address_line' => '123 Nguyễn Huệ',
                 'province_code' => 79,
                 'ward_code' => 99999,
@@ -127,6 +132,7 @@ class VietnamAddressTest extends TestCase
         $this->assertTrue($address->is_default);
         $this->assertSame('Nguyễn Văn An', $address->receiver_name);
         $this->assertSame('0901234567', $address->receiver_phone);
+        $this->assertSame($user->email, $address->receiver_email);
         $this->assertSame(
             '123 Nguyễn Huệ, Phường Sài Gòn, Thành phố Hồ Chí Minh',
             $address->address_detail
@@ -151,6 +157,7 @@ class VietnamAddressTest extends TestCase
             'id' => $address->id,
             'receiver_name' => 'Nguyễn Văn An Mới',
             'receiver_phone' => '0912345678',
+            'receiver_email' => $user->email,
             'address_detail' => '456 Lê Lợi, Phường Sài Gòn, Thành phố Hồ Chí Minh',
             'is_default' => true,
         ]);

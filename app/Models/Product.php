@@ -44,6 +44,11 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
     public function getImageUrlsAttribute(): array
     {
         return $this->productImages->map->url->all();
@@ -51,7 +56,7 @@ class Product extends Model
 
     public function getThumbnailUrlAttribute(): string
     {
-        if (!$this->thumbnail) {
+        if (! $this->thumbnail) {
             return 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=900&q=80';
         }
 
@@ -61,7 +66,7 @@ class Product extends Model
 
         $path = ltrim($this->thumbnail, '/');
 
-        return asset('storage/' . $path);
+        return asset('storage/'.$path);
     }
 
     public function getCategoryNameAttribute(): string
@@ -81,11 +86,11 @@ class Product extends Model
 
     public function getFormattedPriceAttribute(): string
     {
-        return number_format($this->final_price, 0, ',', '.') . ' đ';
+        return number_format($this->final_price, 0, ',', '.').' đ';
     }
 
     public function getFormattedBasePriceAttribute(): string
     {
-        return number_format($this->base_price, 0, ',', '.') . ' đ';
+        return number_format($this->base_price, 0, ',', '.').' đ';
     }
 }
