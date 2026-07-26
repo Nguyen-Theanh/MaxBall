@@ -202,6 +202,7 @@
                                     <span class="text-gray-300">|</span>
                                     <span class="text-gray-500">{{ $address->receiver_phone }}</span>
                                 </div>
+                                <p class="text-sm text-gray-500">{{ $address->receiver_email ?? $user->email }}</p>
                                 <p class="text-sm text-gray-600 mt-2">{{ $address->address_detail }}</p>
                                 @if($address->is_default)
                                     <div class="mt-2"><span class="inline-block border border-[#d92525] text-[#d92525] text-xs px-2 py-0.5 rounded">Mặc định</span></div>
@@ -309,13 +310,30 @@
                                 </div>
                             @endif
 
-                            <div class="bg-red-50/50 -mx-6 -mb-6 px-6 py-4 flex justify-between items-center rounded-b border-t border-gray-100">
+                            <div class="bg-red-50/50 -mx-6 -mb-6 px-6 py-4 flex flex-col gap-4 rounded-b border-t border-gray-100 sm:flex-row sm:items-center sm:justify-between">
                                 <div class="text-xs text-gray-500">
                                     SĐT Người nhận: {{ $order->customer_phone }}
                                 </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-gray-600">Thành tiền:</span>
-                                    <span class="text-xl font-black text-[#d92525]">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                                <div class="flex flex-wrap items-center justify-end gap-3">
+                                    <div class="mr-1">
+                                        <span class="text-gray-600">Thành tiền:</span>
+                                        <span class="ml-1 text-xl font-black text-[#d92525]">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                                    </div>
+
+                                    <a href="{{ route('client.orders.show', $order->id) }}" class="rounded border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black">
+                                        Xem chi tiết
+                                    </a>
+
+                                    @if(in_array($order->order_status, ['pending', 'processing']))
+                                        <button type="button"
+                                                data-customer-cancel
+                                                data-order-id="{{ $order->id }}"
+                                                data-order-code="{{ $order->order_code }}"
+                                                data-cancel-action="{{ route('client.orders.cancel', $order->id) }}"
+                                                class="rounded border border-red-600 px-4 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50">
+                                            Hủy đơn
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -337,6 +355,8 @@
         </div>
     </div>
 </div>
+
+@include('client.orders._cancel_modal')
 
 <!-- Modal thêm/sửa địa chỉ -->
 <div id="addressModal" class="fixed inset-0 z-[100] hidden items-center justify-center">
@@ -367,7 +387,12 @@
                         <input type="text" id="receiver_phone" name="receiver_phone" value="{{ old('receiver_phone') }}" placeholder="Số điện thoại" class="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#d92525]" required>
                     </div>
                 </div>
-                
+
+                <div>
+                    <input type="email" id="receiver_email" name="receiver_email" value="{{ old('receiver_email', $user->email) }}" placeholder="Email nhận xác nhận đơn hàng" class="w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#d92525]" required>
+                    @error('receiver_email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
                 <x-vietnam-address-fields prefix="account-address" />
 
                 <div class="flex items-center gap-2 pt-2">
@@ -455,7 +480,7 @@
             switchTab('profile'); // default
         }
 
-        @if(old('form_context') === 'address' && $errors->hasAny(['receiver_name', 'receiver_phone', 'address_line', 'province_code', 'ward_code']))
+        @if(old('form_context') === 'address' && $errors->hasAny(['receiver_name', 'receiver_phone', 'receiver_email', 'address_line', 'province_code', 'ward_code']))
             const restoredAddressId = @json(old('address_id'));
             const form = document.getElementById('addressForm');
 
@@ -499,6 +524,7 @@
             addressIdInput.value = address.id;
             document.getElementById('receiver_name').value = address.receiver_name;
             document.getElementById('receiver_phone').value = address.receiver_phone;
+            document.getElementById('receiver_email').value = address.receiver_email || @json($user->email);
             addressLineInput.value = address.address_line || address.address_detail;
             document.getElementById('is_default').checked = address.is_default == 1;
             if (selector) {

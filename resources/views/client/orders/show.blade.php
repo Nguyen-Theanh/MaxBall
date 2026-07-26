@@ -120,6 +120,20 @@
                 </div>
             </div>
 
+            @if($order->order_status === 'cancelled' && $order->cancellation_reason)
+                <div class="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-900">
+                    <p class="font-bold">Thông tin hủy đơn</p>
+                    <p class="mt-2"><span class="font-medium">Người hủy:</span> {{ $order->cancelled_by === 'admin' ? 'Cửa hàng' : 'Khách hàng' }}</p>
+                    <p class="mt-1"><span class="font-medium">Lý do:</span> {{ $order->cancellation_reason_label }}</p>
+                    @if($order->cancellation_note)
+                        <p class="mt-1 whitespace-pre-line"><span class="font-medium">Ghi chú:</span> {{ $order->cancellation_note }}</p>
+                    @endif
+                    @if($order->cancelled_at)
+                        <p class="mt-1"><span class="font-medium">Thời gian:</span> {{ $order->cancelled_at->format('d/m/Y H:i') }}</p>
+                    @endif
+                </div>
+            @endif
+
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="bg-gray-50 px-6 py-4 border-b">
                     <h2 class="font-bold text-lg">Thông tin nhận hàng</h2>
@@ -132,18 +146,14 @@
             </div>
             
 @if(in_array($order->order_status, ['pending', 'processing']))
-    <form action="{{ route('client.orders.cancel', $order->id) }}"
-          method="POST"
-          data-confirm="Đơn hàng sẽ được chuyển sang trạng thái đã hủy. Bạn có chắc chắn muốn tiếp tục?"
-          data-confirm-title="Hủy đơn hàng"
-          data-confirm-label="Hủy đơn"
-          data-confirm-variant="warning">
-                    @csrf
-                    @method('PUT')
-                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50 transition-colors">
-                        Hủy đơn hàng
-                    </button>
-                </form>
+                <button type="button"
+                        data-customer-cancel
+                        data-order-id="{{ $order->id }}"
+                        data-order-code="{{ $order->order_code }}"
+                        data-cancel-action="{{ route('client.orders.cancel', $order->id) }}"
+                        class="w-full sm:w-auto px-6 py-2.5 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50 transition-colors">
+                    Hủy đơn hàng
+                </button>
             @elseif($order->order_status == 'shipping')
                 <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?');">
                     @csrf
@@ -156,4 +166,6 @@
         </div>
     </div>
 </div>
+
+@include('client.orders._cancel_modal')
 @endsection

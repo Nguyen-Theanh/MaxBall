@@ -18,12 +18,6 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        @keyframes slideUp {
-            to { opacity: 1; transform: translateY(0); }
         }
         .header {
             background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
@@ -37,7 +31,6 @@
             font-size: 28px;
             font-weight: 700;
             letter-spacing: 1px;
-            animation: fadeIn 1s ease-in-out forwards;
         }
         .header p {
             margin: 10px 0 0;
@@ -51,7 +44,18 @@
         .greeting {
             font-size: 20px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+        }
+        .intro {
+            color: #555555;
+            font-size: 15px;
+            line-height: 1.7;
+            margin: 0 0 16px;
+        }
+        .section-title {
+            color: #1a1a1a;
+            font-size: 18px;
+            margin: 28px 0 14px;
         }
         .order-info {
             background-color: #f9fafb;
@@ -125,6 +129,43 @@
             border-top: 2px solid #dee2e6;
             padding-top: 20px;
         }
+        .notice-box {
+            background-color: #fff8e6;
+            border: 1px solid #f4d58d;
+            border-radius: 8px;
+            color: #604800;
+            font-size: 14px;
+            line-height: 1.7;
+            margin-top: 30px;
+            padding: 16px 18px;
+        }
+        .support-box {
+            background-color: #f7f8fa;
+            border-radius: 8px;
+            color: #555555;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-top: 24px;
+            padding: 18px 20px;
+        }
+        .support-box p {
+            margin: 0 0 8px;
+        }
+        .support-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .support-box a {
+            color: #d92525;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .closing {
+            color: #555555;
+            font-size: 15px;
+            line-height: 1.7;
+            margin-top: 28px;
+        }
         .footer {
             background-color: #1a1a1a;
             color: #888888;
@@ -137,19 +178,27 @@
     </style>
 </head>
 <body>
+    <div style="display: none; max-height: 0; overflow: hidden; opacity: 0;">
+        Đơn hàng #{{ $order->order_code }} của bạn đã được MaxBall ghi nhận thành công.
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>MAXBALL</h1>
-            <p>Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi!</p>
+            <p>Xác nhận đơn hàng thành công</p>
         </div>
         
         <div class="content">
-            <div class="greeting">Xin chào {{ $order->customer_name }},</div>
-            <p style="line-height: 1.6; color: #555;">Đơn hàng của bạn đã được hệ thống ghi nhận thành công. Dưới đây là thông tin chi tiết về đơn hàng của bạn.</p>
+            <div class="greeting">Kính gửi {{ $order->customer_name }},</div>
+            <p class="intro">Cảm ơn bạn đã tin tưởng và lựa chọn mua sắm tại <strong>MaxBall</strong>!</p>
+            <p class="intro">Đơn hàng của bạn đã được ghi nhận thành công và chúng tôi sẽ tiến hành xử lý trong thời gian sớm nhất.</p>
+
+            <h2 class="section-title">Thông tin đơn hàng</h2>
             
             <div class="order-info">
                 <p><strong>Mã đơn hàng:</strong> #{{ $order->order_code }}</p>
                 <p><strong>Ngày đặt:</strong> {{ $order->created_at->format('d/m/Y H:i') }}</p>
+                <p><strong>Tổng thanh toán:</strong> <span style="color: #d92525; font-size: 17px; font-weight: 700;">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span></p>
                 <p><strong>Phương thức thanh toán:</strong> {{ strtoupper($order->payment_method) }}</p>
                 <p>
                     <strong>Trạng thái thanh toán:</strong> 
@@ -161,6 +210,8 @@
                 </p>
                 <p><strong>Địa chỉ nhận hàng:</strong> {{ $order->customer_address }} (SĐT: {{ $order->customer_phone }})</p>
             </div>
+
+            <h2 class="section-title">Chi tiết sản phẩm</h2>
 
             <table class="table-container">
                 <thead>
@@ -204,8 +255,24 @@
                     <td class="value">{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
                 </tr>
             </table>
-            
-            <p style="margin-top: 40px; text-align: center; color: #777; font-size: 14px;">Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email support@maxball.com.</p>
+
+            <div class="notice-box">
+                Chúng tôi sẽ gửi email thông báo khi đơn hàng được xác nhận, đóng gói và giao cho đơn vị vận chuyển.
+            </div>
+
+            <div class="support-box">
+                <p>Nếu có bất kỳ thắc mắc hoặc cần hỗ trợ, vui lòng liên hệ với chúng tôi qua:</p>
+                <ul>
+                    <li>Email: <a href="mailto:support@maxball.com">support@maxball.com</a></li>
+                    <li>Hotline: <a href="tel:0123456789">0123 456 789</a></li>
+                </ul>
+            </div>
+
+            <div class="closing">
+                <p>Một lần nữa, xin chân thành cảm ơn bạn đã đồng hành cùng <strong>MaxBall</strong>. Chúc bạn có những trải nghiệm tuyệt vời với sản phẩm của chúng tôi!</p>
+                <p>Trân trọng,</p>
+                <p><strong>Đội ngũ MaxBall</strong></p>
+            </div>
         </div>
         
         <div class="footer">

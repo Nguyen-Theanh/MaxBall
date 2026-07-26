@@ -32,11 +32,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Cập nhật trạng thái</h6>
                 </div>
                 <div class="card-body">
-                    <form id="order-status-form" action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
-                        @csrf
-                        @method('PATCH')
-                        
-                        <div class="mb-4">
+                    <div class="mb-4">
                             <label class="form-label fw-bold">Trạng thái thanh toán</label>
                             <div>
                                     @if($order->payment_status == 'paid')
@@ -59,7 +55,11 @@
                                     @endif
                             </div>
                         </div>
-                        
+
+                    <form id="order-status-form" action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
+
                         <div class="mb-4">
                             <label class="form-label fw-bold">Trạng thái đơn hàng</label>
                             @if(in_array($order->order_status, ['completed', 'cancelled']))
@@ -68,10 +68,29 @@
                                         <span class="badge bg-success px-3 py-2">Hoàn thành</span>
                                     @else
                                         <span class="badge bg-danger px-3 py-2">Đã hủy</span>
+                                        @if($order->cancellation_reason)
+                                            <div class="mt-3 rounded border border-danger-subtle bg-danger-subtle p-3 small text-danger-emphasis">
+                                                <p class="mb-1"><strong>Người hủy:</strong> {{ $order->cancelled_by === 'admin' ? 'Cửa hàng' : 'Khách hàng' }}</p>
+                                                <p class="mb-1"><strong>Lý do:</strong> {{ $order->cancellation_reason_label }}</p>
+                                                @if($order->cancellation_note)
+                                                    <p class="mb-1 whitespace-pre-line"><strong>Ghi chú:</strong> {{ $order->cancellation_note }}</p>
+                                                @endif
+                                                @if($order->cancelled_at)
+                                                    <p class="mb-0"><strong>Thời gian:</strong> {{ $order->cancelled_at->format('d/m/Y H:i') }}</p>
+                                                @endif
+                                            </div>
+                                        @endif
                                     @endif
                                 </div>
                             @else
-                                <select name="order_status" class="form-select" id="orderStatusSelect">
+                                <select name="order_status"
+                                        class="form-select"
+                                        id="orderStatusSelect"
+                                        data-admin-cancel
+                                        data-order-id="{{ $order->id }}"
+                                        data-order-code="{{ $order->order_code }}"
+                                        data-current-status="{{ $order->order_status }}"
+                                        data-cancel-action="{{ route('admin.orders.updateStatus', $order->id) }}">
                                     @if($order->order_status == 'pending')
                                         <option value="pending" selected>Chờ xác nhận</option>
                                         <option value="processing">Đã xác nhận</option>
@@ -113,12 +132,10 @@ document.getElementById('order-status-form')?.addEventListener('submit', async (
             variant: 'primary',
         };
     } else if (status === 'cancelled') {
-        options = {
-            title: 'Hủy đơn hàng',
-            message: 'Đơn hàng sẽ bị hủy và số lượng sản phẩm sẽ được hoàn lại kho. Thao tác này không thể hoàn tác.',
-            confirmLabel: 'Hủy đơn',
-            variant: 'warning',
-        };
+        event.preventDefault();
+        window.openAdminCancelModal(document.getElementById('orderStatusSelect'));
+
+        return;
     }
 
     if (!options) return;
@@ -228,4 +245,6 @@ document.getElementById('order-status-form')?.addEventListener('submit', async (
         </div>
     </div>
 </div>
+
+@include('admin.orders._cancel_modal')
 @endsection

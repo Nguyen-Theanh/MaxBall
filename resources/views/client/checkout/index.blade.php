@@ -36,6 +36,7 @@
                         <div id="selected-address-display">
                             <div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
                                 <div class="font-bold text-gray-900 whitespace-nowrap">{{ $selectedAddress->receiver_name }} <span class="text-gray-400 font-normal mx-1">|</span> {{ $selectedAddress->receiver_phone }}</div>
+                                <div class="text-sm text-gray-500">{{ $selectedAddress->receiver_email ?? Auth::user()->email }}</div>
                                 <div class="text-gray-700 flex-1">{{ $selectedAddress->address_detail }}</div>
                                 @if($selectedAddress->is_default)
                                     <div class="shrink-0"><span class="border border-red-500 text-red-500 text-xs px-2 py-0.5 rounded whitespace-nowrap">Mặc định</span></div>
@@ -153,6 +154,7 @@
                             <span class="text-gray-400">|</span>
                             <span class="text-gray-600" id="addr-phone-{{ $address->id }}">{{ $address->receiver_phone }}</span>
                         </div>
+                        <p class="text-sm text-gray-500" id="addr-email-{{ $address->id }}">{{ $address->receiver_email ?? Auth::user()->email }}</p>
                         <p class="text-sm text-gray-600" id="addr-detail-{{ $address->id }}">{{ $address->address_detail }}</p>
                         @if($address->is_default)
                             <span class="inline-block mt-2 border border-red-500 text-red-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded" id="addr-default-{{ $address->id }}">Mặc định</span>
@@ -202,7 +204,13 @@
                         @error('receiver_phone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
-                
+
+                <div>
+                    <label class="mb-2 block text-sm font-bold text-gray-700">Email nhận xác nhận đơn hàng</label>
+                    <input type="email" id="checkout_receiver_email" name="receiver_email" value="{{ old('receiver_email', Auth::user()->email) }}" class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10" required>
+                    @error('receiver_email') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+
                 <x-vietnam-address-fields
                     prefix="checkout-address"
                     input-class="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-[#10271d] focus:ring-4 focus:ring-[#10271d]/10"
@@ -269,6 +277,7 @@
             if (!preserveValues) {
                 document.getElementById('checkout_receiver_name').value = address.receiver_name;
                 document.getElementById('checkout_receiver_phone').value = address.receiver_phone;
+                document.getElementById('checkout_receiver_email').value = address.receiver_email || @json(Auth::user()->email);
                 addressLineInput.value = address.address_line || address.address_detail;
                 document.getElementById('checkout_is_default').checked = address.is_default == 1;
                 if (selector) {
@@ -323,6 +332,7 @@
         const id = selectedRadio.value;
         const name = document.getElementById(`addr-name-${id}`).textContent;
         const phone = document.getElementById(`addr-phone-${id}`).textContent;
+        const email = document.getElementById(`addr-email-${id}`).textContent;
         const detail = document.getElementById(`addr-detail-${id}`).textContent;
         const defaultBadge = document.getElementById(`addr-default-${id}`);
 
@@ -344,6 +354,7 @@
         const displayHtml = `
             <div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
                 <div class="font-bold text-gray-900 whitespace-nowrap">${escapeHtml(name)} <span class="text-gray-400 font-normal mx-1">|</span> ${escapeHtml(phone)}</div>
+                <div class="text-sm text-gray-500">${escapeHtml(email)}</div>
                 <div class="text-gray-700 flex-1">${escapeHtml(detail)}</div>
                 ${defaultBadgeHtml}
             </div>
@@ -354,7 +365,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        @if(old('form_context') === 'checkout_address' && $errors->hasAny(['receiver_name', 'receiver_phone', 'address_line', 'province_code', 'ward_code']))
+        @if(old('form_context') === 'checkout_address' && $errors->hasAny(['receiver_name', 'receiver_phone', 'receiver_email', 'address_line', 'province_code', 'ward_code']))
             const restoredAddressId = @json(old('address_id'));
             const restoredAddress = restoredAddressId
                 ? checkoutAddresses[String(restoredAddressId)]
