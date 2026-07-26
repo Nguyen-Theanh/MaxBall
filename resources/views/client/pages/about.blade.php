@@ -27,7 +27,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div data-aos="fade-right">
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl aspect-square md:aspect-auto md:h-[600px]">
-                    <img src="https://images.unsplash.com/photo-1551280857-22eb74db89ce?q=80&w=1974&auto=format&fit=crop" alt="MaxBall Team" class="w-full h-full object-cover">
+                    <img src="https://tse4.mm.bing.net/th/id/OIP.sm9pH2p4scUHZHLx-JViLQHaGT?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="MaxBall Team" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-[#10271d]/90 via-[#10271d]/20 to-transparent flex items-end p-10">
                         <div class="text-white">
                             <div class="text-5xl font-black font-heading mb-3 text-[#d92525]">2016</div>
@@ -91,7 +91,7 @@
                     Tuyển chọn khắt khe từ chất liệu vải siêu nhẹ, thấm hút mồ hôi cực tốt đến công nghệ in ấn tiên tiến không bong tróc.
                 </p>
             </div>
-            
+
             <!-- Value 2 -->
             <div class="bg-white p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:-translate-y-2 transition-transform duration-500" data-aos="fade-up" data-aos-delay="200">
                 <div class="w-16 h-16 rounded-2xl bg-[#10271d]/5 flex items-center justify-center text-[#d92525] text-2xl mb-8">

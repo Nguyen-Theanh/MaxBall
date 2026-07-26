@@ -68,7 +68,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div data-aos="fade-right">
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl aspect-square md:aspect-auto md:h-[600px]">
-                    <img src="https://images.unsplash.com/photo-1551280857-22eb74db89ce?q=80&w=1974&auto=format&fit=crop" alt="MaxBall Team" class="w-full h-full object-cover">
+                    <img src="https://tse4.mm.bing.net/th/id/OIP.sm9pH2p4scUHZHLx-JViLQHaGT?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="MaxBall Team" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-[#10271d]/80 to-transparent flex items-end p-8">
                         <div class="text-white">
                             <div class="text-4xl font-black font-heading mb-2">10+</div>
@@ -88,7 +88,7 @@
                 <p class="text-gray-600 text-lg mb-8 leading-relaxed">
                     Từ những bộ áo đấu siêu nhẹ, thấm hút mồ hôi tối đa, đến những đôi giày đinh bám sân tuyệt đối, mọi sản phẩm tại MaxBall đều được tuyển chọn khắt khe để giúp bạn phát huy tối đa kỹ năng và tận hưởng trọn vẹn từng khoảnh khắc của trận đấu.
                 </p>
-                
+
                 <div class="grid grid-cols-2 gap-6">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-full bg-[#10271d]/5 flex items-center justify-center text-[#d92525] flex-shrink-0 text-xl">
@@ -133,7 +133,7 @@
                 @endphp
 
                 <div data-aos="fade-up" data-aos-delay="{{ $delay }}" class="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col h-full transform hover:-translate-y-2">
-                    
+
                     @if($product->discount_price)
                         <div class="absolute top-4 left-4 z-10 bg-[#d92525] text-white text-xs font-bold px-3 py-1 rounded-full uppercase shadow-md">
                             Sale
@@ -155,7 +155,7 @@
                                  alt="{{ $product->name }}"
                                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         </a>
-                        
+
                         <!-- Overlay Actions -->
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
                             <button class="w-12 h-12 bg-white rounded-full text-[#10271d] hover:bg-[#d92525] hover:text-white transition-colors flex items-center justify-center shadow-lg" title="Thêm vào giỏ hàng">
@@ -190,14 +190,14 @@
                 </div>
             @endforelse
         </div>
-        
+
         <div class="text-center mt-12">
             <a href="{{ route('client.products.index') }}" class="inline-block px-8 py-3 rounded-full border-2 border-[#10271d] text-[#10271d] font-bold hover:bg-[#10271d] hover:text-white transition-colors duration-300">
                 Xem tất cả sản phẩm
             </a>
         </div>
     </div>
-</section>   
+</section>
 
 <!-- Promotion Section -->
 <section id="deal" class="relative bg-[#10271d] py-24 overflow-hidden">
@@ -205,7 +205,7 @@
     <div class="absolute top-0 right-0 w-96 h-96 bg-[#d92525] rounded-full mix-blend-multiply filter blur-[100px] opacity-40"></div>
     <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
 
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"> 
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-10" data-aos="zoom-in">
             <div class="text-left max-w-xl">
                 <div class="inline-block px-4 py-1.5 rounded-full bg-[#d92525] text-white text-xs font-bold uppercase tracking-widest mb-6">
