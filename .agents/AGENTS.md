@@ -1,4 +1,10 @@
-## Quy tr?nh Git b?t bu?c
-Tr�?c khi vi?t code ho?c th?c hi?n thay �?i, b?t bu?c ph?i t?o m?t nh�nh (branch) m?i v� chuy?n sang nh�nh ��. Tuy?t �?i kh�ng code tr?c ti?p tr�n nh�nh main. Khi code �? ?n �?nh v� ng�?i d�ng duy?t, m?i th?c hi?n merge nh�nh �� v�o main.
+# Quy tắc làm việc (Quy định bắt buộc)
 
-- Luôn viết nội dung commit (commit message) bằng Tiếng Việt.
+1. **KHÔNG BAO GIỜ** được code trực tiếp trên nhánh `main`.
+2. Khi phát triển một tính năng mới hoặc sửa lỗi, luôn phải tuân theo quy trình sau:
+   - Tải toàn bộ code mới nhất từ github xuống (`git pull origin main`).
+   - Tạo nhánh mới (branch) từ nhánh `main` để code (Ví dụ: `git checkout -b feature/tên-chức-năng`).
+   - Thực hiện code trên nhánh này.
+   - Kiểm tra kỹ lại toàn bộ dự án, chạy test xem có xuất hiện lỗi phát sinh ở đâu không.
+   - Nếu có lỗi, phải thông báo ngay cho người dùng để xem xét hướng giải quyết.
+   - Chỉ khi giải quyết xong mọi lỗi và tính năng hoàn thiện, mới được đẩy nhánh (push) lên github và tiến hành merge vào nhánh `main`.

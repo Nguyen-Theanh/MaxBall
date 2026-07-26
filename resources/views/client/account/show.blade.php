@@ -309,13 +309,16 @@
                                 </div>
                             @endif
 
-                            <div class="bg-red-50/50 -mx-6 -mb-6 px-6 py-4 flex justify-between items-center rounded-b border-t border-gray-100">
+                            <div class="bg-red-50/50 -mx-6 -mb-6 px-6 py-4 flex flex-col sm:flex-row justify-between sm:items-center gap-3 rounded-b border-t border-gray-100">
                                 <div class="text-xs text-gray-500">
                                     SĐT Người nhận: {{ $order->customer_phone }}
                                 </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-gray-600">Thành tiền:</span>
-                                    <span class="text-xl font-black text-[#d92525]">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                                <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 sm:gap-6">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-600 text-sm">Thành tiền:</span>
+                                        <span class="text-xl font-black text-[#d92525]">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                                    </div>
+                                    <a href="{{ route('client.orders.show', $order->id) }}" class="text-sm font-medium px-4 py-1.5 border border-[#d92525] text-[#d92525] rounded hover:bg-[#d92525] hover:text-white transition-colors">Xem chi tiết</a>
                                 </div>
                             </div>
                         </div>
