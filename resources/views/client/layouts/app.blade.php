@@ -77,6 +77,22 @@
             </script>
         @endif
 
+        @if (session('error'))
+            <div id="global-session-error" class="fixed top-24 right-4 z-[9999] max-w-sm rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm font-semibold text-red-800 shadow-2xl flex items-center gap-3 transition-opacity duration-500">
+                <i class="fa-solid fa-circle-exclamation text-xl"></i>
+                {{ session('error') }}
+            </div>
+            <script>
+                setTimeout(() => {
+                    const el = document.getElementById('global-session-error');
+                    if (el) {
+                        el.style.opacity = '0';
+                        setTimeout(() => el.remove(), 500);
+                    }
+                }, 4000);
+            </script>
+        @endif
+
         @yield('content')
     </main>
 

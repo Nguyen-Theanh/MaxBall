@@ -109,6 +109,7 @@
     }
 
     $totalStock = $product->variants->count() ? $product->variants->sum('stock') : 999999;
+    $averageRating = (float) ($product->reviews_avg_rating ?? 0);
 @endphp
 
 <section class="bg-[#10271d] pt-32 pb-12">
@@ -159,6 +160,20 @@
             <h1 class="text-4xl font-black text-gray-900 mb-4">
                 {{ $product->name }}
             </h1>
+
+            <a href="#product-reviews" class="mb-4 flex w-fit items-center gap-2 text-sm no-underline">
+                <span class="text-lg tracking-tight text-yellow-400">
+                    @for($star = 1; $star <= 5; $star++)
+                        <span class="{{ $star <= round($averageRating) ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                    @endfor
+                </span>
+                @if($product->reviews_count > 0)
+                    <span class="font-bold text-gray-800">{{ number_format($averageRating, 1) }}/5</span>
+                    <span class="text-gray-500">({{ $product->reviews_count }} đánh giá)</span>
+                @else
+                    <span class="text-gray-500">Chưa có đánh giá</span>
+                @endif
+            </a>
 
             <div class="flex items-center gap-4 mb-4">
                 <span class="text-3xl font-black text-red-600" id="display-price">
@@ -238,6 +253,90 @@
             </form>
         </div>
     </div>
+
+    <section id="product-reviews" class="mt-14 rounded-2xl bg-white p-6 shadow">
+        <div class="flex flex-col gap-5 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-2xl font-black text-gray-900">Đánh giá sản phẩm</h2>
+                <p class="mt-1 text-sm text-gray-500">Đánh giá từ khách hàng đã mua sản phẩm tại MaxBall.</p>
+            </div>
+            <div class="rounded-xl bg-yellow-50 px-6 py-4 text-center">
+                <div class="text-3xl font-black text-gray-900">
+                    {{ $product->reviews_count > 0 ? number_format($averageRating, 1) : '0.0' }}
+                    <span class="text-base font-medium text-gray-500">/ 5</span>
+                </div>
+                <div class="mt-1 text-lg text-yellow-400">
+                    @for($star = 1; $star <= 5; $star++)
+                        <span class="{{ $star <= round($averageRating) ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                    @endfor
+                </div>
+                <p class="mt-1 text-xs text-gray-500">{{ $product->reviews_count }} đánh giá</p>
+            </div>
+        </div>
+
+        <div class="divide-y divide-gray-100">
+            @forelse($product->reviews as $review)
+                <article class="py-6">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="font-bold text-gray-900">
+                                    {{ $review->is_admin_review ? ($review->public_name ?: 'Khách hàng MaxBall') : ($review->user?->name ?? 'Khách hàng MaxBall') }}
+                                </span>
+                                @if(! $review->is_admin_review && $review->order_detail_id)
+                                    <span class="rounded-full bg-green-50 px-2 py-1 text-[11px] font-bold text-green-700">Đã mua hàng</span>
+                                @endif
+                            </div>
+                            @if($review->orderDetail?->variant)
+                                <p class="mt-1 text-xs text-gray-500">Phân loại: {{ $review->orderDetail->variant->name }}</p>
+                            @endif
+                        </div>
+                        <time class="text-xs text-gray-400">{{ $review->created_at->format('d/m/Y H:i') }}</time>
+                    </div>
+
+                    <div class="mt-3 text-lg text-yellow-400" aria-label="{{ $review->rating }} trên 5 sao">
+                        @for($star = 1; $star <= 5; $star++)
+                            <span class="{{ $star <= $review->rating ? 'text-yellow-400' : 'text-gray-300' }}">★</span>
+                        @endfor
+                    </div>
+
+                    <p class="mt-3 whitespace-pre-line text-sm leading-7 text-gray-700">
+                        {{ $review->content ?: 'Khách hàng đã đánh giá sản phẩm này.' }}
+                    </p>
+
+                    @if($review->media->isNotEmpty())
+                        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                            @foreach($review->media as $media)
+                                @if($media->type === 'video')
+                                    <video
+                                        src="{{ $media->url }}"
+                                        class="h-32 w-full rounded-xl border border-gray-200 bg-black object-cover"
+                                        controls
+                                        preload="metadata"
+                                    ></video>
+                                @else
+                                    <a href="{{ $media->url }}" target="_blank" rel="noopener noreferrer" class="block overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                                        <img
+                                            src="{{ $media->url }}"
+                                            alt="Ảnh đánh giá sản phẩm"
+                                            class="h-32 w-full object-cover transition hover:scale-105"
+                                            loading="lazy"
+                                        >
+                                    </a>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
+                </article>
+            @empty
+                <div class="py-12 text-center">
+                    <div class="text-5xl text-gray-200">★</div>
+                    <p class="mt-3 font-bold text-gray-700">Sản phẩm chưa có đánh giá</p>
+                    <p class="mt-1 text-sm text-gray-500">Hãy là khách hàng đầu tiên chia sẻ trải nghiệm sau khi mua hàng.</p>
+                </div>
+            @endforelse
+        </div>
+    </section>
 
     @if($relatedProducts->count())
         <div class="mt-14">
