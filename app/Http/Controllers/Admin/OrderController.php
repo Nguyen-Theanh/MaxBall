@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\OrderCancellationNotifier;
+use App\Support\OrderCancellationReasons;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
@@ -17,26 +20,47 @@ class OrderController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('order_code', 'like', '%' . $request->search . '%')
-                  ->orWhere('customer_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('customer_phone', 'like', '%' . $request->search . '%');
+            $query->where('order_code', 'like', '%'.$request->search.'%')
+                ->orWhere('customer_name', 'like', '%'.$request->search.'%')
+                ->orWhere('customer_phone', 'like', '%'.$request->search.'%');
         }
 
         $orders = $query->paginate(20)->withQueryString();
+        $adminCancellationReasons = OrderCancellationReasons::admin();
 
-        return view('admin.orders.index', compact('orders'));
+        return view('admin.orders.index', compact('orders', 'adminCancellationReasons'));
     }
 
     public function show(Order $order)
     {
         $order->load('details.variant.product', 'user');
-        return view('admin.orders.show', compact('order'));
+        $adminCancellationReasons = OrderCancellationReasons::admin();
+
+        return view('admin.orders.show', compact('order', 'adminCancellationReasons'));
     }
 
-    public function updateStatus(Request $request, Order $order)
+    public function updateStatus(Request $request, Order $order, OrderCancellationNotifier $notifier)
     {
-        $request->validate([
-            'order_status' => 'required|in:pending,processing,shipping,completed,cancelled'
+        $rules = [
+            'order_status' => ['required', Rule::in(['pending', 'processing', 'shipping', 'completed', 'cancelled'])],
+        ];
+
+        if ($request->input('order_status') === 'cancelled') {
+            $rules['cancellation_reason'] = [
+                'required',
+                Rule::in(array_keys(OrderCancellationReasons::admin())),
+            ];
+            $rules['cancellation_note'] = [
+                'nullable',
+                'string',
+                'max:1000',
+                Rule::requiredIf($request->input('cancellation_reason') === 'other'),
+            ];
+        }
+
+        $validated = $request->validate($rules, [
+            'cancellation_reason.required' => 'Vui lòng chọn lý do hủy đơn hàng.',
+            'cancellation_note.required' => 'Vui lòng nhập ghi chú cho lý do hủy đơn hàng.',
         ]);
 
         $currentStatus = $order->order_status;
@@ -59,7 +83,7 @@ class OrderController extends Controller
             return back()->with('error', 'Đơn hàng phải được thanh toán trước khi hoàn thành.');
         }
 
-        if (!in_array($newStatus, $validTransitions[$currentStatus] ?? [])) {
+        if (! in_array($newStatus, $validTransitions[$currentStatus] ?? [])) {
             return back()->with('error', 'Trạng thái chuyển đổi không hợp lệ.');
         }
 
@@ -70,11 +94,28 @@ class OrderController extends Controller
                     $detail->variant->increment('stock', $detail->quantity);
                 }
             }
-        } 
+        }
 
-        $order->update([
+        $updateData = [
             'order_status' => $newStatus,
-        ]);
+        ];
+
+        if ($newStatus === 'cancelled') {
+            $updateData += [
+                'cancelled_by' => 'admin',
+                'cancellation_reason' => $validated['cancellation_reason'],
+                'cancellation_note' => $validated['cancellation_reason'] === 'other'
+                    ? trim($validated['cancellation_note'])
+                    : null,
+                'cancelled_at' => now(),
+            ];
+        }
+
+        $order->update($updateData);
+
+        if ($newStatus === 'cancelled') {
+            $notifier->send($order);
+        }
 
         return back()->with('success', 'Đã cập nhật trạng thái đơn hàng thành công.');
     }
@@ -82,7 +123,7 @@ class OrderController extends Controller
     public function updatePaymentStatus(Request $request, Order $order)
     {
         $request->validate([
-            'payment_status' => 'required|in:paid,failed,pending'
+            'payment_status' => 'required|in:paid,failed,pending',
         ]);
 
         if ($order->payment_status === 'paid') {
@@ -90,7 +131,7 @@ class OrderController extends Controller
         }
 
         $order->update([
-            'payment_status' => $request->payment_status
+            'payment_status' => $request->payment_status,
         ]);
 
         return back()->with('success', 'Đã cập nhật trạng thái thanh toán thành công.');

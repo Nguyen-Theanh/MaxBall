@@ -13,6 +13,7 @@ class UserAddress extends Model
         'user_id',
         'receiver_name',
         'receiver_phone',
+        'receiver_email',
         'address_line',
         'province_code',
         'province_name',

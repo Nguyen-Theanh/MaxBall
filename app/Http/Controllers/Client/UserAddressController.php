@@ -15,11 +15,13 @@ class UserAddressController extends Controller
         $request->validate([
             'receiver_name' => ['required', 'string', 'max:255'],
             'receiver_phone' => ['required', 'regex:/^0[0-9]{9}$/'],
+            'receiver_email' => ['required', 'email', 'max:255'],
         ], [
             'receiver_phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.',
         ]);
 
-        $data = $addressData->fromRequest($request) + $request->only('receiver_name', 'receiver_phone');
+        $data = $addressData->fromRequest($request)
+            + $request->only('receiver_name', 'receiver_phone', 'receiver_email');
         $user = Auth::user();
         $isFirst = $user->addresses()->count() === 0;
         $isDefault = $isFirst || $request->has('is_default');
@@ -46,11 +48,13 @@ class UserAddressController extends Controller
         $request->validate([
             'receiver_name' => ['required', 'string', 'max:255'],
             'receiver_phone' => ['required', 'regex:/^0[0-9]{9}$/'],
+            'receiver_email' => ['required', 'email', 'max:255'],
         ], [
             'receiver_phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.',
         ]);
 
-        $data = $addressData->fromRequest($request) + $request->only('receiver_name', 'receiver_phone');
+        $data = $addressData->fromRequest($request)
+            + $request->only('receiver_name', 'receiver_phone', 'receiver_email');
         $address = Auth::user()->addresses()->findOrFail($id);
 
         DB::transaction(function () use ($request, $address, $data): void {
@@ -94,5 +98,4 @@ class UserAddressController extends Controller
 
         return back()->with('success', 'Đã đặt làm địa chỉ mặc định!');
     }
-
 }

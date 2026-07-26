@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\OrderCancellationReasons;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,6 +25,10 @@ class Order extends Model
         'payment_method',
         'payment_status',
         'order_status',
+        'cancelled_by',
+        'cancellation_reason',
+        'cancellation_note',
+        'cancelled_at',
     ];
 
     protected $casts = [
@@ -31,6 +36,7 @@ class Order extends Model
         'shipping_fee' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'cancelled_at' => 'datetime',
     ];
 
     public function user()
@@ -41,5 +47,13 @@ class Order extends Model
     public function details()
     {
         return $this->hasMany(OrderDetail::class);
+    }
+
+    public function getCancellationReasonLabelAttribute(): ?string
+    {
+        return OrderCancellationReasons::label(
+            $this->cancellation_reason,
+            $this->cancelled_by
+        );
     }
 }

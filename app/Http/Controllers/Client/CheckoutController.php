@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrderCreatedMail;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\OrderCreatedMail;
+use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -19,7 +19,7 @@ class CheckoutController extends Controller
     {
         $cart = Cart::with('items.productVariant.product')->where('user_id', Auth::id())->first();
 
-        if (!$cart || $cart->items->count() === 0) {
+        if (! $cart || $cart->items->count() === 0) {
             return redirect()->route('client.products.index')->with('error', 'Giỏ hàng của bạn đang trống.');
         }
 
@@ -42,14 +42,14 @@ class CheckoutController extends Controller
 
         $cart = Cart::with('items.productVariant')->where('user_id', Auth::id())->first();
 
-        if (!$cart || $cart->items->count() === 0) {
+        if (! $cart || $cart->items->count() === 0) {
             return redirect()->route('client.products.index')->with('error', 'Giỏ hàng trống.');
         }
 
         // Validate stock
         foreach ($cart->items as $item) {
             if ($item->quantity > $item->productVariant->stock) {
-                return back()->with('error', 'Sản phẩm "' . $item->productVariant->product->name . ' - ' . $item->productVariant->name . '" không đủ số lượng tồn kho.');
+                return back()->with('error', 'Sản phẩm "'.$item->productVariant->product->name.' - '.$item->productVariant->name.'" không đủ số lượng tồn kho.');
             }
         }
 
@@ -73,6 +73,7 @@ class CheckoutController extends Controller
                 'order_code' => $orderCode,
                 'customer_name' => $selectedAddress->receiver_name,
                 'customer_phone' => $selectedAddress->receiver_phone,
+                'customer_email' => $selectedAddress->receiver_email ?: Auth::user()->email,
                 'customer_address' => $selectedAddress->address_detail,
                 'sub_total' => $subTotal,
                 'shipping_fee' => $shippingFee,
@@ -84,7 +85,7 @@ class CheckoutController extends Controller
 
             foreach ($cart->items as $item) {
                 $price = $item->productVariant->discount_price ?: $item->productVariant->base_price;
-                
+
                 OrderDetail::create([
                     'order_id' => $order->id,
                     'product_variant_id' => $item->productVariant->id,
@@ -110,7 +111,7 @@ class CheckoutController extends Controller
                 }
             } catch (\Exception $e) {
                 // Log the email error but don't stop the checkout
-                \Log::error('Lỗi gửi email: ' . $e->getMessage());
+                \Log::error('Lỗi gửi email: '.$e->getMessage());
             }
 
             if ($request->payment_method === 'vietqr') {
@@ -121,7 +122,8 @@ class CheckoutController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Đã xảy ra lỗi trong quá trình đặt hàng: ' . $e->getMessage());
+
+            return back()->with('error', 'Đã xảy ra lỗi trong quá trình đặt hàng: '.$e->getMessage());
         }
     }
 }
