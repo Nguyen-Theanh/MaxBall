@@ -89,12 +89,23 @@
                                             <span class="badge bg-success px-2 py-2">Hoàn thành</span>
                                         @else
                                             <span class="badge bg-danger px-2 py-2">Đã hủy</span>
+                                            @if($order->cancellation_reason)
+                                                <div class="mt-1 small text-danger" style="max-width: 220px;">{{ $order->cancellation_reason_label }}</div>
+                                            @endif
                                         @endif
                                     @else
                                         <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST" class="m-0">
                                             @csrf
                                             @method('PATCH')
-                                            <select name="order_status" class="form-select form-select-sm" style="min-width: 140px;" onchange="confirmAndSubmit(this)">
+                                            <select name="order_status"
+                                                    class="form-select form-select-sm"
+                                                    style="min-width: 140px;"
+                                                    data-admin-cancel
+                                                    data-order-id="{{ $order->id }}"
+                                                    data-order-code="{{ $order->order_code }}"
+                                                    data-current-status="{{ $order->order_status }}"
+                                                    data-cancel-action="{{ route('admin.orders.updateStatus', $order->id) }}"
+                                                    onchange="confirmAndSubmit(this)">
                                                 @if($order->order_status == 'pending')
                                                     <option value="pending" selected>Chờ xác nhận</option>
                                                     <option value="processing">Đã xác nhận</option>
@@ -152,12 +163,9 @@ async function confirmAndSubmit(selectElement) {
             variant: 'primary',
         };
     } else if (status === 'cancelled') {
-        options = {
-            title: 'Hủy đơn hàng',
-            message: 'Đơn hàng sẽ bị hủy và số lượng sản phẩm sẽ được hoàn lại kho. Thao tác này không thể hoàn tác.',
-            confirmLabel: 'Hủy đơn',
-            variant: 'warning',
-        };
+        window.openAdminCancelModal(selectElement);
+
+        return;
     }
 
     if (!options || await window.AppConfirm.open(options)) {
@@ -167,4 +175,6 @@ async function confirmAndSubmit(selectElement) {
     }
 }
 </script>
+
+@include('admin.orders._cancel_modal')
 @endsection

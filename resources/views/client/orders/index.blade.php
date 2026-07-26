@@ -50,6 +50,9 @@
                                 @elseif($order->order_status == 'completed') Hoàn thành
                                 @else Đã hủy @endif
                             </span>
+                            @if($order->order_status === 'cancelled' && $order->cancellation_reason)
+                                <p class="mt-2 max-w-xs text-xs text-red-700">{{ $order->cancellation_reason_label }}</p>
+                            @endif
                         </div>
                     </div>
                     
@@ -95,18 +98,14 @@
                             </a>
                             
 @if(in_array($order->order_status, ['pending', 'processing']))
-    <form action="{{ route('client.orders.cancel', $order->id) }}"
-          method="POST"
-          data-confirm="Đơn hàng sẽ được chuyển sang trạng thái đã hủy. Bạn có chắc chắn muốn tiếp tục?"
-          data-confirm-title="Hủy đơn hàng"
-          data-confirm-label="Hủy đơn"
-          data-confirm-variant="warning">
-                                    @csrf
-                                    @method('PUT')
-                                    <button type="submit" class="px-4 py-2 border border-red-600 text-red-600 text-sm font-bold rounded hover:bg-red-50 transition-colors">
-                                        Hủy đơn
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        data-customer-cancel
+                                        data-order-id="{{ $order->id }}"
+                                        data-order-code="{{ $order->order_code }}"
+                                        data-cancel-action="{{ route('client.orders.cancel', $order->id) }}"
+                                        class="px-4 py-2 border border-red-600 text-red-600 text-sm font-bold rounded hover:bg-red-50 transition-colors">
+                                    Hủy đơn
+                                </button>
                             @elseif($order->order_status == 'shipping')
                                 <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?');">
                                     @csrf
@@ -134,4 +133,6 @@
         </div>
     @endif
 </div>
+
+@include('client.orders._cancel_modal')
 @endsection
