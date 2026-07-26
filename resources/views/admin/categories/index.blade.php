@@ -22,7 +22,7 @@
     {{-- Thông báo lỗi (ví dụ: khi xóa danh mục cha có chứa con) --}}
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            {{ session('error') }}
+            {!! nl2br(e(session('error'))) !!}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
