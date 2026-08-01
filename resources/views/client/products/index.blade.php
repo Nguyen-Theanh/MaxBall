@@ -199,6 +199,122 @@
     </div>
 </section>
 
+<!-- Leaderboard Section -->
+<section id="leaderboard" class="py-24 bg-white relative overflow-hidden">
+    <!-- Decorative background elements -->
+    <div class="absolute top-0 left-0 w-64 h-64 bg-[#d92525]/5 rounded-full filter blur-[80px]"></div>
+    <div class="absolute bottom-0 right-0 w-80 h-80 bg-[#10271d]/5 rounded-full filter blur-[100px]"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="flex flex-col items-center mb-16 text-center" data-aos="fade-up">
+            <p class="text-[#d92525] font-black uppercase tracking-[0.2em] text-sm mb-3">Vinh Danh</p>
+            <h2 class="font-heading text-4xl md:text-5xl font-black text-[#10271d]">
+                Khách Hàng Nổi Bật Tháng {{ now()->month }}
+            </h2>
+            <div class="w-24 h-1 bg-[#d92525] mt-6 rounded-full"></div>
+            <p class="text-gray-500 mt-6 max-w-2xl text-lg">Cảm ơn sự đồng hành và tin tưởng của quý khách hàng. Dưới đây là những thành viên đã có nhiều đóng góp nhất cho cộng đồng MaxBall trong tháng này.</p>
+        </div>
+
+        @if($topCustomers->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-end max-w-5xl mx-auto">
+                {{-- TOP 2 --}}
+                @if($topCustomers->count() > 1)
+                    @php $user2 = $topCustomers[1]; @endphp
+                    <div class="order-2 md:order-1 flex flex-col items-center group" data-aos="fade-up" data-aos-delay="100">
+                        <div class="relative mb-6">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 p-1 shadow-lg shadow-gray-400/50 transform group-hover:-translate-y-2 transition-all duration-300">
+                                <div class="w-full h-full rounded-full bg-white flex items-center justify-center text-3xl font-black text-gray-400">
+                                    {{ strtoupper(substr($user2->name, 0, 1)) }}
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-400 to-gray-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md border-2 border-white">
+                                TOP 2
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 w-full text-center relative overflow-hidden group-hover:shadow-2xl transition-all duration-300">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-300 to-gray-400"></div>
+                            <h3 class="font-bold text-[#10271d] text-lg mb-1 truncate w-full">{{ $user2->name }}</h3>
+                            <p class="text-[#d92525] font-black text-xl">{{ number_format($user2->orders_sum_total_amount, 0, ',', '.') }}đ</p>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- TOP 1 --}}
+                @php $user1 = $topCustomers[0]; @endphp
+                <div class="order-1 md:order-2 flex flex-col items-center group z-10" data-aos="fade-up" data-aos-delay="0">
+                    <div class="relative mb-8">
+                        <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 text-5xl text-yellow-400 drop-shadow-md z-20 animate-bounce">
+                            <i class="fa-solid fa-crown"></i>
+                        </div>
+                        <div class="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 p-1.5 shadow-xl shadow-yellow-500/50 transform group-hover:-translate-y-3 transition-all duration-300">
+                            <div class="w-full h-full rounded-full bg-white flex items-center justify-center text-4xl font-black text-yellow-500">
+                                {{ strtoupper(substr($user1->name, 0, 1)) }}
+                            </div>
+                        </div>
+                        <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-sm font-black px-5 py-1.5 rounded-full shadow-lg border-2 border-white">
+                            TOP 1
+                        </div>
+                    </div>
+                    <div class="bg-white p-8 rounded-3xl shadow-2xl border border-yellow-100 w-full text-center relative overflow-hidden transform md:-translate-y-4 group-hover:-translate-y-6 transition-all duration-300">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-300 to-yellow-500"></div>
+                        <h3 class="font-bold text-[#10271d] text-2xl mb-2 truncate w-full">{{ $user1->name }}</h3>
+                        <p class="text-[#d92525] font-black text-2xl">{{ number_format($user1->orders_sum_total_amount, 0, ',', '.') }}đ</p>
+                    </div>
+                </div>
+
+                {{-- TOP 3 --}}
+                @if($topCustomers->count() > 2)
+                    @php $user3 = $topCustomers[2]; @endphp
+                    <div class="order-3 md:order-3 flex flex-col items-center group" data-aos="fade-up" data-aos-delay="200">
+                        <div class="relative mb-6">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-300 to-orange-500 p-1 shadow-lg shadow-orange-500/50 transform group-hover:-translate-y-2 transition-all duration-300">
+                                <div class="w-full h-full rounded-full bg-white flex items-center justify-center text-3xl font-black text-orange-500">
+                                    {{ strtoupper(substr($user3->name, 0, 1)) }}
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-400 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md border-2 border-white">
+                                TOP 3
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-xl border border-orange-50 w-full text-center relative overflow-hidden group-hover:shadow-2xl transition-all duration-300">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-orange-600"></div>
+                            <h3 class="font-bold text-[#10271d] text-lg mb-1 truncate w-full">{{ $user3->name }}</h3>
+                            <p class="text-[#d92525] font-black text-xl">{{ number_format($user3->orders_sum_total_amount, 0, ',', '.') }}đ</p>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            {{-- Top 4 and 5 list --}}
+            @if($topCustomers->count() > 3)
+                <div class="max-w-3xl mx-auto mt-16 bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden" data-aos="fade-up">
+                    @foreach($topCustomers->skip(3) as $index => $user)
+                        <div class="flex items-center justify-between p-6 {{ !$loop->last ? 'border-b border-gray-100' : '' }} hover:bg-gray-50 transition-colors">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500">
+                                    {{ $index + 4 }}
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-[#10271d] flex items-center justify-center text-white font-bold">
+                                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                                </div>
+                                <h4 class="font-bold text-[#10271d] text-lg">{{ $user->name }}</h4>
+                            </div>
+                            <div class="font-black text-[#d92525]">
+                                {{ number_format($user->orders_sum_total_amount, 0, ',', '.') }}đ
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        @else
+            <div class="text-center py-16 bg-gray-50 rounded-3xl border border-gray-200 border-dashed">
+                <i class="fa-solid fa-trophy text-5xl text-gray-300 mb-4"></i>
+                <p class="text-gray-500 text-lg">Chưa có dữ liệu khách hàng cho tháng này.</p>
+            </div>
+        @endif
+    </div>
+</section>
+
 <!-- Promotion Section -->
 <section id="deal" class="relative bg-[#10271d] py-24 overflow-hidden">
     <!-- Decorative Elements -->

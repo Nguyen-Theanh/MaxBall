@@ -14,7 +14,17 @@ class ProductController extends Controller
     {
         $products = Product::where('status', 1)->latest()->take(8)->get();
 
-        return view('client.products.index', compact('products'));
+        $topCustomers = \App\Models\User::withSum(['orders' => function($query) {
+            $query->where('order_status', 'completed')
+                  ->whereMonth('created_at', now()->month)
+                  ->whereYear('created_at', now()->year);
+        }], 'total_amount')
+        ->having('orders_sum_total_amount', '>', 0)
+        ->orderByDesc('orders_sum_total_amount')
+        ->take(5)
+        ->get();
+
+        return view('client.products.index', compact('products', 'topCustomers'));
     }
 
     public function index(Request $request)

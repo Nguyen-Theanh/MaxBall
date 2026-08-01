@@ -112,7 +112,7 @@
     $averageRating = (float) ($product->reviews_avg_rating ?? 0);
 @endphp
 
-<section class="bg-[#10271d] pt-32 pb-12">
+<section class="bg-[#10271d] pt-24 pb-6">
     <div class="max-w-7xl mx-auto px-4">
         <div class="text-sm text-gray-300">
             <a href="{{ route('client.home') }}" class="hover:text-white transition">Trang chủ</a>
@@ -124,8 +124,8 @@
     </div>
 </section>
 
-<div class="max-w-7xl mx-auto px-4 py-10">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 bg-white rounded-2xl shadow p-6">
+<div class="max-w-7xl mx-auto px-4 py-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl shadow p-6">
         <div>
             <button type="button"
                     id="main-image-button"
@@ -133,7 +133,7 @@
                 <img src="{{ $galleryImages->first()['url'] }}"
                      alt="{{ $product->name }}"
                      id="main-product-image"
-                     class="w-full h-[500px] object-cover">
+                     class="w-full aspect-[4/5] max-h-[460px] object-cover">
             </button>
 
             @if($galleryImages->count() > 1)
@@ -192,12 +192,7 @@
                 </span>
             </div>
 
-            <div class="mb-6">
-                <h3 class="font-bold mb-2">Mô tả sản phẩm</h3>
-                <p class="text-gray-700 leading-7">
-                    {{ $product->description ?? 'Chưa có mô tả sản phẩm.' }}
-                </p>
-            </div>
+
 
             @if($variantData->count())
                 <div class="mb-6">
@@ -232,7 +227,7 @@
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
                 <input type="hidden" name="product_variant_id" id="selected_variant_id" value="">
 
-                <div class="mb-8">
+                <div class="mb-6">
                     <h3 class="font-bold mb-3">Số lượng</h3>
                     <div class="inline-flex items-center border rounded-lg">
                         <button type="button" id="btn-decrease-qty" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-l-lg transition-colors">-</button>
@@ -241,12 +236,12 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row gap-4 mt-8">
-                    <button type="submit" name="action" value="add_cart" class="flex-1 bg-white text-red-600 border border-red-600 py-4 rounded-xl font-bold hover:bg-red-50 transition-colors">
+                <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                    <button type="submit" name="action" value="add_cart" class="flex-1 bg-white text-red-600 border border-red-600 py-3.5 rounded-xl font-bold hover:bg-red-50 transition-colors">
                         Thêm vào giỏ hàng
                     </button>
 
-                    <button type="submit" name="action" value="buy_now" class="flex-1 bg-red-600 text-white py-4 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200">
+                    <button type="submit" name="action" value="buy_now" class="flex-1 bg-red-600 text-white py-3.5 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200">
                         Mua ngay
                     </button>
                 </div>
@@ -254,7 +249,15 @@
         </div>
     </div>
 
-    <section id="product-reviews" class="mt-14 rounded-2xl bg-white p-6 shadow">
+    <!-- Section Mô tả sản phẩm -->
+    <section class="mt-8 rounded-2xl bg-white p-6 shadow border border-gray-100">
+        <h2 class="text-2xl font-black text-gray-900 mb-4 border-b pb-4">Chi tiết & Mô tả sản phẩm</h2>
+        <div class="prose max-w-none text-gray-700 leading-8">
+            {!! nl2br(e($product->description ?? 'Chưa có mô tả chi tiết cho sản phẩm này.')) !!}
+        </div>
+    </section>
+
+    <section id="product-reviews" class="mt-8 rounded-2xl bg-white p-6 shadow">
         <div class="flex flex-col gap-5 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-2xl font-black text-gray-900">Đánh giá sản phẩm</h2>
