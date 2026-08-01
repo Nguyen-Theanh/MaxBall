@@ -36,95 +36,25 @@ class UserController extends Controller
         return view('admin.users.index', compact('users'));
     }
 
-    public function create(): View
+    public function toggleStatus(Request $request, User $user): RedirectResponse
     {
-        return view('admin.users.create', [
-            'user' => new User(['role' => 'customer', 'status' => true]),
-            'roles' => self::ROLES,
-        ]);
-    }
-
-    public function store(Request $request): RedirectResponse
-    {
-        $data = $this->validatedData($request, null, true);
-        $data['status'] = $request->boolean('status');
-
-        User::create($data);
+        if ($user->status) {
+            if ($request->user()->is($user)) {
+                return back()->withErrors(['user' => 'Bạn không thể khóa chính tài khoản đang đăng nhập.']);
+            }
+            if ($user->role === 'admin' && $this->activeAdminCount() <= 1) {
+                return back()->withErrors(['user' => 'Cần giữ lại ít nhất một admin đang hoạt động.']);
+            }
+            $user->update(['status' => false]);
+            $message = 'Đã khóa tài khoản.';
+        } else {
+            $user->update(['status' => true]);
+            $message = 'Đã mở khóa tài khoản.';
+        }
 
         return redirect()
             ->route('admin.users.index')
-            ->with('success', 'Đã tạo tài khỏan mới.');
-    }
-
-    public function edit(User $user): View
-    {
-        return view('admin.users.edit', [
-            'user' => $user,
-            'roles' => self::ROLES,
-        ]);
-    }
-
-    public function update(Request $request, User $user): RedirectResponse
-    {
-        $data = $this->validatedData($request, $user);
-        $data['status'] = $request->boolean('status');
-
-        if ($this->wouldRemoveLastActiveAdmin($user, $data)) {
-            return back()
-                ->withInput()
-                ->withErrors(['role' => 'Cần giữ lại ít nhất một admin đang họat động.']);
-        }
-
-        if ($request->user()->is($user) && ($data['role'] !== 'admin' || ! $data['status'])) {
-            return back()
-                ->withInput()
-                ->withErrors(['role' => 'Bạn không thể tự hạ quyền hoặc khóa chính tài khỏan đang đăng nhập.']);
-        }
-
-        if (empty($data['password'])) {
-            unset($data['password']);
-        }
-
-        $user->update($data);
-
-        return redirect()
-            ->route('admin.users.index')
-            ->with('success', 'Đã cập nhật tài khoản.');
-    }
-
-    public function destroy(Request $request, User $user): RedirectResponse
-    {
-        if ($request->user()->is($user)) {
-            return back()->withErrors(['user' => 'Bạn không thể xóa chính tài khoản đang đăng nhập.']);
-        }
-
-        if ($user->role === 'admin' && $user->status && $this->activeAdminCount() <= 1) {
-            return back()->withErrors(['user' => 'Cần giữ lại ít nhất một admin đang hoạt động.']);
-        }
-
-        $user->delete();
-
-        return redirect()
-            ->route('admin.users.index')
-            ->with('success', 'Đã xóa tài khoản.');
-    }
-
-    private function validatedData(Request $request, ?User $user = null, bool $creating = false): array
-    {
-        $passwordRules = $creating
-            ? ['required', 'confirmed', Password::min(8)]
-            : ['nullable', 'confirmed', Password::min(8)];
-
-        return $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
-            'phone' => ['nullable', 'regex:/^0[0-9]{9}$/'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'role' => ['required', Rule::in(self::ROLES)],
-            'password' => $passwordRules,
-        ], [
-            'phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0.',
-        ]);
+            ->with('success', $message);
     }
 
     private function wouldRemoveLastActiveAdmin(User $user, array $data): bool

@@ -102,7 +102,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::resource('products', AdminProductController::class)->except(['show']);
     Route::resource('categories', CategoryController::class)->except(['show']);
-    Route::resource('users', AdminUserController::class);
+    Route::resource('users', AdminUserController::class)->only(['index']);
+    Route::patch('users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
 
     // Quản lý đơn hàng
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');

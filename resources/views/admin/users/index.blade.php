@@ -31,7 +31,7 @@
                     </div>
                 </form>
 
-                <a href="{{ route('admin.users.create') }}" class="btn btn-primary align-self-start">Thêm user</a>
+
             </div>
 
             <div class="table-responsive">
@@ -55,7 +55,7 @@
                                 </td>
                                 <td>{{ $user->phone ?: '-' }}</td>
                                 <td>
-                                    <span class="badge {{ $user->role === 'admin' ? 'text-bg-dark' : 'text-bg-info' }}">
+                                    <span class="badge {{ $user->role === 'admin' ? 'text-bg-danger' : 'text-bg-info' }}">
                                         {{ ucfirst($user->role) }}
                                     </span>
                                 </td>
@@ -68,16 +68,23 @@
                                 </td>
                                 <td>{{ $user->orders_count }}</td>
                                 <td class="text-end">
-                                    <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-outline-primary">Sửa</a>
-                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="d-inline"
-                                          data-confirm="Tài khoản người dùng này sẽ bị xóa khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục?"
-                                          data-confirm-title="Xóa người dùng"
-                                          data-confirm-label="Xóa người dùng"
-                                          data-confirm-variant="danger">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
-                                    </form>
+                                    @if(auth()->id() !== $user->id)
+                                        <form method="POST" action="{{ route('admin.users.toggle-status', $user) }}" class="d-inline"
+                                              data-confirm="{{ $user->status ? 'Tài khoản này sẽ bị khóa và không thể đăng nhập. Bạn có chắc chắn?' : 'Tài khoản này sẽ được mở khóa và có thể đăng nhập bình thường. Bạn có chắc chắn?' }}"
+                                              data-confirm-title="{{ $user->status ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}"
+                                              data-confirm-label="{{ $user->status ? 'Khóa' : 'Mở khóa' }}"
+                                              data-confirm-variant="{{ $user->status ? 'warning' : 'success' }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            @if ($user->status)
+                                                <button type="submit" class="btn btn-sm btn-outline-warning">Khóa</button>
+                                            @else
+                                                <button type="submit" class="btn btn-sm btn-outline-success">Mở khóa</button>
+                                            @endif
+                                        </form>
+                                    @else
+                                        <span class="text-muted fst-italic" style="font-size: 0.85rem;">(Bạn)</span>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
