@@ -144,7 +144,7 @@
                 @if($products->hasPages())
                     <div class="mt-16 flex justify-center">
                         <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-                            {{ $products->links() }}
+                            {{ $products->onEachSide(1)->links('pagination::tailwind') }}
                         </div>
                     </div>
                 @endif

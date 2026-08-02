@@ -100,5 +100,11 @@
             </div>
         </div>
     </div>
+
+    @if($categories->hasPages())
+        <div class="mt-4">
+            {{ $categories->onEachSide(1)->links() }}
+        </div>
+    @endif
 </div>
 @endsection

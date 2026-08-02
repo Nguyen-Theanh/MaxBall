@@ -54,6 +54,11 @@ class OrderCancellationTest extends TestCase
         );
         $this->assertStringContainsString('Muốn thay đổi size/màu/số lượng.', $renderedMail);
         $this->assertStringContainsString('Chi tiết sản phẩm đã hủy', $renderedMail);
+        $this->assertStringContainsString('Trạng thái thanh toán:', $renderedMail);
+        $this->assertStringContainsString('Chưa thanh toán', $renderedMail);
+        $this->assertStringContainsString('Địa chỉ nhận hàng:', $renderedMail);
+        $this->assertStringContainsString($order->customer_address, $renderedMail);
+        $this->assertStringContainsString($order->customer_phone, $renderedMail);
         $this->assertStringContainsString('Sản phẩm kiểm thử hủy đơn', $renderedMail);
         $this->assertStringContainsString('Phân loại: Size M', $renderedMail);
         $this->assertStringContainsString('200.000đ', $renderedMail);

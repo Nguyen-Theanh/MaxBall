@@ -16,8 +16,11 @@ class OrderController extends Controller
     {
         $orders = Order::with(['details.variant.product', 'details.review'])
             ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(8)
+            ->withQueryString()
+            ->fragment('orders');
 
         $customerCancellationReasons = OrderCancellationReasons::customer();
 

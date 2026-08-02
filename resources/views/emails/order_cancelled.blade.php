@@ -68,26 +68,30 @@
         }
         .order-info {
             background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            width: 100%;
+            border-left: 4px solid #d92525;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            padding: 15px 20px;
         }
-        .order-info td {
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 14px;
-            padding: 11px 14px;
+        .order-info p {
+            font-size: 15px;
+            margin: 5px 0;
         }
-        .order-info tr:last-child td {
-            border-bottom: 0;
-        }
-        .order-info .label {
-            color: #6b7280;
-            width: 42%;
-        }
-        .order-info .value {
-            color: #111827;
+        .badge-pending {
+            background-color: #fff3cd;
+            border-radius: 4px;
+            color: #856404;
+            font-size: 12px;
             font-weight: 700;
-            text-align: right;
+            padding: 4px 8px;
+        }
+        .badge-paid {
+            background-color: #d4edda;
+            border-radius: 4px;
+            color: #155724;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 8px;
         }
         .product-table {
             border-collapse: collapse;
@@ -234,28 +238,21 @@
             <div class="case-message">{{ $cancellationMessage }}</div>
 
             <h2 class="section-title">Thông tin đơn hàng</h2>
-            <table class="order-info" role="presentation">
-                <tr>
-                    <td class="label">Mã đơn hàng</td>
-                    <td class="value">#{{ $order->order_code }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Ngày đặt</td>
-                    <td class="value">{{ $order->created_at->format('d/m/Y H:i') }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Thời gian hủy</td>
-                    <td class="value">{{ $order->cancelled_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i') }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Tổng thanh toán</td>
-                    <td class="value" style="color: #dc2626;">{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
-                </tr>
-                <tr>
-                    <td class="label">Phương thức thanh toán</td>
-                    <td class="value">{{ strtoupper($order->payment_method) }}</td>
-                </tr>
-            </table>
+            <div class="order-info">
+                <p><strong>Mã đơn hàng:</strong> #{{ $order->order_code }}</p>
+                <p><strong>Ngày đặt:</strong> {{ $order->created_at->format('d/m/Y H:i') }}</p>
+                <p><strong>Tổng thanh toán:</strong> <span style="color: #d92525; font-size: 17px; font-weight: 700;">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span></p>
+                <p><strong>Phương thức thanh toán:</strong> {{ strtoupper($order->payment_method) }}</p>
+                <p>
+                    <strong>Trạng thái thanh toán:</strong>
+                    @if($order->payment_status === 'paid')
+                        <span class="badge-paid">Đã thanh toán</span>
+                    @else
+                        <span class="badge-pending">Chưa thanh toán</span>
+                    @endif
+                </p>
+                <p><strong>Địa chỉ nhận hàng:</strong> {{ $order->customer_address }} (SĐT: {{ $order->customer_phone }})</p>
+            </div>
 
             <h2 class="section-title">Chi tiết sản phẩm đã hủy</h2>
             <table class="product-table" role="presentation">
