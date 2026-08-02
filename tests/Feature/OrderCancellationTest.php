@@ -53,6 +53,15 @@ class OrderCancellationTest extends TestCase
             $renderedMail
         );
         $this->assertStringContainsString('Muốn thay đổi size/màu/số lượng.', $renderedMail);
+        $this->assertStringContainsString('Chi tiết sản phẩm đã hủy', $renderedMail);
+        $this->assertStringContainsString('Sản phẩm kiểm thử hủy đơn', $renderedMail);
+        $this->assertStringContainsString('Phân loại: Size M', $renderedMail);
+        $this->assertStringContainsString('200.000đ', $renderedMail);
+        $this->assertStringContainsString('400.000đ', $renderedMail);
+        $this->assertStringContainsString('Phí vận chuyển:', $renderedMail);
+        $this->assertStringContainsString('30.000đ', $renderedMail);
+        $this->assertStringContainsString('Tổng giá trị đơn đã hủy:', $renderedMail);
+        $this->assertStringContainsString('430.000đ', $renderedMail);
         $this->assertStringContainsString('không phát sinh yêu cầu hoàn tiền', $renderedMail);
     }
 
@@ -144,6 +153,47 @@ class OrderCancellationTest extends TestCase
             $renderedMail
         );
         Mail::assertSent(OrderCancelledMail::class);
+    }
+
+    public function test_cancellation_email_lists_each_cancelled_product_and_its_line_total(): void
+    {
+        [, , $order, $firstVariant] = $this->orderFixture('cancelled');
+        $suffix = Str::lower(Str::random(8));
+        $secondProduct = Product::create([
+            'category_id' => $firstVariant->product->category_id,
+            'name' => 'Bóng thi đấu kiểm thử hủy đơn',
+            'slug' => "bong-thi-dau-huy-don-{$suffix}",
+            'status' => true,
+            'base_price' => 150000,
+        ]);
+        $secondVariant = ProductVariant::create([
+            'product_id' => $secondProduct->id,
+            'name' => 'Size 5',
+            'base_price' => 150000,
+            'stock' => 5,
+        ]);
+
+        OrderDetail::create([
+            'order_id' => $order->id,
+            'product_variant_id' => $secondVariant->id,
+            'quantity' => 1,
+            'price' => 150000,
+        ]);
+
+        $order->update([
+            'sub_total' => 550000,
+            'total_amount' => 580000,
+        ]);
+
+        $renderedMail = (new OrderCancelledMail($order->fresh()))->render();
+
+        $this->assertStringContainsString('Sản phẩm kiểm thử hủy đơn', $renderedMail);
+        $this->assertStringContainsString('Bóng thi đấu kiểm thử hủy đơn', $renderedMail);
+        $this->assertStringContainsString('Phân loại: Size M', $renderedMail);
+        $this->assertStringContainsString('Phân loại: Size 5', $renderedMail);
+        $this->assertStringContainsString('400.000đ', $renderedMail);
+        $this->assertStringContainsString('150.000đ', $renderedMail);
+        $this->assertStringContainsString('580.000đ', $renderedMail);
     }
 
     public function test_customer_and_admin_see_their_respective_reason_lists(): void

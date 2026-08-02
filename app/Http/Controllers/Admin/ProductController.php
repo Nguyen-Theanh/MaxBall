@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute as ProductAttributeOption;
 use App\Models\Category;
 use App\Models\Product;
-
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -86,7 +85,7 @@ class ProductController extends Controller
         $data = $this->validatedData($request);
 
         if ($request->hasFile('image')) {
-            if ($product->thumbnail && !Str::startsWith($product->thumbnail, ['http://', 'https://'])) {
+            if ($product->thumbnail && ! Str::startsWith($product->thumbnail, ['http://', 'https://'])) {
                 Storage::disk('public')->delete(ltrim($product->thumbnail, '/'));
             }
             $data['thumbnail'] = $request->file('image')->store('products', 'public');
@@ -110,6 +109,15 @@ class ProductController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
+        if ($product->variants()->whereHas('orderDetails')->exists()) {
+            return redirect()
+                ->route('admin.products.index')
+                ->with(
+                    'error',
+                    "Không thể xóa sản phẩm vì sản phẩm này đã phát sinh đơn hàng.\nVui lòng ẩn sản phẩm thay vì xóa để bảo toàn dữ liệu đơn hàng."
+                );
+        }
+
         $product->delete();
 
         return redirect()
@@ -201,8 +209,9 @@ class ProductController extends Controller
         $receivedIds = [];
 
         foreach ($variants as $variantIndex => $variantData) {
-            if (empty($variantData))
+            if (empty($variantData)) {
                 continue;
+            }
 
             $data = [
                 'name' => $variantData['name'] ?? null,
@@ -214,7 +223,7 @@ class ProductController extends Controller
 
             $variantImage = $request->file("variants.{$variantIndex}.image");
 
-            if (!empty($variantData['id'])) {
+            if (! empty($variantData['id'])) {
                 $id = (int) $variantData['id'];
                 $variant = $product->variants()->where('id', $id)->first();
 
@@ -226,6 +235,7 @@ class ProductController extends Controller
 
                     $variant->update($data);
                     $receivedIds[] = $id;
+
                     continue;
                 }
             }
@@ -240,7 +250,7 @@ class ProductController extends Controller
 
         // delete variants removed in the UI
         $toDelete = array_diff($existingIds, $receivedIds);
-        if (!empty($toDelete)) {
+        if (! empty($toDelete)) {
             $product->variants()->whereIn('id', $toDelete)->get()->each(function ($variant) {
                 $this->deleteVariantImage($variant->image_url);
             });
@@ -250,7 +260,7 @@ class ProductController extends Controller
 
     private function deleteVariantImage(?string $path): void
     {
-        if (!$path || Str::startsWith($path, ['http://', 'https://'])) {
+        if (! $path || Str::startsWith($path, ['http://', 'https://'])) {
             return;
         }
 
@@ -302,17 +312,17 @@ class ProductController extends Controller
         $base = Str::upper(Str::slug($product->slug ?: $product->name, '-'));
         $variant = Str::upper(Str::slug((string) $variantName, '-'));
 
-        return trim($base . '-' . ($variant ?: 'VAR-' . ($index + 1)), '-');
+        return trim($base.'-'.($variant ?: 'VAR-'.($index + 1)), '-');
     }
 
     private function storeGalleryImages(Product $product, Request $request): void
     {
-        if (!$request->hasFile('gallery_images')) {
+        if (! $request->hasFile('gallery_images')) {
             return;
         }
 
         foreach ($request->file('gallery_images') as $file) {
-            if (!$file->isValid()) {
+            if (! $file->isValid()) {
                 continue;
             }
 
@@ -349,12 +359,13 @@ class ProductController extends Controller
 
         return $categories->map(function ($category) {
             $category->display_name = $category->parent_id
-                ? $category->parent->name . ' > ' . $category->name
+                ? $category->parent->name.' > '.$category->name
                 : $category->name;
 
             return $category;
         })->sortBy('parent_id');
     }
+
     private function variantAttributes()
     {
         return ProductAttributeOption::with('values')->orderBy('name')->get();

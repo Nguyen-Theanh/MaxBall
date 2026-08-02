@@ -89,6 +89,69 @@
             font-weight: 700;
             text-align: right;
         }
+        .product-table {
+            border-collapse: collapse;
+            margin-bottom: 18px;
+            width: 100%;
+        }
+        .product-table th {
+            background-color: #f3f4f6;
+            border-bottom: 2px solid #d1d5db;
+            color: #4b5563;
+            font-size: 12px;
+            letter-spacing: 0.3px;
+            padding: 11px 10px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        .product-table td {
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+            font-size: 13px;
+            padding: 13px 10px;
+            vertical-align: top;
+        }
+        .product-name {
+            color: #111827;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .product-variant {
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .totals {
+            border-collapse: collapse;
+            margin: 0 0 26px auto;
+            width: 100%;
+        }
+        .totals td {
+            color: #4b5563;
+            font-size: 14px;
+            padding: 7px 10px;
+            text-align: right;
+        }
+        .totals .value {
+            color: #111827;
+            font-weight: 700;
+            width: 145px;
+        }
+        .totals .discount .value {
+            color: #15803d;
+        }
+        .totals .grand-total td {
+            border-top: 2px solid #d1d5db;
+            color: #111827;
+            font-size: 16px;
+            font-weight: 700;
+            padding-top: 13px;
+        }
+        .totals .grand-total .value {
+            color: #dc2626;
+            font-size: 19px;
+        }
         .reason-box {
             background-color: #fff7ed;
             border: 1px solid #fed7aa;
@@ -191,6 +254,61 @@
                 <tr>
                     <td class="label">Phương thức thanh toán</td>
                     <td class="value">{{ strtoupper($order->payment_method) }}</td>
+                </tr>
+            </table>
+
+            <h2 class="section-title">Chi tiết sản phẩm đã hủy</h2>
+            <table class="product-table" role="presentation">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th style="text-align: center;">SL</th>
+                        <th style="text-align: right;">Đơn giá</th>
+                        <th style="text-align: right;">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($order->details as $detail)
+                        <tr>
+                            <td>
+                                <div class="product-name">{{ $detail->variant?->product?->name ?? 'Sản phẩm' }}</div>
+                                @if($detail->variant?->name)
+                                    <div class="product-variant">Phân loại: {{ $detail->variant->name }}</div>
+                                @endif
+                                @if($detail->print_name || $detail->print_number)
+                                    <div class="product-variant">
+                                        In áo:
+                                        {{ $detail->print_name ?: 'Không tên' }}
+                                        {{ $detail->print_number ? ' - Số '.$detail->print_number : '' }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td style="text-align: center; font-weight: 700;">{{ $detail->quantity }}</td>
+                            <td style="text-align: right; white-space: nowrap;">{{ number_format($detail->price, 0, ',', '.') }}đ</td>
+                            <td style="text-align: right; font-weight: 700; white-space: nowrap;">{{ number_format($detail->price * $detail->quantity, 0, ',', '.') }}đ</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <table class="totals" role="presentation">
+                <tr>
+                    <td>Tạm tính:</td>
+                    <td class="value">{{ number_format($order->sub_total, 0, ',', '.') }}đ</td>
+                </tr>
+                <tr>
+                    <td>Phí vận chuyển:</td>
+                    <td class="value">{{ number_format($order->shipping_fee, 0, ',', '.') }}đ</td>
+                </tr>
+                @if($order->discount_amount > 0)
+                    <tr class="discount">
+                        <td>Giảm giá:</td>
+                        <td class="value">-{{ number_format($order->discount_amount, 0, ',', '.') }}đ</td>
+                    </tr>
+                @endif
+                <tr class="grand-total">
+                    <td>Tổng giá trị đơn đã hủy:</td>
+                    <td class="value">{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
                 </tr>
             </table>
 
