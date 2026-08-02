@@ -3,64 +3,59 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Admin\DashboardReportRequest;
+use App\Services\AdminDashboardReport;
+use App\Services\DashboardReportExporter;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(
+        DashboardReportRequest $request,
+        AdminDashboardReport $dashboardReport
+    ) {
+        $report = $dashboardReport->build($request->validated());
+
+        return view('admin.dashboard', compact('report'));
+    }
+
+    public function exportExcel(
+        DashboardReportRequest $request,
+        AdminDashboardReport $dashboardReport,
+        DashboardReportExporter $exporter
+    ): BinaryFileResponse {
+        $report = $dashboardReport->build($request->validated());
+        $path = $exporter->createExcel($report);
+        $filename = $this->filename($report, 'xlsx');
+
+        return response()->download(
+            $path,
+            $filename,
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        )->deleteFileAfterSend(true);
+    }
+
+    public function exportPdf(
+        DashboardReportRequest $request,
+        AdminDashboardReport $dashboardReport,
+        DashboardReportExporter $exporter
+    ) {
+        $report = $dashboardReport->build($request->validated());
+        $filename = $this->filename($report, 'pdf');
+
+        return response($exporter->createPdf($report), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
+    private function filename(array $report, string $extension): string
     {
-        // 1. Thống kê tổng quan
-        // Chỉ tính doanh thu các đơn hàng đã Hoàn thành và Đã thanh toán
-        $totalRevenue = Order::where('order_status', 'completed')
-            ->where('payment_status', 'paid')
-            ->sum('total_amount');
-        $totalOrders = Order::count();
-        $pendingOrders = Order::where('order_status', 'pending')->count();
-        $totalCustomers = User::where('role', 'customer')->count();
-
-        // 2. Dữ liệu biểu đồ doanh thu trong 30 ngày gần nhất
-        $thirtyDaysAgo = Carbon::now()->subDays(30);
-        $revenueData = Order::where('order_status', 'completed')
-            ->where('payment_status', 'paid')
-            ->where('created_at', '>=', $thirtyDaysAgo)
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('SUM(total_amount) as total')
-            )
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        $labels = [];
-        $data = [];
-        
-        // Fill missing days with 0
-        for ($i = 29; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i)->format('Y-m-d');
-            $labels[] = Carbon::now()->subDays($i)->format('d/m');
-            
-            $dayData = $revenueData->firstWhere('date', $date);
-            $data[] = $dayData ? $dayData->total : 0;
-        }
-
-        // 3. Đơn hàng mới nhất cần xử lý
-        $recentOrders = Order::with('user')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-
-        return view('admin.dashboard', compact(
-            'totalRevenue',
-            'totalOrders',
-            'pendingOrders',
-            'totalCustomers',
-            'labels',
-            'data',
-            'recentOrders'
-        ));
+        return sprintf(
+            'maxball-report-%s-%s.%s',
+            $report['filter']['start']->format('Ymd'),
+            $report['filter']['end']->format('Ymd'),
+            $extension
+        );
     }
 }

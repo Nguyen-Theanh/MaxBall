@@ -5,10 +5,7 @@
 @section('content')
 <div class="space-y-6">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Quản lý đánh giá</h1>
-            <p class="mt-1 text-sm text-gray-500">Kiểm duyệt đánh giá của khách hàng và đăng nội dung dưới tên thương hiệu MaxBall.</p>
-        </div>
+        <p class="text-sm text-gray-500">Kiểm duyệt đánh giá của khách hàng và đăng nội dung dưới tên thương hiệu MaxBall.</p>
         <a href="{{ route('client.products.index') }}" target="_blank" class="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
             Xem trang sản phẩm
         </a>

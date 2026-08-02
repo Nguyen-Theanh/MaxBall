@@ -4,10 +4,6 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Quản lý Đơn hàng</h1>
-    </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -33,6 +29,11 @@
                     <option value="shipping" {{ request('status') == 'shipping' ? 'selected' : '' }}>Đang giao hàng</option>
                     <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
                     <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
+                </select>
+                <select name="per_page" class="form-select form-select-sm w-auto" aria-label="Số đơn mỗi trang" onchange="this.form.submit()">
+                    <option value="10" @selected((int) request('per_page', 10) === 10)>10 đơn/trang</option>
+                    <option value="20" @selected((int) request('per_page', 10) === 20)>20 đơn/trang</option>
+                    <option value="50" @selected((int) request('per_page', 10) === 50)>50 đơn/trang</option>
                 </select>
                 <div class="input-group input-group-sm w-auto">
                     <input type="text" name="search" class="form-control" placeholder="Mã ĐH, Tên, SĐT..." value="{{ request('search') }}">
@@ -142,8 +143,18 @@
                 </table>
             </div>
             
-            <div class="mt-3">
-                {{ $orders->links() }}
+            <div class="mt-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                <div class="small text-muted">
+                    @if($orders->total() > 0)
+                        Hiển thị {{ $orders->firstItem() }}–{{ $orders->lastItem() }} trên tổng {{ number_format($orders->total()) }} đơn hàng
+                    @else
+                        Không có đơn hàng phù hợp
+                    @endif
+                </div>
+
+                @if($orders->hasPages())
+                    {{ $orders->onEachSide(1)->links() }}
+                @endif
             </div>
         </div>
     </div>
