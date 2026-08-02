@@ -99,6 +99,8 @@ Route::get('/san-pham/{slug}', [ClientProductController::class, 'show'])
 // Admin
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/export/excel', [DashboardController::class, 'exportExcel'])->name('dashboard.export.excel');
+    Route::get('/dashboard/export/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export.pdf');
 
     Route::resource('products', AdminProductController::class)->except(['show']);
     Route::resource('categories', CategoryController::class)->except(['show']);

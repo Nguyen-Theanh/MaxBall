@@ -14,7 +14,10 @@ class AttributeController extends Controller
 {
     public function index()
     {
-        $attributes = Attribute::with('values')->latest()->get();
+        $attributes = Attribute::with('values')
+            ->latest()
+            ->paginate(8)
+            ->withQueryString();
 
         return view('admin.attributes.index', compact('attributes'));
     }

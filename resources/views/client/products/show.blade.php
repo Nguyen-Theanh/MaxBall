@@ -54,6 +54,7 @@
 
     $variantData = collect();
     $attributeOptions = [];
+    $availableAttributeValues = [];
 
     foreach ($product->variants as $variant) {
         $parts = collect(preg_split('/\s*-\s*/u', (string) $variant->name))
@@ -80,6 +81,10 @@
         foreach ($options as $attributeName => $valueName) {
             $attributeOptions[$attributeName] ??= [];
             $attributeOptions[$attributeName][$valueName] = $valueName;
+
+            if ((int) $variant->stock > 0) {
+                $availableAttributeValues[$attributeName][$valueName] = true;
+            }
         }
 
         $variantData->push([
@@ -204,10 +209,16 @@
                                 <div class="text-sm font-semibold text-gray-700 mb-2">{{ $attributeName }}</div>
                                 <div class="flex flex-wrap gap-2">
                                     @foreach($values as $value)
+                                        @php
+                                            $isOptionInStock = isset($availableAttributeValues[$attributeName][$value]);
+                                        @endphp
                                         <button type="button"
-                                                class="option-btn px-4 py-2 border rounded-lg text-sm font-semibold hover:border-red-600 focus:outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                                                class="option-btn px-4 py-2 border rounded-lg text-sm font-semibold hover:border-red-600 focus:outline-none transition-colors disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-50 disabled:line-through disabled:hover:border-gray-200"
                                                 data-attribute="{{ $attributeName }}"
-                                                data-value="{{ $value }}">
+                                                data-value="{{ $value }}"
+                                                @disabled(! $isOptionInStock)
+                                                aria-disabled="{{ $isOptionInStock ? 'false' : 'true' }}"
+                                                title="{{ $isOptionInStock ? '' : 'Phân loại này đã hết hàng' }}">
                                             {{ $value }}
                                         </button>
                                     @endforeach
@@ -278,7 +289,7 @@
         </div>
 
         <div class="divide-y divide-gray-100">
-            @forelse($product->reviews as $review)
+            @forelse($reviews as $review)
                 <article class="py-6">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
@@ -339,6 +350,12 @@
                 </div>
             @endforelse
         </div>
+
+        @if($reviews->hasPages())
+            <div class="border-t border-gray-100 pt-5">
+                {{ $reviews->onEachSide(1)->links('pagination::tailwind') }}
+            </div>
+        @endif
     </section>
 
     @if($relatedProducts->count())
@@ -443,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const nextOptions = { ...selectedOptions, [attributeName]: valueName };
 
         return variants.some((variant) => {
-            return Object.entries(nextOptions).every(([attribute, value]) => {
+            return Number(variant.stock) > 0 && Object.entries(nextOptions).every(([attribute, value]) => {
                 return !value || variant.options[attribute] === value;
             });
         });
@@ -451,7 +468,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const refreshOptionAvailability = () => {
         optionButtons.forEach((button) => {
-            button.disabled = !isOptionAvailable(button.dataset.attribute, button.dataset.value);
+            const isAvailable = isOptionAvailable(button.dataset.attribute, button.dataset.value);
+
+            button.disabled = !isAvailable;
+            button.setAttribute('aria-disabled', isAvailable ? 'false' : 'true');
+            button.title = isAvailable ? '' : 'Phân loại này đã hết hàng';
         });
     };
 
@@ -459,8 +480,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedCount = Object.keys(selectedOptions).filter((attribute) => selectedOptions[attribute]).length;
         const isComplete = selectedCount === requiredAttributes.length;
         const matchedVariant = isComplete ? findMatchingVariant(selectedOptions) : null;
+        const matchedVariantInStock = matchedVariant && Number(matchedVariant.stock) > 0;
 
-        selectedVariantInput.value = matchedVariant ? matchedVariant.id : '';
+        selectedVariantInput.value = matchedVariantInStock ? matchedVariant.id : '';
 
         if (!isComplete) {
             variantHelper.textContent = 'Vui lòng chọn đủ phân loại để xem đúng giá và tồn kho.';

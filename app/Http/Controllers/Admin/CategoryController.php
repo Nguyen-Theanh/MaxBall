@@ -13,7 +13,12 @@ class CategoryController extends Controller
     public function index()
     {
         // Chỉ lấy các danh mục gốc, kèm theo các danh mục con của nó
-        $categories = Category::whereNull('parent_id')->with('children')->get();
+        $categories = Category::query()
+            ->whereNull('parent_id')
+            ->with(['children' => fn ($query) => $query->orderBy('name')])
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.categories.index', compact('categories'));
     }

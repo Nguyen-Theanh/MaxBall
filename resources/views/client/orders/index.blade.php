@@ -14,7 +14,7 @@
     </div>
 </section>
 
-<div class="max-w-7xl mx-auto px-4 py-10">
+<div id="orders" class="max-w-7xl mx-auto px-4 py-10">
 
     @if($orders->count() > 0)
         <div class="space-y-6">
@@ -121,6 +121,12 @@
                 </div>
             @endforeach
         </div>
+
+        @if($orders->hasPages())
+            <div class="mt-8">
+                {{ $orders->onEachSide(1)->links('pagination::tailwind') }}
+            </div>
+        @endif
     @else
         <div class="bg-white rounded-xl shadow p-10 text-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-24 h-24 mx-auto text-gray-300 mb-4">

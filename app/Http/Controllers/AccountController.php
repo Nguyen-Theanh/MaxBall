@@ -21,14 +21,23 @@ class AccountController extends Controller
             ->orders()
             ->with(['details.variant.product', 'details.review'])
             ->orderByDesc('created_at')
-            ->paginate(8);
+            ->orderByDesc('id')
+            ->paginate(8, ['*'], 'orders_page')
+            ->withQueryString()
+            ->fragment('orders');
 
         $addresses = $request->user()
             ->addresses()
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
-            ->get();
-        $defaultAddress = $addresses->firstWhere('is_default', true) ?? $addresses->first();
+            ->paginate(8, ['*'], 'addresses_page')
+            ->withQueryString()
+            ->fragment('address');
+        $defaultAddress = $request->user()
+            ->addresses()
+            ->orderByDesc('is_default')
+            ->orderByDesc('created_at')
+            ->first();
         $customerCancellationReasons = OrderCancellationReasons::customer();
 
         return view('client.account.show', [

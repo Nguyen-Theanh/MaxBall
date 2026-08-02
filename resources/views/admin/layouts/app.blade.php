@@ -31,11 +31,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
         /* Prevent Tailwind's preflight from breaking Bootstrap components entirely */
         a { text-decoration: none; }
-        
+
         body {
             background-color: #f4f5f7;
             font-family: 'Inter', sans-serif;
@@ -48,14 +48,14 @@
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
+            background: #f1f1f1;
         }
         ::-webkit-scrollbar-thumb {
-            background: #c1c1c1; 
+            background: #c1c1c1;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8; 
+            background: #a8a8a8;
         }
 
         /* Core Animations */
@@ -117,7 +117,7 @@
     @stack('styles')
 </head>
 <body class="antialiased h-screen flex overflow-hidden">
-    
+
     <!-- Sidebar -->
     <aside class="w-64 bg-white border-r border-gray-100 flex-shrink-0 flex flex-col h-full shadow-sm z-20">
         <!-- Logo -->
@@ -131,12 +131,12 @@
         <!-- Navigation -->
         <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
             <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Quản lý chính</p>
-            
+
             <a href="{{ route('admin.dashboard') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                Dashboard
+                Thống kê
             </a>
-            
+
             <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-2">Cửa hàng</p>
 
             <a href="{{ route('admin.products.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
@@ -175,54 +175,60 @@
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                 Liên hệ
             </a>
-            
-            <div class="mt-8 px-4">
-                <a href="{{ route('client.products.index') }}" target="_blank" class="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                    Xem Trang Chủ
-                </a>
-            </div>
+
         </div>
     </aside>
 
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden bg-background">
-        
+
         <!-- Header -->
-        <header class="h-20 bg-background/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-10 animate-fade-in border-b border-gray-200/50">
-            <!-- Search -->
-            <div class="flex-1 max-w-xl">
-                <div class="relative group">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <input type="text" class="block w-full pl-10 pr-3 py-2.5 border border-transparent rounded-xl leading-5 bg-white shadow-sm placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all sm:text-sm" placeholder="Tìm kiếm đơn hàng, khách hàng...">
-                </div>
+        @php
+            $adminPageTitle = match (true) {
+                request()->routeIs('admin.dashboard*') => 'Thống kê kinh doanh',
+                request()->routeIs('admin.products.*') => 'Quản lý sản phẩm',
+                request()->routeIs('admin.orders.*') => 'Quản lý đơn hàng',
+                request()->routeIs('admin.reviews.*') => 'Quản lý đánh giá',
+                request()->routeIs('admin.categories.*') => 'Quản lý danh mục',
+                request()->routeIs('admin.attributes.*') => 'Quản lý thuộc tính',
+                request()->routeIs('admin.users.*') => 'Quản lý người dùng',
+                request()->routeIs('admin.contacts.*') => 'Quản lý liên hệ',
+                default => 'Quản trị MaxBall',
+            };
+        @endphp
+        <header class="h-20 bg-white/90 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-10 animate-fade-in border-b border-gray-200/70 shadow-sm shadow-gray-200/30">
+            <div class="min-w-0">
+                <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">Khu vực quản trị</p>
+                <h2 class="mt-1 truncate text-xl font-extrabold text-gray-900">{{ $adminPageTitle }}</h2>
             </div>
 
             <!-- Right Nav -->
-            <div class="flex items-center gap-6 ml-4">
+            <div class="ml-4 flex items-center gap-3">
+                <a href="{{ route('client.products.index') }}" target="_blank" class="hidden sm:flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 transition-colors hover:border-blue-200 hover:bg-blue-100">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M9 20v-6h6v6"></path></svg>
+                    Xem cửa hàng
+                </a>
+
                 <!-- Date -->
-                <div class="hidden md:flex items-center gap-2 text-sm text-gray-500 font-medium bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <div class="hidden md:flex items-center gap-2 text-sm text-gray-500 font-medium bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     {{ now()->format('d/m/Y') }}
                 </div>
 
-                <!-- Notifications -->
-                <button class="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none transition-colors">
-                    <span class="absolute top-1 right-1.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                </button>
-
                 <!-- Profile Dropdown (Alpine.js) -->
                 <div x-data="{ open: false }" class="relative">
-                    <button @click="open = !open" @click.away="open = false" class="flex items-center gap-3 focus:outline-none">
-                        <img class="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm" src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Admin') }}&background=2563eb&color=fff" alt="Avatar">
+                    <button @click="open = !open" @click.away="open = false" class="flex items-center gap-3 rounded-xl border border-transparent px-2 py-1.5 text-left transition hover:border-gray-200 hover:bg-gray-50 focus:outline-none">
+                        <div class="hidden lg:block max-w-40 text-right">
+                            <p class="truncate text-sm font-bold text-gray-800">{{ auth()->user()->name ?? 'Admin' }}</p>
+                            <p class="text-[11px] text-gray-400">Quản trị viên</p>
+                        </div>
+                        <img class="h-10 w-10 rounded-xl object-cover ring-2 ring-blue-100" src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Admin') }}&background=2563eb&color=fff" alt="Avatar quản trị">
+                        <svg class="hidden h-4 w-4 text-gray-400 sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"/></svg>
                     </button>
-                    
-                    <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="origin-top-right absolute right-0 mt-2 w-48 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50" style="display: none;">
+
+                    <div x-show="open" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50" style="display: none;">
                         <div class="px-4 py-3">
-                            <p class="text-sm">Đang đăng nhập với</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Đang đăng nhập với</p>
                             <p class="text-sm font-medium text-gray-900 truncate">{{ auth()->user()->email ?? 'admin@maxball.com' }}</p>
                         </div>
                         <div class="py-1">
@@ -238,7 +244,7 @@
 
         <!-- Main Scrollable Area -->
         <main class="flex-1 overflow-y-auto p-8">
-            
+
             <!-- Alerts -->
             @if (session('success'))
                 <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg flex items-center justify-between animate-slide-up">
@@ -265,7 +271,7 @@
             @endif
 
             @yield('content')
-            
+
         </main>
     </div>
 

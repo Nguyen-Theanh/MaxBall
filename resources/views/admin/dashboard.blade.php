@@ -1,304 +1,366 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Tổng quan (Dashboard)')
+@section('title', 'Thống kê doanh thu - MaxBall')
 
 @section('content')
+@php
+    $baseFilterQuery = [
+        'period' => $report['filter']['period'],
+        'chart_granularity' => $report['filter']['chart_granularity'],
+    ];
+
+    if ($report['filter']['period'] === 'custom') {
+        $baseFilterQuery['start_date'] = $report['filter']['start_date'];
+        $baseFilterQuery['end_date'] = $report['filter']['end_date'];
+    }
+
+    $periodOptions = [
+        'today' => 'Hôm nay',
+        'last_7_days' => '7 ngày gần nhất',
+        'this_month' => 'Tháng này',
+        'this_year' => 'Năm nay',
+    ];
+    $granularityOptions = [
+        'day' => 'Ngày',
+        'week' => 'Tuần',
+        'month' => 'Tháng',
+        'year' => 'Năm',
+    ];
+    $statusLegendColors = [
+        'pending' => 'bg-amber-500',
+        'processing' => 'bg-blue-500',
+        'shipping' => 'bg-cyan-500',
+        'completed' => 'bg-emerald-500',
+        'cancelled' => 'bg-red-500',
+    ];
+    $categoryRevenueTotal = max(1, $report['categories']->sum('revenue'));
+@endphp
+
 <div class="space-y-6">
-    <!-- Welcome Header -->
-    <div class="flex justify-between items-end animate-slide-up">
-        <div>
-            <h1 class="text-3xl text-gray-800 font-light mb-1">
-                Chào buổi sáng, <span class="font-bold">{{ auth()->user()->name ?? 'Admin' }}</span>
-            </h1>
-            <p class="text-gray-500 text-sm">Tóm tắt hiệu suất của bạn tuần này</p>
-        </div>
-        <div class="hidden sm:flex gap-3">
-            <button class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                Chia sẻ
-            </button>
-            <button class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                In
-            </button>
-            <button class="flex items-center gap-2 px-4 py-2 bg-blue-600 border border-blue-600 rounded-xl text-white hover:bg-blue-700 transition-colors shadow-sm text-sm font-medium">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Xuất
-            </button>
-        </div>
-    </div>
+    <header class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <p class="text-sm text-slate-500">
+            Kỳ báo cáo: {{ $report['filter']['range_label'] }} · Doanh thu không bao gồm phí vận chuyển
+        </p>
 
-    <!-- Divider / Tabs -->
-    <div class="border-b border-gray-200 animate-slide-up delay-100">
-        <nav class="-mb-px flex space-x-8">
-            <a href="#" class="border-blue-600 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Tổng quan</a>
-            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Khách hàng</a>
-            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Nhân khẩu học</a>
-            <a href="#" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Thêm</a>
-        </nav>
-    </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('admin.dashboard.export.excel', $baseFilterQuery) }}"
+               class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6m3 6V7m3 10v-4M5 3h10l4 4v14H5V3z"/></svg>
+                Xuất Excel
+            </a>
+            <a href="{{ route('admin.dashboard.export.pdf', $baseFilterQuery) }}"
+               class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6m3 6V7m3 10v-4M5 3h10l4 4v14H5V3z"/></svg>
+                Xuất PDF
+            </a>
+        </div>
+    </header>
 
-    <!-- Metrics Row -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up delay-200">
-        
-        <!-- Doanh thu -->
-        <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100/50 hover:-translate-y-1 transition-transform duration-300">
-            <h3 class="text-gray-500 text-sm font-medium mb-1">Tổng Doanh Thu</h3>
-            <div class="text-3xl font-bold text-gray-800 mb-2">{{ number_format($totalRevenue, 0, ',', '.') }}đ</div>
-            <div class="flex items-center text-sm">
-                <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                <span class="text-green-500 font-medium">+5.2%</span>
-                <span class="text-gray-400 ml-2">so với tuần trước</span>
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-wrap items-center gap-2">
+                @foreach($periodOptions as $periodValue => $periodLabel)
+                    <a href="{{ route('admin.dashboard', ['period' => $periodValue, 'chart_granularity' => $report['filter']['chart_granularity']]) }}"
+                       class="rounded-xl border px-4 py-2 text-sm font-semibold shadow-sm transition {{ $report['filter']['period'] === $periodValue ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700' }}">
+                        {{ $periodLabel }}
+                    </a>
+                @endforeach
+
+                <button type="button" id="custom-period-toggle"
+                        class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold shadow-sm transition {{ $report['filter']['period'] === 'custom' ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700' }}">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M5 11h14M5 5h14v16H5V5z"/></svg>
+                    Chọn khoảng ngày
+                </button>
             </div>
+
+            <p class="text-sm text-slate-500">Tổng <span class="font-bold text-slate-800">{{ number_format($report['summary']['total_orders']) }}</span> đơn trong kỳ</p>
         </div>
 
-        <!-- Tổng đơn hàng -->
-        <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100/50 hover:-translate-y-1 transition-transform duration-300">
-            <h3 class="text-gray-500 text-sm font-medium mb-1">Tổng Đơn Hàng</h3>
-            <div class="text-3xl font-bold text-gray-800 mb-2">{{ number_format($totalOrders) }}</div>
-            <div class="flex items-center text-sm">
-                <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                <span class="text-green-500 font-medium">+1.8%</span>
-                <span class="text-gray-400 ml-2">so với tuần trước</span>
+        <form method="GET" action="{{ route('admin.dashboard') }}" id="custom-period-form"
+              class="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end {{ $report['filter']['period'] === 'custom' ? '' : 'hidden' }}">
+            <input type="hidden" name="period" value="custom">
+            <input type="hidden" name="chart_granularity" value="{{ $report['filter']['chart_granularity'] }}">
+            <div>
+                <label for="start_date" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Từ ngày</label>
+                <input type="date" id="start_date" name="start_date" required value="{{ $report['filter']['start_date'] }}"
+                       class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
             </div>
-        </div>
-
-        <!-- Chờ xác nhận -->
-        <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100/50 hover:-translate-y-1 transition-transform duration-300">
-            <h3 class="text-gray-500 text-sm font-medium mb-1">Chờ Xác Nhận</h3>
-            <div class="text-3xl font-bold text-gray-800 mb-2">{{ number_format($pendingOrders) }}</div>
-            <div class="flex items-center text-sm">
-                <svg class="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-                <span class="text-red-500 font-medium">-0.4%</span>
-                <span class="text-gray-400 ml-2">so với tuần trước</span>
+            <div>
+                <label for="end_date" class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Đến ngày</label>
+                <input type="date" id="end_date" name="end_date" required value="{{ $report['filter']['end_date'] }}"
+                       class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
             </div>
-        </div>
+            <button type="submit" class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-bold text-white transition hover:bg-blue-700">Áp dụng</button>
+        </form>
+    </section>
 
-        <!-- Tổng khách hàng -->
-        <div class="bg-white rounded-2xl p-6 card-shadow border border-gray-100/50 hover:-translate-y-1 transition-transform duration-300">
-            <h3 class="text-gray-500 text-sm font-medium mb-1">Tổng Khách Hàng</h3>
-            <div class="text-3xl font-bold text-gray-800 mb-2">{{ number_format($totalCustomers) }}</div>
-            <div class="flex items-center text-sm">
-                <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                <span class="text-green-500 font-medium">+12.5%</span>
-                <span class="text-gray-400 ml-2">so với tháng trước</span>
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tổng doanh thu</p><p class="mt-2 text-2xl font-black text-slate-900">{{ number_format($report['summary']['total_revenue'], 0, ',', '.') }}đ</p><p class="mt-2 text-xs text-slate-400">Đã loại {{ number_format($report['summary']['shipping_collected'], 0, ',', '.') }}đ phí vận chuyển</p></div>
+                <div class="rounded-xl bg-blue-50 p-3 text-blue-600"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l5-5 4 4 7-8m0 0v5m0-5h-5"/></svg></div>
             </div>
-        </div>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Đơn thành công</p><p class="mt-2 text-2xl font-black text-slate-900">{{ number_format($report['summary']['successful_orders']) }}</p><p class="mt-2 text-xs text-slate-400">Trên tổng {{ number_format($report['summary']['total_orders']) }} đơn</p></div>
+                <div class="rounded-xl bg-emerald-50 p-3 text-emerald-600"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            </div>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Khách đã mua</p><p class="mt-2 text-2xl font-black text-slate-900">{{ number_format($report['summary']['purchasing_customers']) }}</p><p class="mt-2 text-xs text-slate-400">{{ number_format($report['customers']['new_customers']) }} khách mới trong kỳ</p></div>
+                <div class="rounded-xl bg-violet-50 p-3 text-violet-600"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20H7v-2a5 5 0 0110 0v2zM12 12a4 4 0 100-8 4 4 0 000 8z"/></svg></div>
+            </div>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Giá trị đơn trung bình</p><p class="mt-2 text-2xl font-black text-slate-900">{{ number_format($report['summary']['average_order_value'], 0, ',', '.') }}đ</p><p class="mt-2 text-xs text-slate-400">Trên mỗi đơn thành công</p></div>
+                <div class="rounded-xl bg-cyan-50 p-3 text-cyan-600"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 8h12M6 12h8M6 16h4M5 4h14v16H5V4z"/></svg></div>
+            </div>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Đơn bị hủy</p><p class="mt-2 text-2xl font-black text-slate-900">{{ number_format($report['summary']['cancelled_orders']) }}</p><p class="mt-2 text-xs text-slate-400">Trong khoảng thời gian đã chọn</p></div>
+                <div class="rounded-xl bg-red-50 p-3 text-red-600"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></div>
+            </div>
+        </article>
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4">
+                <div><p class="text-xs font-bold uppercase tracking-wide text-slate-400">Tỷ lệ hoàn thành</p><p class="mt-2 text-2xl font-black text-slate-900">{{ number_format($report['summary']['completion_rate'], 1, ',', '.') }}%</p><p class="mt-2 text-xs text-slate-400">Đơn hoàn thành trên tổng đơn</p></div>
+                <div class="rounded-xl bg-amber-50 p-3 text-amber-700"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 8h.01M16 16h.01M7 17L17 7"/></svg></div>
+            </div>
+        </article>
+    </section>
 
-    </div>
-
-    <!-- Charts Row -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-slide-up delay-300">
-        
-        <!-- Main Chart -->
-        <div class="lg:col-span-2 bg-white rounded-3xl p-6 card-shadow border border-gray-100/50">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h2 class="text-xl font-bold text-gray-900">Biểu đồ hiệu suất</h2>
-                    <p class="text-sm text-gray-500 mt-1">Biểu đồ doanh thu trong 30 ngày qua</p>
+    <section class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div><h2 class="font-bold text-slate-900">Doanh thu theo thời gian</h2><p class="mt-1 text-sm text-slate-500">Chỉ tính đơn hoàn thành, không gồm phí vận chuyển</p></div>
+                <div class="inline-flex self-start rounded-xl bg-slate-100 p-1">
+                    @foreach($granularityOptions as $granularityValue => $granularityLabel)
+                        <a href="{{ route('admin.dashboard', array_merge($baseFilterQuery, ['chart_granularity' => $granularityValue])) }}"
+                           class="rounded-lg px-3 py-1.5 text-xs font-bold transition {{ $report['filter']['chart_granularity'] === $granularityValue ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">
+                            {{ $granularityLabel }}
+                        </a>
+                    @endforeach
                 </div>
-                <div class="flex items-center gap-4 text-sm">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-blue-600"></span>
-                        <span class="text-gray-500">Doanh thu</span>
-                    </div>
-                </div>
             </div>
-            <div class="relative h-72 w-full">
-                <canvas id="revenueChart"></canvas>
-            </div>
-        </div>
+            <div class="h-80"><canvas id="revenueChart"></canvas></div>
+        </article>
 
-        <!-- Status Summary -->
-        <div class="bg-blue-600 rounded-3xl p-6 shadow-lg relative overflow-hidden text-white flex flex-col justify-between group cursor-default">
-            <!-- Decorative circle -->
-            <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-700"></div>
-            
-            <div class="relative z-10">
-                <h2 class="text-xl font-bold mb-2">Tóm tắt trạng thái</h2>
-                <p class="text-blue-100 text-sm mb-6">Tổng quan trạng thái xử lý đơn hàng</p>
-                
-                <div class="space-y-4">
+        <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div><h2 class="font-bold text-slate-900">Trạng thái đơn hàng</h2><p class="mt-1 text-sm text-slate-500">Phân bổ {{ number_format($report['summary']['total_orders']) }} đơn trong kỳ báo cáo</p></div>
+            <div class="mx-auto h-72 max-w-md"><canvas id="orderStatusChart"></canvas></div>
+            <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs">
+                @foreach($report['order_statuses'] as $status)
+                    <span class="inline-flex items-center gap-1.5 text-slate-500"><span class="h-2.5 w-2.5 rounded-full {{ $statusLegendColors[$status['status']] }}"></span>{{ $status['label'] }} <strong class="text-slate-800">{{ $status['count'] }}</strong></span>
+                @endforeach
+            </div>
+        </article>
+    </section>
+
+    <section class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 px-6 py-5"><h2 class="font-bold text-slate-900">Top 10 sản phẩm bán chạy</h2><p class="mt-1 text-sm text-slate-500">Xếp theo số lượng sản phẩm đã bán</p></div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-xs uppercase text-slate-400"><tr><th class="px-4 py-3 text-center">#</th><th class="px-4 py-3">Sản phẩm</th><th class="px-4 py-3">Danh mục</th><th class="px-4 py-3 text-right">Đã bán</th><th class="px-4 py-3 text-right">Doanh thu</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($report['products']['top_selling'] as $index => $product)
+                            <tr class="hover:bg-slate-50"><td class="px-4 py-3 text-center text-slate-400">{{ $index + 1 }}</td><td class="max-w-[220px] truncate px-4 py-3 font-semibold text-slate-800" title="{{ $product['product_name'] }}">{{ $product['product_name'] }}</td><td class="px-4 py-3 text-slate-500">{{ $product['category_name'] }}</td><td class="px-4 py-3 text-right font-semibold">{{ number_format($product['sold_quantity']) }}</td><td class="whitespace-nowrap px-4 py-3 text-right font-bold text-blue-600">{{ number_format($product['revenue'], 0, ',', '.') }}đ</td></tr>
+                        @empty
+                            <tr><td colspan="5" class="px-4 py-12 text-center text-slate-400">Chưa có dữ liệu bán hàng</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="mb-5"><h2 class="font-bold text-slate-900">Doanh thu theo danh mục</h2><p class="mt-1 text-sm text-slate-500">Tỷ trọng đóng góp của từng nhóm hàng</p></div>
+            <div class="space-y-5">
+                @forelse($report['categories'] as $category)
+                    @php $categoryPercent = round(($category['revenue'] / $categoryRevenueTotal) * 100, 1); @endphp
                     <div>
-                        <div class="text-blue-200 text-sm mb-1">Chờ xác nhận</div>
-                        <div class="text-4xl font-light">{{ number_format($pendingOrders) }}</div>
+                        <div class="mb-2 flex items-center justify-between gap-3"><span class="font-semibold text-slate-700">{{ $category['category_name'] }}</span><span class="text-sm font-bold text-blue-600">{{ number_format($categoryPercent, 1, ',', '.') }}%</span></div>
+                        <div class="h-2 overflow-hidden rounded-full bg-blue-100"><div class="h-full rounded-full bg-blue-600" style="width: {{ min(100, $categoryPercent) }}%"></div></div>
+                        <div class="mt-1.5 flex items-center justify-between text-xs text-slate-400"><span>{{ number_format($category['sold_quantity']) }} sản phẩm</span><span>{{ number_format($category['revenue'], 0, ',', '.') }}đ</span></div>
                     </div>
-                    <div class="h-px w-full bg-white/20 my-2"></div>
-                    <div>
-                        <div class="text-blue-200 text-sm mb-1">Đã hoàn thành</div>
-                        <div class="text-2xl font-light">{{ App\Models\Order::where('order_status', 'completed')->count() }}</div>
-                    </div>
+                @empty
+                    <div class="py-12 text-center text-sm text-slate-400">Chưa có dữ liệu danh mục</div>
+                @endforelse
+            </div>
+        </article>
+    </section>
+
+    <section class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        @foreach([
+            ['title' => 'Sản phẩm doanh thu cao nhất', 'subtitle' => 'Xếp theo doanh thu thực thu', 'items' => $report['products']['top_revenue'], 'color' => 'text-emerald-600'],
+            ['title' => 'Sản phẩm bán chậm', 'subtitle' => 'Ưu tiên sản phẩm chưa phát sinh bán hàng', 'items' => $report['products']['slow_selling'], 'color' => 'text-amber-600'],
+        ] as $productGroup)
+            <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-6 py-5"><h2 class="font-bold text-slate-900">{{ $productGroup['title'] }}</h2><p class="mt-1 text-sm text-slate-500">{{ $productGroup['subtitle'] }}</p></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-xs uppercase text-slate-400"><tr><th class="px-4 py-3 text-center">#</th><th class="px-4 py-3">Sản phẩm</th><th class="px-4 py-3">Danh mục</th><th class="px-4 py-3 text-right">Đã bán</th><th class="px-4 py-3 text-right">Doanh thu</th></tr></thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @forelse($productGroup['items'] as $index => $product)
+                                <tr class="hover:bg-slate-50"><td class="px-4 py-3 text-center text-slate-400">{{ $index + 1 }}</td><td class="max-w-[220px] truncate px-4 py-3 font-semibold text-slate-800" title="{{ $product['product_name'] }}">{{ $product['product_name'] }}</td><td class="px-4 py-3 text-slate-500">{{ $product['category_name'] }}</td><td class="px-4 py-3 text-right font-semibold">{{ number_format($product['sold_quantity']) }}</td><td class="whitespace-nowrap px-4 py-3 text-right font-bold {{ $productGroup['color'] }}">{{ number_format($product['revenue'], 0, ',', '.') }}đ</td></tr>
+                            @empty
+                                <tr><td colspan="5" class="px-4 py-12 text-center text-slate-400">Chưa có dữ liệu</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
+            </article>
+        @endforeach
+    </section>
+
+    <section class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 px-6 py-5"><h2 class="font-bold text-slate-900">Thống kê khách hàng</h2><p class="mt-1 text-sm text-slate-500">Khách mua hàng thành công trong kỳ</p></div>
+            <div class="grid grid-cols-3 gap-3 p-5">
+                <div class="rounded-xl bg-blue-50 p-4"><p class="text-xs text-slate-500">Tổng khách</p><p class="mt-2 text-xl font-black text-slate-900">{{ number_format($report['summary']['purchasing_customers']) }}</p></div>
+                <div class="rounded-xl bg-emerald-50 p-4"><p class="text-xs text-slate-500">Khách mới</p><p class="mt-2 text-xl font-black text-slate-900">{{ number_format($report['customers']['new_customers']) }}</p></div>
+                <div class="rounded-xl bg-violet-50 p-4"><p class="text-xs text-slate-500">Chi tiêu cao nhất</p><p class="mt-2 truncate text-sm font-bold text-slate-900">{{ $report['customers']['top_spender']['customer_name'] ?? '—' }}</p></div>
             </div>
-
-            <!-- Mini decorative wave SVG -->
-            <div class="absolute bottom-0 left-0 right-0 h-24 opacity-50 pointer-events-none">
-                <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none">
-                    <path fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="3" d="M0,160L48,170.7C96,181,192,203,288,208C384,213,480,203,576,170.7C672,139,768,85,864,85.3C960,85,1056,139,1152,149.3C1248,160,1344,128,1392,112L1440,96"></path>
-                </svg>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-xs uppercase text-slate-400"><tr><th class="px-5 py-3">Khách hàng</th><th class="px-5 py-3 text-right">Số đơn</th><th class="px-5 py-3 text-right">Chi tiêu</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($report['customers']['customers'] as $customer)
+                            <tr><td class="px-5 py-3"><p class="font-semibold text-slate-800">{{ $customer['customer_name'] }}</p><p class="text-xs text-slate-400">{{ $customer['customer_email'] ?: '—' }}</p></td><td class="px-5 py-3 text-right font-semibold">{{ $customer['order_count'] }}</td><td class="px-5 py-3 text-right font-bold text-emerald-600">{{ number_format($customer['total_spent'], 0, ',', '.') }}đ</td></tr>
+                        @empty
+                            <tr><td colspan="3" class="px-5 py-12 text-center text-slate-400">Chưa có khách hàng mua thành công</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-        </div>
+        </article>
 
-    </div>
-
-    <!-- Recent Orders Table -->
-    <div class="bg-white rounded-3xl p-6 card-shadow border border-gray-100/50 animate-slide-up delay-400">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-900">Đơn Hàng Mới Nhất</h2>
-            <a href="{{ route('admin.orders.index') }}" class="text-sm text-blue-600 font-medium hover:text-blue-800 transition-colors bg-blue-50 px-4 py-2 rounded-lg">Xem tất cả</a>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="text-gray-400 text-sm uppercase border-b border-gray-100">
-                        <th class="pb-3 font-medium px-4">Mã Đơn</th>
-                        <th class="pb-3 font-medium px-4">Khách Hàng</th>
-                        <th class="pb-3 font-medium px-4">Tổng Tiền</th>
-                        <th class="pb-3 font-medium px-4">Trạng Thái</th>
-                        <th class="pb-3 font-medium px-4 text-right">Thời Gian</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm">
-                    @forelse($recentOrders as $order)
-                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
-                            <td class="py-4 px-4 font-semibold text-gray-800">
-                                <a href="{{ route('admin.orders.show', $order->id) }}" class="hover:text-blue-600 transition-colors">#{{ $order->order_code }}</a>
-                            </td>
-                            <td class="py-4 px-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                                        {{ substr($order->customer_name, 0, 1) }}
-                                    </div>
-                                    <span class="font-medium text-gray-700">{{ $order->customer_name }}</span>
-                                </div>
-                            </td>
-                            <td class="py-4 px-4 font-bold text-gray-900">{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
-                            <td class="py-4 px-4">
-                                @if($order->order_status == 'pending')
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Chờ xác nhận</span>
-                                @elseif($order->order_status == 'processing')
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Đã xác nhận</span>
-                                @elseif($order->order_status == 'shipping')
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Đang giao hàng</span>
-                                @elseif($order->order_status == 'completed')
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Hoàn thành</span>
-                                @else
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Đã hủy</span>
-                                @endif
-                            </td>
-                            <td class="py-4 px-4 text-right text-gray-500">{{ $order->created_at->diffForHumans() }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="py-8 text-center text-gray-500">Không có đơn hàng nào.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
+        <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-100 px-6 py-5"><div><h2 class="font-bold text-slate-900">Đơn hàng gần đây</h2><p class="mt-1 text-sm text-slate-500">Cập nhật mới nhất trong kỳ báo cáo</p></div><a href="{{ route('admin.orders.index') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800">Xem tất cả</a></div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-xs uppercase text-slate-400"><tr><th class="px-4 py-3">Mã đơn</th><th class="px-4 py-3">Khách hàng</th><th class="px-4 py-3">Ngày</th><th class="px-4 py-3 text-center">Trạng thái</th><th class="px-4 py-3 text-right">Doanh thu</th></tr></thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($report['recent_orders'] as $order)
+                            @php
+                                [$statusText, $statusClass] = match($order->order_status) {
+                                    'pending' => ['Chờ xác nhận', 'bg-amber-50 text-amber-700'],
+                                    'processing' => ['Đã xác nhận', 'bg-blue-50 text-blue-700'],
+                                    'shipping' => ['Đang giao', 'bg-cyan-50 text-cyan-700'],
+                                    'completed' => ['Hoàn thành', 'bg-emerald-50 text-emerald-700'],
+                                    default => ['Đã hủy', 'bg-red-50 text-red-700'],
+                                };
+                                $orderRevenue = max(0, $order->total_amount - $order->shipping_fee);
+                            @endphp
+                            <tr><td class="px-4 py-3"><a href="{{ route('admin.orders.show', $order) }}" class="font-bold text-blue-600">#{{ $order->order_code }}</a></td><td class="max-w-[140px] truncate px-4 py-3 font-semibold text-slate-700">{{ $order->customer_name }}</td><td class="whitespace-nowrap px-4 py-3 text-slate-500">{{ $order->created_at?->format('d/m/Y') }}</td><td class="px-4 py-3 text-center"><span class="whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold {{ $statusClass }}">{{ $statusText }}</span></td><td class="whitespace-nowrap px-4 py-3 text-right font-bold text-slate-800">{{ number_format($orderRevenue, 0, ',', '.') }}đ</td></tr>
+                        @empty
+                            <tr><td colspan="5" class="px-4 py-12 text-center text-slate-400">Không có đơn hàng trong kỳ</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </section>
 </div>
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        
-        // Gradient cho background
-        let gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(37, 99, 235, 0.2)'); // blue-600 with opacity
-        gradient.addColorStop(1, 'rgba(37, 99, 235, 0)');
+    document.addEventListener('DOMContentLoaded', () => {
+        const customPeriodToggle = document.getElementById('custom-period-toggle');
+        const customPeriodForm = document.getElementById('custom-period-form');
 
-        const dataLabels = {!! json_encode($labels) !!};
-        const dataValues = {!! json_encode($data) !!};
+        customPeriodToggle.addEventListener('click', () => customPeriodForm.classList.toggle('hidden'));
 
-        new Chart(ctx, {
+        const currency = (value) => new Intl.NumberFormat('vi-VN', {
+            style: 'currency', currency: 'VND', maximumFractionDigits: 0,
+        }).format(value);
+
+        new Chart(document.getElementById('revenueChart'), {
             type: 'line',
             data: {
-                labels: dataLabels,
+                labels: @json($report['revenue_chart']['labels']),
                 datasets: [{
                     label: 'Doanh thu',
-                    data: dataValues,
-                    backgroundColor: gradient,
-                    borderColor: '#2563eb', // blue-600
-                    borderWidth: 3,
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#2563eb',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
+                    data: @json($report['revenue_chart']['values']),
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.13)',
                     fill: true,
-                    tension: 0.4 // Làm cong đường đồ thị (bezier curve)
-                }]
+                    borderWidth: 3,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    tension: 0.32,
+                }],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
                 plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: '#ffffff',
-                        titleColor: '#1f2937',
-                        bodyColor: '#4b5563',
-                        borderColor: '#e5e7eb',
-                        borderWidth: 1,
-                        padding: 12,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                let value = context.parsed.y;
-                                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-                            }
-                        }
-                    }
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (context) => `Doanh thu: ${currency(context.parsed.y)}` } },
                 },
                 scales: {
-                    x: {
-                        grid: {
-                            display: false,
-                            drawBorder: false
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+                    y: { beginAtZero: true, grid: { color: '#e2e8f0', borderDash: [4, 4] }, ticks: { color: '#94a3b8', callback: (value) => currency(value) } },
+                },
+            },
+        });
+
+        const statusLabelPlugin = typeof ChartDataLabels === 'undefined' ? [] : [ChartDataLabels];
+        new Chart(document.getElementById('orderStatusChart'), {
+            type: 'doughnut',
+            plugins: statusLabelPlugin,
+            data: {
+                labels: @json($report['order_statuses']->pluck('label')),
+                datasets: [{
+                    data: @json($report['order_statuses']->pluck('count')),
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#06b6d4', '#10b981', '#ef4444'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 5,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '66%',
+                layout: { padding: { top: 38, right: 62, bottom: 38, left: 62 } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: (context) => Number(context.dataset.data[context.dataIndex]) > 0 ? 'auto' : false,
+                        anchor: 'end', align: 'end', offset: 7, clamp: true, clip: false,
+                        color: '#475569',
+                        backgroundColor: 'rgba(255,255,255,.97)',
+                        borderColor: (context) => context.dataset.backgroundColor[context.dataIndex],
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        padding: { top: 4, right: 6, bottom: 4, left: 6 },
+                        textAlign: 'center',
+                        font: { size: 9, weight: '600' },
+                        formatter: (value, context) => {
+                            const total = context.dataset.data.reduce((sum, item) => sum + Number(item), 0);
+                            const percentage = total > 0 ? ((Number(value) / total) * 100).toFixed(1) : '0.0';
+                            return `${context.chart.data.labels[context.dataIndex]}\n${percentage}%`;
                         },
-                        ticks: {
-                            color: '#9ca3af',
-                            font: {
-                                family: "'Inter', sans-serif",
-                                size: 11
-                            }
-                        }
                     },
-                    y: {
-                        grid: {
-                            color: '#f3f4f6',
-                            drawBorder: false,
-                            borderDash: [5, 5]
-                        },
-                        ticks: {
-                            color: '#9ca3af',
-                            font: {
-                                family: "'Inter', sans-serif",
-                                size: 11
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const total = context.dataset.data.reduce((sum, value) => sum + Number(value), 0);
+                                const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : '0.0';
+                                return `${context.label}: ${context.parsed} đơn (${percentage}%)`;
                             },
-                            callback: function(value) {
-                                if (value >= 1000000) {
-                                    return (value / 1000000) + 'Tr';
-                                } else if (value >= 1000) {
-                                    return (value / 1000) + 'k';
-                                }
-                                return value;
-                            }
-                        }
-                    }
+                        },
+                    },
                 },
-                interaction: {
-                    intersect: false,
-                    mode: 'index',
-                },
-            }
+            },
         });
     });
 </script>

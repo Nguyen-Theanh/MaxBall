@@ -68,26 +68,93 @@
         }
         .order-info {
             background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+            border-left: 4px solid #d92525;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            padding: 15px 20px;
+        }
+        .order-info p {
+            font-size: 15px;
+            margin: 5px 0;
+        }
+        .badge-pending {
+            background-color: #fff3cd;
+            border-radius: 4px;
+            color: #856404;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 8px;
+        }
+        .badge-paid {
+            background-color: #d4edda;
+            border-radius: 4px;
+            color: #155724;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 8px;
+        }
+        .product-table {
+            border-collapse: collapse;
+            margin-bottom: 18px;
             width: 100%;
         }
-        .order-info td {
+        .product-table th {
+            background-color: #f3f4f6;
+            border-bottom: 2px solid #d1d5db;
+            color: #4b5563;
+            font-size: 12px;
+            letter-spacing: 0.3px;
+            padding: 11px 10px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        .product-table td {
             border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+            font-size: 13px;
+            padding: 13px 10px;
+            vertical-align: top;
+        }
+        .product-name {
+            color: #111827;
             font-size: 14px;
-            padding: 11px 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
         }
-        .order-info tr:last-child td {
-            border-bottom: 0;
-        }
-        .order-info .label {
+        .product-variant {
             color: #6b7280;
-            width: 42%;
+            font-size: 12px;
+            line-height: 1.5;
         }
-        .order-info .value {
+        .totals {
+            border-collapse: collapse;
+            margin: 0 0 26px auto;
+            width: 100%;
+        }
+        .totals td {
+            color: #4b5563;
+            font-size: 14px;
+            padding: 7px 10px;
+            text-align: right;
+        }
+        .totals .value {
             color: #111827;
             font-weight: 700;
-            text-align: right;
+            width: 145px;
+        }
+        .totals .discount .value {
+            color: #15803d;
+        }
+        .totals .grand-total td {
+            border-top: 2px solid #d1d5db;
+            color: #111827;
+            font-size: 16px;
+            font-weight: 700;
+            padding-top: 13px;
+        }
+        .totals .grand-total .value {
+            color: #dc2626;
+            font-size: 19px;
         }
         .reason-box {
             background-color: #fff7ed;
@@ -171,26 +238,74 @@
             <div class="case-message">{{ $cancellationMessage }}</div>
 
             <h2 class="section-title">Thông tin đơn hàng</h2>
-            <table class="order-info" role="presentation">
+            <div class="order-info">
+                <p><strong>Mã đơn hàng:</strong> #{{ $order->order_code }}</p>
+                <p><strong>Ngày đặt:</strong> {{ $order->created_at->format('d/m/Y H:i') }}</p>
+                <p><strong>Tổng thanh toán:</strong> <span style="color: #d92525; font-size: 17px; font-weight: 700;">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span></p>
+                <p><strong>Phương thức thanh toán:</strong> {{ strtoupper($order->payment_method) }}</p>
+                <p>
+                    <strong>Trạng thái thanh toán:</strong>
+                    @if($order->payment_status === 'paid')
+                        <span class="badge-paid">Đã thanh toán</span>
+                    @else
+                        <span class="badge-pending">Chưa thanh toán</span>
+                    @endif
+                </p>
+                <p><strong>Địa chỉ nhận hàng:</strong> {{ $order->customer_address }} (SĐT: {{ $order->customer_phone }})</p>
+            </div>
+
+            <h2 class="section-title">Chi tiết sản phẩm đã hủy</h2>
+            <table class="product-table" role="presentation">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th style="text-align: center;">SL</th>
+                        <th style="text-align: right;">Đơn giá</th>
+                        <th style="text-align: right;">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($order->details as $detail)
+                        <tr>
+                            <td>
+                                <div class="product-name">{{ $detail->variant?->product?->name ?? 'Sản phẩm' }}</div>
+                                @if($detail->variant?->name)
+                                    <div class="product-variant">Phân loại: {{ $detail->variant->name }}</div>
+                                @endif
+                                @if($detail->print_name || $detail->print_number)
+                                    <div class="product-variant">
+                                        In áo:
+                                        {{ $detail->print_name ?: 'Không tên' }}
+                                        {{ $detail->print_number ? ' - Số '.$detail->print_number : '' }}
+                                    </div>
+                                @endif
+                            </td>
+                            <td style="text-align: center; font-weight: 700;">{{ $detail->quantity }}</td>
+                            <td style="text-align: right; white-space: nowrap;">{{ number_format($detail->price, 0, ',', '.') }}đ</td>
+                            <td style="text-align: right; font-weight: 700; white-space: nowrap;">{{ number_format($detail->price * $detail->quantity, 0, ',', '.') }}đ</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <table class="totals" role="presentation">
                 <tr>
-                    <td class="label">Mã đơn hàng</td>
-                    <td class="value">#{{ $order->order_code }}</td>
+                    <td>Tạm tính:</td>
+                    <td class="value">{{ number_format($order->sub_total, 0, ',', '.') }}đ</td>
                 </tr>
                 <tr>
-                    <td class="label">Ngày đặt</td>
-                    <td class="value">{{ $order->created_at->format('d/m/Y H:i') }}</td>
+                    <td>Phí vận chuyển:</td>
+                    <td class="value">{{ number_format($order->shipping_fee, 0, ',', '.') }}đ</td>
                 </tr>
-                <tr>
-                    <td class="label">Thời gian hủy</td>
-                    <td class="value">{{ $order->cancelled_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i') }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Tổng thanh toán</td>
-                    <td class="value" style="color: #dc2626;">{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
-                </tr>
-                <tr>
-                    <td class="label">Phương thức thanh toán</td>
-                    <td class="value">{{ strtoupper($order->payment_method) }}</td>
+                @if($order->discount_amount > 0)
+                    <tr class="discount">
+                        <td>Giảm giá:</td>
+                        <td class="value">-{{ number_format($order->discount_amount, 0, ',', '.') }}đ</td>
+                    </tr>
+                @endif
+                <tr class="grand-total">
+                    <td>Tổng giá trị đơn đã hủy:</td>
+                    <td class="value">{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
                 </tr>
             </table>
 

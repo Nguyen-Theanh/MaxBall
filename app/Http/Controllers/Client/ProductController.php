@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -14,15 +15,15 @@ class ProductController extends Controller
     {
         $products = Product::where('status', 1)->latest()->take(8)->get();
 
-        $topCustomers = \App\Models\User::withSum(['orders' => function($query) {
+        $topCustomers = User::withSum(['orders' => function ($query) {
             $query->where('order_status', 'completed')
-                  ->whereMonth('created_at', now()->month)
-                  ->whereYear('created_at', now()->year);
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year);
         }], 'total_amount')
-        ->having('orders_sum_total_amount', '>', 0)
-        ->orderByDesc('orders_sum_total_amount')
-        ->take(5)
-        ->get();
+            ->having('orders_sum_total_amount', '>', 0)
+            ->orderByDesc('orders_sum_total_amount')
+            ->take(5)
+            ->get();
 
         return view('client.products.index', compact('products', 'topCustomers'));
     }
@@ -74,10 +75,6 @@ class ProductController extends Controller
             'category',
             'productImages',
             'variants',
-            'reviews' => fn ($query) => $query
-                ->visible()
-                ->with(['user', 'orderDetail.variant', 'media'])
-                ->latest(),
         ])
             ->withCount([
                 'reviews' => fn ($query) => $query->visible(),
@@ -89,6 +86,14 @@ class ProductController extends Controller
             ->where('status', 1)
             ->firstOrFail();
 
+        $reviews = $product->reviews()
+            ->visible()
+            ->with(['user', 'orderDetail.variant', 'media'])
+            ->latest()
+            ->paginate(8, ['*'], 'reviews_page')
+            ->withQueryString()
+            ->fragment('product-reviews');
+
         $attributes = Attribute::with('values')->orderBy('name')->get();
 
         $relatedProducts = Product::where('status', 1)
@@ -97,6 +102,6 @@ class ProductController extends Controller
             ->limit(4)
             ->get();
 
-        return view('client.products.show', compact('product', 'relatedProducts', 'attributes'));
+        return view('client.products.show', compact('product', 'relatedProducts', 'attributes', 'reviews'));
     }
 }

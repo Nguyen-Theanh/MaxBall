@@ -18,6 +18,8 @@ class OrderCancelledMail extends Mailable
 
     public function __construct(public Order $order)
     {
+        $this->order->loadMissing('details.variant.product');
+
         $this->cancellationMessage = OrderCancellationReasons::emailMessage(
             $order->cancellation_reason,
             $order->cancelled_by

@@ -13,19 +13,30 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with('user')->orderBy('created_at', 'desc');
+        $validated = $request->validate([
+            'status' => ['nullable', Rule::in(['pending', 'processing', 'shipping', 'completed', 'cancelled'])],
+            'search' => ['nullable', 'string', 'max:255'],
+            'per_page' => ['nullable', Rule::in([10, 20, 50])],
+        ]);
+        $perPage = (int) ($validated['per_page'] ?? 10);
+        $query = Order::with('user')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
-        if ($request->filled('status')) {
-            $query->where('order_status', $request->status);
+        if (! empty($validated['status'])) {
+            $query->where('order_status', $validated['status']);
         }
 
-        if ($request->filled('search')) {
-            $query->where('order_code', 'like', '%'.$request->search.'%')
-                ->orWhere('customer_name', 'like', '%'.$request->search.'%')
-                ->orWhere('customer_phone', 'like', '%'.$request->search.'%');
+        if (! empty($validated['search'])) {
+            $search = trim($validated['search']);
+            $query->where(function ($query) use ($search): void {
+                $query->where('order_code', 'like', '%'.$search.'%')
+                    ->orWhere('customer_name', 'like', '%'.$search.'%')
+                    ->orWhere('customer_phone', 'like', '%'.$search.'%');
+            });
         }
 
-        $orders = $query->paginate(20)->withQueryString();
+        $orders = $query->paginate($perPage)->withQueryString();
         $adminCancellationReasons = OrderCancellationReasons::admin();
 
         return view('admin.orders.index', compact('orders', 'adminCancellationReasons'));

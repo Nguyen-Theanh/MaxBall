@@ -4,6 +4,13 @@
 @section('page_title', 'Quản lý sản phẩm')
 
 @section('content')
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            {!! nl2br(e(session('error'))) !!}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 mb-4">

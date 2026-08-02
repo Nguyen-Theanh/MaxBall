@@ -94,6 +94,12 @@
                     </div>
                 </div>
             @endforeach
+
+            @if($attributes->hasPages())
+                <div class="mt-4">
+                    {{ $attributes->onEachSide(1)->links() }}
+                </div>
+            @endif
         </div>
     </div>
 

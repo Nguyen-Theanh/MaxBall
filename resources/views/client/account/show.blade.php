@@ -240,6 +240,12 @@
                             <p>Bạn chưa có địa chỉ giao hàng nào.</p>
                         </div>
                     @endforelse
+
+                    @if($addresses->hasPages())
+                        <div class="pt-2">
+                            {{ $addresses->onEachSide(1)->links('pagination::tailwind') }}
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -348,7 +354,7 @@
                     @endforelse
                     
                     <div class="mt-5">
-                        {{ $orders->links() }}
+                        {{ $orders->onEachSide(1)->links('pagination::tailwind') }}
                     </div>
                 </div>
             </div>

@@ -4,8 +4,7 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Chi tiết Đơn hàng #{{ $order->order_code }}</h1>
+    <div class="d-flex justify-content-end mb-4">
         <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary btn-sm">
             Quay lại danh sách
         </a>

@@ -4,8 +4,7 @@
 
 @section('content')
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 mb-0 text-gray-800 fw-bold">Quản lý Danh mục</h2>
+    <div class="d-flex justify-content-end mb-4">
         <a href="{{ route('admin.categories.create') }}" class="btn btn-primary shadow-sm">
             + Thêm danh mục
         </a>
@@ -100,5 +99,11 @@
             </div>
         </div>
     </div>
+
+    @if($categories->hasPages())
+        <div class="mt-4">
+            {{ $categories->onEachSide(1)->links() }}
+        </div>
+    @endif
 </div>
 @endsection
