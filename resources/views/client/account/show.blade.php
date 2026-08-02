@@ -8,7 +8,7 @@
 
 <div class="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-12 md:pb-16">
     <div class="flex flex-col md:flex-row gap-8">
-        
+
         <!-- Sidebar Navigation -->
         <div class="w-full md:w-64 shrink-0">
             <!-- User Info -->
@@ -23,7 +23,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Menu Items -->
             <div class="space-y-2">
                 <div>
@@ -36,12 +36,12 @@
                         <button onclick="switchTab('password')" id="nav-password" class="text-left text-gray-600 hover:text-[#d92525] transition-colors">Đổi mật khẩu</button>
                     </div>
                 </div>
-                
+
                 <button onclick="switchTab('address')" id="nav-address" class="w-full text-left flex items-center gap-3 px-2 py-2 rounded transition-colors group">
                     <i class="fa-solid fa-location-dot w-5 text-center text-orange-500"></i>
-                    <span class="font-bold text-gray-700 group-hover:text-[#d92525]">Địa Chỉ</span>
+                    <span class="font-bold text-gray-700 group-hover:text-[#d92525]">Địa Chỉ Nhận Hàng</span>
                 </button>
-                
+
                 <button onclick="switchTab('orders')" id="nav-orders" class="w-full text-left flex items-center gap-3 px-2 py-2 rounded transition-colors group">
                     <i class="fa-solid fa-clipboard-list w-5 text-center text-blue-500"></i>
                     <span class="font-bold text-gray-700 group-hover:text-[#d92525]">Đơn Mua</span>
@@ -51,7 +51,7 @@
 
         <!-- Main Content -->
         <div class="flex-1 bg-white rounded-sm shadow-sm border border-gray-100 min-h-[500px]">
-            
+
             <!-- TAB: PROFILE -->
             <div id="tab-profile" class="tab-content p-6 md:p-8 hidden">
                 <div class="border-b pb-4 mb-6">
@@ -352,7 +352,7 @@
                             <p class="text-gray-500 font-medium">Chưa có đơn hàng</p>
                         </div>
                     @endforelse
-                    
+
                     <div class="mt-5">
                         {{ $orders->onEachSide(1)->links('pagination::tailwind') }}
                     </div>
@@ -370,7 +370,7 @@
 <div id="addressModal" class="fixed inset-0 z-[100] hidden items-center justify-center">
     <!-- Backdrop -->
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeAddressModal()"></div>
-    
+
     <!-- Modal Content -->
     <div class="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-sm bg-white p-6 shadow-2xl transition-all">
         <div class="mb-5 flex items-center justify-between border-b pb-4">
@@ -385,7 +385,7 @@
             <input type="hidden" name="_method" id="addressMethod" value="POST">
             <input type="hidden" name="address_id" id="address_id" value="{{ old('address_id') }}">
             <input type="hidden" name="form_context" value="address">
-            
+
             <div class="space-y-4">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
@@ -431,7 +431,7 @@
         document.querySelectorAll('.tab-content').forEach(el => {
             el.classList.add('hidden');
         });
-        
+
         // Show target tab
         document.getElementById('tab-' + tabId).classList.remove('hidden');
 
@@ -439,16 +439,16 @@
         document.getElementById('nav-profile-group').classList.remove('text-[#d92525]');
         document.getElementById('nav-profile-group').querySelector('span').classList.remove('text-[#d92525]');
         document.getElementById('nav-profile-group').querySelector('span').classList.add('text-[#10271d]');
-        
+
         document.getElementById('nav-profile').classList.remove('text-[#d92525]');
         document.getElementById('nav-profile').classList.add('text-gray-600');
-        
+
         document.getElementById('nav-password').classList.remove('text-[#d92525]');
         document.getElementById('nav-password').classList.add('text-gray-600');
-        
+
         document.getElementById('nav-address').querySelector('span').classList.remove('text-[#d92525]');
         document.getElementById('nav-address').querySelector('span').classList.add('text-gray-700');
-        
+
         document.getElementById('nav-orders').querySelector('span').classList.remove('text-[#d92525]');
         document.getElementById('nav-orders').querySelector('span').classList.add('text-gray-700');
 
@@ -456,7 +456,7 @@
         if (tabId === 'profile' || tabId === 'password') {
             document.getElementById('nav-profile-group').querySelector('span').classList.remove('text-[#10271d]');
             document.getElementById('nav-profile-group').querySelector('span').classList.add('text-[#d92525]');
-            
+
             if (tabId === 'profile') {
                 document.getElementById('nav-profile').classList.remove('text-gray-600');
                 document.getElementById('nav-profile').classList.add('text-[#d92525]');
@@ -526,7 +526,7 @@
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        
+
         if (address) {
             title.textContent = 'Cập nhật địa chỉ';
             form.action = `/account/addresses/${address.id}`;

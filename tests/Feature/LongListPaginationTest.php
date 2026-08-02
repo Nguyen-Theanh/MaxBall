@@ -98,7 +98,13 @@ class LongListPaginationTest extends TestCase
 
         $response
             ->assertSee('class="flex gap-2 items-center justify-between sm:hidden"', false)
-            ->assertDontSee('class="d-flex justify-content-between flex-fill d-sm-none"', false);
+            ->assertDontSee('class="d-flex justify-content-between flex-fill d-sm-none"', false)
+            ->assertSee('Hiển thị')
+            ->assertSee('trên tổng số')
+            ->assertSee('kết quả')
+            ->assertSee('Trước')
+            ->assertSee('Sau')
+            ->assertDontSee('Showing');
         $this->assertSame(2, $orders->currentPage());
         $this->assertSame(2, $addresses->currentPage());
         $this->assertSame(2, $orders->count());

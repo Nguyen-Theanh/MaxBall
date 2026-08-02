@@ -46,7 +46,10 @@ class AdminOrderPaginationTest extends TestCase
             ->assertSee('Quản lý đơn hàng')
             ->assertDontSee('placeholder="Tìm kiếm đơn hàng, khách hàng..."', false)
             ->assertSee('10 đơn/trang')
-            ->assertSee('Hiển thị 1–10 trên tổng 12 đơn hàng');
+            ->assertSee('Hiển thị 1–10 trên tổng 12 đơn hàng')
+            ->assertSee('aria-label="Trang sau"', false)
+            ->assertDontSee('Showing')
+            ->assertDontSee('results');
 
         $secondPageResponse = $this->get(route('admin.orders.index', [
             'status' => 'pending',
