@@ -1,4 +1,4 @@
-﻿@csrf
+@csrf
 
 <style>
     .attribute-picker {
@@ -368,9 +368,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     let variantIndex = variantsContainer ? (function() {
-        const els = variantsContainer.querySelectorAll('.variant-row');
-        return els.length ? Number(els[els.length - 1].dataset.index) + 1 : 0;
+        let maxIndex = -1;
+        variantsContainer.querySelectorAll('.variant-row').forEach(row => {
+            const index = parseInt(row.dataset.index, 10);
+            if (!isNaN(index) && index > maxIndex) {
+                maxIndex = index;
+            }
+        });
+        return maxIndex + 1;
     })() : 0;
+
+    function toggleGlobalPriceSection() {
+        const priceSection = document.getElementById('product-price-section');
+        if (!priceSection) return;
+        
+        const hasAttributes = selectedAttributes.length > 0;
+        const hasVariants = document.querySelectorAll('#variants-container .variant-row').length > 0;
+        
+        const basePriceVisible = priceSection.querySelector('input[type="text"]');
+        const basePriceHidden = priceSection.querySelector('input[name="base_price"]');
+        
+        if (hasAttributes || hasVariants) {
+            priceSection.classList.add('d-none');
+            if (basePriceVisible) {
+                basePriceVisible.removeAttribute('required');
+            }
+            if (basePriceHidden && !basePriceHidden.value) {
+                basePriceHidden.value = '0';
+            }
+        } else {
+            priceSection.classList.remove('d-none');
+            if (basePriceVisible) {
+                basePriceVisible.setAttribute('required', 'required');
+            }
+        }
+    }
 
     function normalizeKey(value) {
         return toSlug(value);
@@ -449,6 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderSelectedAttributes();
         renderPickerList();
         renderAllVariantAttributes();
+        toggleGlobalPriceSection();
     }
 
     function removeAttribute(key) {
@@ -463,6 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderSelectedAttributes();
         renderPickerList();
         renderAllVariantAttributes();
+        toggleGlobalPriceSection();
     }
 
     function renderSelectedAttributes() {
@@ -470,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="selected-attribute-card" data-selected-attribute="${attribute.key}">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="fw-semibold">${escapeHtml(attribute.name)}</span>
-                    <button type="button" class="btn-close" style="font-size: 0.65rem;" data-remove-attribute="${attribute.key}" aria-label="Xóa"></button>
+                    <button type="button" class="btn-close remove-attribute" style="font-size: 0.65rem;" data-key="${attribute.key}" aria-label="Xóa"></button>
                 </div>
                 <div class="selected-attribute-values vstack gap-1">
                     ${attribute.values.map((value, index) => `
@@ -483,8 +517,10 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `).join('');
 
-        selectedAttributesContainer.querySelectorAll('[data-remove-attribute]').forEach((button) => {
-            button.addEventListener('click', () => removeAttribute(button.dataset.removeAttribute));
+        selectedAttributesContainer.querySelectorAll('.remove-attribute').forEach((button) => {
+            button.addEventListener('click', function() {
+                removeAttribute(this.dataset.key);
+            });
         });
 
         selectedAttributesContainer.querySelectorAll('.attribute-value-check').forEach((checkbox) => {
@@ -504,6 +540,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderAllVariantAttributes();
             });
         });
+
+        toggleGlobalPriceSection();
     }
     function renderPickerList() {
         const keyword = normalizeKey(pickerSearch?.value || '');
@@ -865,6 +903,7 @@ document.addEventListener('DOMContentLoaded', function() {
         row.querySelector('.remove-variant')?.addEventListener('click', function() {
             row.remove();
             updateDuplicateVariantState();
+            toggleGlobalPriceSection();
         });
 
         const skuInput = row.querySelector('.variant-sku-input');
@@ -1018,6 +1057,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         updateDuplicateVariantState();
+        toggleGlobalPriceSection();
     });
 
     addVariantBtn?.addEventListener('click', function() {
@@ -1025,6 +1065,7 @@ document.addEventListener('DOMContentLoaded', function() {
         variantsContainer.appendChild(row);
         generationMessage?.classList.add('d-none');
         updateDuplicateVariantState();
+        toggleGlobalPriceSection();
     });
 
     productForm?.addEventListener('submit', function(event) {
@@ -1036,6 +1077,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     renderPickerList();
     updateDuplicateVariantState();
+    toggleGlobalPriceSection();
 });
 
 document.addEventListener('input', function(e) {
