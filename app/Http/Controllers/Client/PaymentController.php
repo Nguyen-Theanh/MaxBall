@@ -22,8 +22,8 @@ class PaymentController extends Controller
         }
 
         // Thông tin tài khoản ngân hàng của bạn
-        $bankId = 'VCB'; // Vietcombank
-        $accountNo = '1049308625';
+        $bankId = 'MB'; // MB Bank
+        $accountNo = '4007052006';
         $accountName = 'NGUYEN GIA TUAN';
         $amount = $order->total_amount;
         $addInfo = $order->order_code; // Nội dung chuyển khoản là mã đơn hàng
@@ -73,17 +73,21 @@ class PaymentController extends Controller
         $transferAmount = $data['transferAmount'] ?? 0;
         
         // Cố gắng tìm mã đơn hàng trong nội dung chuyển khoản
-        // Mã đơn hàng của chúng ta có định dạng 10 ký tự chữ và số in hoa
         $orders = Order::where('payment_status', '!=', 'paid')->get();
         
         foreach ($orders as $order) {
+            Log::info("Checking order: {$order->order_code} vs content: {$content}. transferAmount: {$transferAmount}, total_amount: {$order->total_amount}");
+            
             // Kiểm tra xem mã đơn hàng có xuất hiện trong nội dung chuyển khoản không
             if (stripos($content, $order->order_code) !== false) {
+                Log::info("Content matches!");
                 // Kiểm tra xem số tiền chuyển có khớp không (có thể cho phép sai số nhỏ hoặc >=)
                 if ($transferAmount >= $order->total_amount) {
                     $order->update(['payment_status' => 'paid']);
                     Log::info("Order {$order->order_code} marked as PAID via SePay.");
                     return response()->json(['success' => true, 'message' => 'Order updated']);
+                } else {
+                    Log::info("Amount mismatch! Transfer: {$transferAmount}, Order Total: {$order->total_amount}");
                 }
             }
         }

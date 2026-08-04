@@ -67,7 +67,6 @@
                             <input type="radio" name="payment_method" value="vietqr" class="w-5 h-5 text-red-600 focus:ring-red-600">
                             <div class="ml-3 flex items-center gap-2">
                                 <span class="block text-sm font-bold text-gray-900">Chuyển khoản (VietQR / App Ngân Hàng / MoMo)</span>
-                                <img src="https://vietqr.net/portal/v2/img/logo-vietqr.png" alt="VietQR" class="h-6 object-contain">
                             </div>
                         </label>
                         @error('payment_method')
