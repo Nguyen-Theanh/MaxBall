@@ -390,6 +390,24 @@ class ProductController extends Controller
         }
     }
 
+    public function checkName(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $name = $request->query('name');
+        $ignoreId = $request->query('ignore_id');
+
+        if (!$name) {
+            return response()->json(['exists' => false]);
+        }
+
+        $query = Product::whereRaw('LOWER(name) = ?', [\Illuminate\Support\Str::lower($name)]);
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        return response()->json(['exists' => $query->exists()]);
+    }
+
     private function resolveCategoryId(Request $request): int
     {
         if ($request->filled('category_name') && trim($request->input('category_name')) !== '') {

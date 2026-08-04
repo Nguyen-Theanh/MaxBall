@@ -67,6 +67,7 @@
                 <div class="mb-3">
                     <label for="name" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
                     <input type="text" id="name" name="name" value="{{ old('name', $product->name) }}" class="form-control @error('name') is-invalid @enderror" required>
+                    <div class="invalid-feedback duplicate-error-name" style="display: none;">Tên sản phẩm này đã tồn tại trong hệ thống. Vui lòng chọn tên khác!</div>
                     @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
@@ -272,6 +273,7 @@
                 <div class="mb-3">
                     <label for="category_name" class="form-label">Hoặc tạo danh mục mới</label>
                     <input type="text" id="category_name" name="category_name" value="{{ old('category_name') }}" class="form-control @error('category_name') is-invalid @enderror" placeholder="VD: Training Kit">
+                    <div class="invalid-feedback duplicate-error-category" style="display: none;">Danh mục này đã tồn tại trong hệ thống. Bạn có thể chọn ở danh sách phía trên hoặc nhập tên khác!</div>
                     @error('category_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
@@ -1077,6 +1079,94 @@ document.addEventListener('DOMContentLoaded', function() {
 
     renderPickerList();
     updateDuplicateVariantState();
+    
+    // Check duplicate names
+    const nameInput = document.getElementById('name');
+    const categoryNameInput = document.getElementById('category_name');
+    const submitButton = productForm?.querySelector('button[type="submit"]');
+    const errorNameDiv = document.querySelector('.duplicate-error-name');
+    const errorCategoryDiv = document.querySelector('.duplicate-error-category');
+    
+    let debounceTimer;
+    let isNameDuplicate = false;
+    let isCategoryDuplicate = false;
+    const productId = '{{ $product->id ?? '' }}';
+
+    function checkSubmitButtonState() {
+        if (!submitButton) return;
+        if (isNameDuplicate || isCategoryDuplicate) {
+            submitButton.disabled = true;
+        } else {
+            submitButton.disabled = false;
+        }
+    }
+
+    if (nameInput) {
+        nameInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const value = this.value.trim();
+            
+            if (value === '') {
+                isNameDuplicate = false;
+                nameInput.classList.remove('is-invalid');
+                errorNameDiv.style.display = 'none';
+                checkSubmitButtonState();
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`/admin/products/check-name?name=${encodeURIComponent(value)}&ignore_id=${productId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            isNameDuplicate = true;
+                            nameInput.classList.add('is-invalid');
+                            errorNameDiv.style.display = 'block';
+                        } else {
+                            isNameDuplicate = false;
+                            nameInput.classList.remove('is-invalid');
+                            errorNameDiv.style.display = 'none';
+                        }
+                        checkSubmitButtonState();
+                    })
+                    .catch(err => console.error(err));
+            }, 500);
+        });
+    }
+
+    if (categoryNameInput) {
+        categoryNameInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const value = this.value.trim();
+            
+            if (value === '') {
+                isCategoryDuplicate = false;
+                categoryNameInput.classList.remove('is-invalid');
+                errorCategoryDiv.style.display = 'none';
+                checkSubmitButtonState();
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`/admin/categories/check-name?name=${encodeURIComponent(value)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            isCategoryDuplicate = true;
+                            categoryNameInput.classList.add('is-invalid');
+                            errorCategoryDiv.style.display = 'block';
+                        } else {
+                            isCategoryDuplicate = false;
+                            categoryNameInput.classList.remove('is-invalid');
+                            errorCategoryDiv.style.display = 'none';
+                        }
+                        checkSubmitButtonState();
+                    })
+                    .catch(err => console.error(err));
+            }, 500);
+        });
+    }
+
     toggleGlobalPriceSection();
 });
 

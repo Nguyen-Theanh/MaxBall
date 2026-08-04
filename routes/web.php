@@ -102,7 +102,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/dashboard/export/excel', [DashboardController::class, 'exportExcel'])->name('dashboard.export.excel');
     Route::get('/dashboard/export/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export.pdf');
 
+    Route::get('/products/check-name', [AdminProductController::class, 'checkName'])->name('products.check-name');
     Route::resource('products', AdminProductController::class)->except(['show']);
+
+    Route::get('/categories/check-name', [CategoryController::class, 'checkName'])->name('categories.check-name');
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('users', AdminUserController::class)->only(['index']);
     Route::patch('users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');

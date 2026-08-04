@@ -100,4 +100,17 @@ class CategoryController extends Controller
 
         return redirect()->route('admin.categories.index')->with('success', 'Đã xóa danh mục!');
     }
+
+    public function checkName(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $name = $request->query('name');
+        
+        if (!$name) {
+            return response()->json(['exists' => false]);
+        }
+
+        $query = \App\Models\Category::whereRaw('LOWER(name) = ?', [\Illuminate\Support\Str::lower($name)]);
+
+        return response()->json(['exists' => $query->exists()]);
+    }
 }
