@@ -155,33 +155,6 @@ class ProductController extends Controller
         ]);
     }
 
-    private function syncProductAverages(Product $product): void
-    {
-        $variants = $product->variants()->get();
-        if ($variants->isEmpty()) {
-            return;
-        }
-
-        $totalBase = 0;
-        $totalDiscount = 0;
-        $hasAnyDiscount = false;
-
-        foreach ($variants as $variant) {
-            $totalBase += $variant->base_price;
-            if ($variant->discount_price !== null) {
-                $hasAnyDiscount = true;
-                $totalDiscount += $variant->discount_price;
-            } else {
-                $totalDiscount += $variant->base_price;
-            }
-        }
-
-        $count = $variants->count();
-        $product->updateQuietly([
-            'base_price' => (int) round($totalBase / $count),
-            'discount_price' => $hasAnyDiscount ? (int) round($totalDiscount / $count) : null,
-        ]);
-    }
 
     private function validatedData(Request $request): array
     {
