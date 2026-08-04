@@ -65,6 +65,7 @@ class ProductController extends Controller
         $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
         $this->storeVariants($product, $request->input('variants', []), $request);
+        $this->syncProductAverages($product);
 
         return redirect()
             ->route('admin.products.index')
@@ -101,6 +102,7 @@ class ProductController extends Controller
         $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
         $this->storeVariants($product, $request->input('variants', []), $request);
+        $this->syncProductAverages($product);
 
         return redirect()
             ->route('admin.products.index')
@@ -122,7 +124,63 @@ class ProductController extends Controller
 
         return redirect()
             ->route('admin.products.index')
-            ->with('success', 'Da xoa san pham.');
+            ->with('success', 'Đã xóa sản phẩm.');
+    }
+
+    private function syncProductAverages(Product $product): void
+    {
+        $variants = $product->variants()->get();
+        if ($variants->isEmpty()) {
+            return;
+        }
+
+        $totalBase = 0;
+        $totalDiscount = 0;
+        $hasAnyDiscount = false;
+
+        foreach ($variants as $variant) {
+            $totalBase += $variant->base_price;
+            if ($variant->discount_price !== null) {
+                $hasAnyDiscount = true;
+                $totalDiscount += $variant->discount_price;
+            } else {
+                $totalDiscount += $variant->base_price;
+            }
+        }
+
+        $count = $variants->count();
+        $product->updateQuietly([
+            'base_price' => (int) round($totalBase / $count),
+            'discount_price' => $hasAnyDiscount ? (int) round($totalDiscount / $count) : null,
+        ]);
+    }
+
+    private function syncProductAverages(Product $product): void
+    {
+        $variants = $product->variants()->get();
+        if ($variants->isEmpty()) {
+            return;
+        }
+
+        $totalBase = 0;
+        $totalDiscount = 0;
+        $hasAnyDiscount = false;
+
+        foreach ($variants as $variant) {
+            $totalBase += $variant->base_price;
+            if ($variant->discount_price !== null) {
+                $hasAnyDiscount = true;
+                $totalDiscount += $variant->discount_price;
+            } else {
+                $totalDiscount += $variant->base_price;
+            }
+        }
+
+        $count = $variants->count();
+        $product->updateQuietly([
+            'base_price' => (int) round($totalBase / $count),
+            'discount_price' => $hasAnyDiscount ? (int) round($totalDiscount / $count) : null,
+        ]);
     }
 
     private function validatedData(Request $request): array
