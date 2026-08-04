@@ -63,6 +63,11 @@ class VietnamAddressService
         $baseUrl = rtrim((string) config('services.vietnam_address.base_url'), '/');
         $caBundle = config('services.vietnam_address.ca_bundle');
         $httpOptions = filled($caBundle) ? ['verify' => $caBundle] : [];
+        
+        // Disable SSL verification in local environment to prevent cURL error 77 on some Laragon setups
+        if (app()->environment('local') && !filled($caBundle)) {
+            $httpOptions['verify'] = false;
+        }
 
         $response = Http::withOptions($httpOptions)
             ->acceptJson()

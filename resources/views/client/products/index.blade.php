@@ -227,7 +227,7 @@
                                     {{ strtoupper(substr($user2->name, 0, 1)) }}
                                 </div>
                             </div>
-                            <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-400 to-gray-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md border-2 border-white">
+                            <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-gray-400 to-gray-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md border-2 border-white whitespace-nowrap">
                                 TOP 2
                             </div>
                         </div>
@@ -251,7 +251,7 @@
                                 {{ strtoupper(substr($user1->name, 0, 1)) }}
                             </div>
                         </div>
-                        <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-sm font-black px-5 py-1.5 rounded-full shadow-lg border-2 border-white">
+                        <div class="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-sm font-black px-5 py-1.5 rounded-full shadow-lg border-2 border-white whitespace-nowrap">
                             TOP 1
                         </div>
                     </div>
@@ -272,7 +272,7 @@
                                     {{ strtoupper(substr($user3->name, 0, 1)) }}
                                 </div>
                             </div>
-                            <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-400 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md border-2 border-white">
+                            <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-400 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md border-2 border-white whitespace-nowrap">
                                 TOP 3
                             </div>
                         </div>

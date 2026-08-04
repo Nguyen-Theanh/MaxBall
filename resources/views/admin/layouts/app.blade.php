@@ -144,9 +144,15 @@
                 Sản phẩm
             </a>
 
-            <a href="{{ route('admin.orders.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                Đơn hàng
+            <a href="{{ route('admin.orders.index') }}" class="sidebar-link flex items-center justify-between px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.orders.*') ? 'active' : '' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    Đơn hàng
+                </div>
+                @php $pendingOrdersCount = \App\Models\Order::where('order_status', 'pending')->count(); @endphp
+                @if($pendingOrdersCount > 0)
+                    <span class="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-red-500 rounded-full">{{ $pendingOrdersCount }}</span>
+                @endif
             </a>
 
             <a href="{{ route('admin.reviews.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">

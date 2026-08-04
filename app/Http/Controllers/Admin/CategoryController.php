@@ -82,6 +82,16 @@ class CategoryController extends Controller
     // 6. Xóa danh mục
     public function destroy(Category $category)
     {
+        $hasOrders = $category->products()->whereHas('variants.orderDetails')->exists();
+        if ($hasOrders) {
+            return redirect()
+                ->route('admin.categories.index')
+                ->with(
+                    'error',
+                    "Không thể xóa danh mục vì đã có sản phẩm thuộc danh mục này phát sinh đơn hàng.\nVui lòng ẩn danh mục thay vì xóa để bảo toàn dữ liệu đơn hàng."
+                );
+        }
+
         if ($category->products()->exists()) {
             return redirect()
                 ->route('admin.categories.index')
