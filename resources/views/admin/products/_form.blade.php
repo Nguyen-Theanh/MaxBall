@@ -1071,6 +1071,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     productForm?.addEventListener('submit', function(event) {
+        if (isNameDuplicate || isCategoryDuplicate) {
+            event.preventDefault();
+            const errDiv = isNameDuplicate ? errorNameDiv : errorCategoryDiv;
+            errDiv?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
         if (!updateDuplicateVariantState()) {
             event.preventDefault();
             duplicateAlert?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1083,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check duplicate names
     const nameInput = document.getElementById('name');
     const categoryNameInput = document.getElementById('category_name');
-    const submitButton = productForm?.querySelector('button[type="submit"]');
+
     const errorNameDiv = document.querySelector('.duplicate-error-name');
     const errorCategoryDiv = document.querySelector('.duplicate-error-category');
     
@@ -1115,7 +1122,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             debounceTimer = setTimeout(() => {
-                fetch(`/admin/products/check-name?name=${encodeURIComponent(value)}&ignore_id=${productId}`)
+                fetch(`/admin/products/check-name?name=${encodeURIComponent(value)}&ignore_id=${productId}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
                     .then(response => response.json())
                     .then(data => {
                         if (data.exists) {
@@ -1148,7 +1160,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             debounceTimer = setTimeout(() => {
-                fetch(`/admin/categories/check-name?name=${encodeURIComponent(value)}`)
+                fetch(`/admin/categories/check-name?name=${encodeURIComponent(value)}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
                     .then(response => response.json())
                     .then(data => {
                         if (data.exists) {

@@ -161,7 +161,12 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'category_name' => ['nullable', 'string', 'max:255'],
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required', 
+                'string', 
+                'max:255',
+                \Illuminate\Validation\Rule::unique('products')->ignore($request->route('product'))
+            ],
             'slug' => ['nullable', 'string', 'max:255'],
             'thumbnail' => ['nullable', 'string', 'max:2048'],
             'image' => ['nullable', 'image', 'max:3072'],
