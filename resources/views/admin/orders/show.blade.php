@@ -104,7 +104,6 @@
                                         @if($order->payment_status == 'paid')
                                             <option value="completed">Hoàn thành</option>
                                         @endif
-                                        <option value="cancelled">Hủy đơn hàng</option>
                                     @endif
                                 </select>
                             @endif
