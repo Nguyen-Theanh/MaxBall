@@ -134,24 +134,13 @@ class ProductController extends Controller
             return;
         }
 
-        $totalBase = 0;
-        $totalDiscount = 0;
-        $hasAnyDiscount = false;
+        $cheapestVariant = $variants->sortBy(function ($variant) {
+            return $variant->discount_price ?? $variant->base_price;
+        })->first();
 
-        foreach ($variants as $variant) {
-            $totalBase += $variant->base_price;
-            if ($variant->discount_price !== null) {
-                $hasAnyDiscount = true;
-                $totalDiscount += $variant->discount_price;
-            } else {
-                $totalDiscount += $variant->base_price;
-            }
-        }
-
-        $count = $variants->count();
         $product->updateQuietly([
-            'base_price' => (int) round($totalBase / $count),
-            'discount_price' => $hasAnyDiscount ? (int) round($totalDiscount / $count) : null,
+            'base_price' => $cheapestVariant->base_price,
+            'discount_price' => $cheapestVariant->discount_price,
         ]);
     }
 

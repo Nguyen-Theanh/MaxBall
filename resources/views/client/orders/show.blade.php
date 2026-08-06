@@ -147,14 +147,21 @@
             </div>
             
 @if(in_array($order->order_status, ['pending', 'processing']))
-                <button type="button"
-                        data-customer-cancel
-                        data-order-id="{{ $order->id }}"
-                        data-order-code="{{ $order->order_code }}"
-                        data-cancel-action="{{ route('client.orders.cancel', $order->id) }}"
-                        class="w-full sm:w-auto px-6 py-2.5 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50 transition-colors">
-                    Hủy đơn hàng
-                </button>
+                <div class="flex gap-3">
+                    @if($order->payment_method === 'vietqr' && $order->payment_status === 'pending')
+                        <a href="{{ route('client.checkout.payment_qr', $order->order_code) }}" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-center">
+                            Thanh toán lại
+                        </a>
+                    @endif
+                    <button type="button"
+                            data-customer-cancel
+                            data-order-id="{{ $order->id }}"
+                            data-order-code="{{ $order->order_code }}"
+                            data-cancel-action="{{ route('client.orders.cancel', $order->id) }}"
+                            class="w-full sm:w-auto px-6 py-2.5 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50 transition-colors">
+                        Hủy đơn hàng
+                    </button>
+                </div>
             @elseif($order->order_status == 'shipping')
                 <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?');">
                     @csrf

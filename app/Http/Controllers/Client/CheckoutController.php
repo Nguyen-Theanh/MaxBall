@@ -93,8 +93,6 @@ class CheckoutController extends Controller
                     'price' => $price,
                 ]);
 
-                // Deduct stock
-                $item->productVariant->decrement('stock', $item->quantity);
             }
 
             // Clear cart

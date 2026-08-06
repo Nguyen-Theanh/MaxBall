@@ -98,11 +98,29 @@ class OrderController extends Controller
             return back()->with('error', 'Trạng thái chuyển đổi không hợp lệ.');
         }
 
-        // If cancelling, restore stock
-        if ($newStatus === 'cancelled') {
+        // Handle stock deduction when COD order is confirmed
+        if ($newStatus === 'processing' && $currentStatus === 'pending' && $order->payment_method === 'cod') {
             foreach ($order->details as $detail) {
                 if ($detail->variant) {
-                    $detail->variant->increment('stock', $detail->quantity);
+                    $detail->variant->decrement('stock', $detail->quantity);
+                }
+            }
+        }
+
+        // Handle stock restoration when cancelling
+        if ($newStatus === 'cancelled') {
+            $stockWasDeducted = false;
+            if ($order->payment_method === 'cod' && in_array($currentStatus, ['processing', 'shipping', 'completed'])) {
+                $stockWasDeducted = true;
+            } elseif ($order->payment_method === 'vietqr' && $order->payment_status === 'paid') {
+                $stockWasDeducted = true;
+            }
+
+            if ($stockWasDeducted) {
+                foreach ($order->details as $detail) {
+                    if ($detail->variant) {
+                        $detail->variant->increment('stock', $detail->quantity);
+                    }
                 }
             }
         }

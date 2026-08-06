@@ -84,6 +84,15 @@ class PaymentController extends Controller
                 // Kiểm tra xem số tiền chuyển có khớp không (có thể cho phép sai số nhỏ hoặc >=)
                 if ($transferAmount >= $order->total_amount) {
                     $order->update(['payment_status' => 'paid']);
+                    
+                    // Deduct stock on successful online payment
+                    $order->load('details.variant');
+                    foreach ($order->details as $detail) {
+                        if ($detail->variant) {
+                            $detail->variant->decrement('stock', $detail->quantity);
+                        }
+                    }
+
                     Log::info("Order {$order->order_code} marked as PAID via SePay.");
                     return response()->json(['success' => true, 'message' => 'Order updated']);
                 } else {
