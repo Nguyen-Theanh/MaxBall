@@ -84,7 +84,7 @@ class OrderController extends Controller
 
         // Validate sequence
         $validTransitions = [
-            'pending' => ['processing', 'shipping', 'cancelled'],
+            'pending' => ['processing', 'cancelled'],
             'processing' => ['shipping', 'cancelled'],
             'shipping' => ['completed', 'cancelled'],
         ];
@@ -100,6 +100,13 @@ class OrderController extends Controller
 
         // Handle stock deduction when COD order is confirmed
         if ($newStatus === 'processing' && $currentStatus === 'pending' && $order->payment_method === 'cod') {
+            // Kiểm tra số lượng tồn kho trước khi xác nhận
+            foreach ($order->details as $detail) {
+                if ($detail->variant && $detail->variant->stock < $detail->quantity) {
+                    return back()->with('error', "Không thể xác nhận đơn hàng. Sản phẩm '{$detail->variant->product->name} - {$detail->variant->name}' hiện chỉ còn {$detail->variant->stock} trong kho (yêu cầu: {$detail->quantity}).");
+                }
+            }
+
             foreach ($order->details as $detail) {
                 if ($detail->variant) {
                     $detail->variant->decrement('stock', $detail->quantity);
@@ -138,6 +145,41 @@ class OrderController extends Controller
                     : null,
                 'cancelled_at' => now(),
             ];
+
+            // Refund logic
+            if ($order->payment_status === 'paid' && in_array($order->payment_method, ['vietqr', 'wallet'])) {
+                $user = $order->user;
+                if ($user) {
+                    $user->increment('wallet_balance', $order->total_amount);
+                    \App\Models\WalletTransaction::create([
+                        'user_id' => $user->id,
+                        'type' => 'refund',
+                        'amount' => $order->total_amount,
+                        'description' => 'Hoàn tiền do Admin hủy đơn hàng #' . $order->order_code,
+                    ]);
+                }
+            }
+
+            // Refund Vouchers
+            if ($order->coupon_id) {
+                $userVoucher = \App\Models\UserVoucher::where('user_id', $order->user_id)->where('coupon_id', $order->coupon_id)->first();
+                if ($userVoucher) {
+                    $userVoucher->update(['is_used' => false, 'used_at' => null]);
+                    if ($order->coupon) {
+                        $order->coupon->decrement('used_count');
+                    }
+                }
+            }
+
+            if ($order->freeship_coupon_id) {
+                $userVoucherFreeship = \App\Models\UserVoucher::where('user_id', $order->user_id)->where('coupon_id', $order->freeship_coupon_id)->first();
+                if ($userVoucherFreeship) {
+                    $userVoucherFreeship->update(['is_used' => false, 'used_at' => null]);
+                    if ($order->freeshipCoupon) {
+                        $order->freeshipCoupon->decrement('used_count');
+                    }
+                }
+            }
         }
 
         $order->update($updateData);

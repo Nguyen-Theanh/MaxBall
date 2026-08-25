@@ -17,12 +17,23 @@ class AccountController extends Controller
 {
     public function show(Request $request): View
     {
-        $orders = $request->user()
+        $ordersQuery = $request->user()
             ->orders()
             ->with(['details.variant.product', 'details.review'])
             ->orderByDesc('created_at')
-            ->orderByDesc('id')
-            ->paginate(8, ['*'], 'orders_page')
+            ->orderByDesc('id');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $ordersQuery->where(function ($q) use ($search) {
+                $q->where('order_code', 'like', "%{$search}%")
+                  ->orWhereHas('details.variant.product', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $orders = $ordersQuery->paginate(8, ['*'], 'orders_page')
             ->withQueryString()
             ->fragment('orders');
 
@@ -40,12 +51,19 @@ class AccountController extends Controller
             ->first();
         $customerCancellationReasons = OrderCancellationReasons::customer();
 
+        $walletTransactions = $request->user()
+            ->walletTransactions()
+            ->orderByDesc('created_at')
+            ->paginate(10, ['*'], 'wallet_page')
+            ->fragment('wallet');
+
         return view('client.account.show', [
             'user' => $request->user(),
             'orders' => $orders,
             'addresses' => $addresses,
             'defaultAddress' => $defaultAddress,
             'customerCancellationReasons' => $customerCancellationReasons,
+            'walletTransactions' => $walletTransactions,
         ]);
     }
 

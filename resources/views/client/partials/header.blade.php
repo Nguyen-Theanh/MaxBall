@@ -1,4 +1,4 @@
-<header class="fixed top-0 w-full z-50 transition-all duration-300" id="main-header">
+<header class="fixed top-0 w-full z-50 transition-all duration-300 {{ request()->routeIs('client.products.show') ? 'bg-[#10271d]' : '' }}" id="main-header" data-force-dark="{{ request()->routeIs('client.products.show') ? 'true' : 'false' }}">
     <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <!-- Logo -->
         <a href="{{ route('client.home') }}" class="font-heading text-4xl font-black !text-white !no-underline flex items-center gap-2 group transition-transform hover:scale-105" id="header-logo">
@@ -97,10 +97,15 @@
         const header = document.getElementById('main-header');
         const logo = document.getElementById('header-logo');
         const navLinks = document.querySelectorAll('.nav-link');
+        const forceDark = header.dataset.forceDark === 'true';
         
         if (window.scrollY > 50) {
             header.classList.add('bg-white', 'shadow-md', 'py-1');
             header.classList.remove('py-4');
+            if (forceDark) {
+                header.classList.remove('bg-[#10271d]');
+            }
+            
             logo.classList.replace('!text-white', '!text-[#10271d]');
             
             navLinks.forEach(link => {
@@ -117,6 +122,10 @@
         } else {
             header.classList.remove('bg-white', 'shadow-md', 'py-1');
             header.classList.add('py-4');
+            if (forceDark) {
+                header.classList.add('bg-[#10271d]');
+            }
+            
             logo.classList.replace('!text-[#10271d]', '!text-white');
             
             navLinks.forEach(link => {

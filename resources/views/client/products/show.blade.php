@@ -115,23 +115,22 @@
 
     $totalStock = (int) $product->variants->sum('stock');
     $averageRating = (float) ($product->reviews_avg_rating ?? 0);
+    $isDefaultVariantOnly = $variantData->count() === 1 && $variantData->first()['name'] === 'Mặc định';
 @endphp
 
-<section class="bg-[#10271d] pt-24 pb-6">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="text-sm text-gray-300">
-            <a href="{{ route('client.home') }}" class="hover:text-white transition">Trang chủ</a>
-            <span class="mx-2">/</span>
-            <a href="{{ route('client.products.index') }}" class="hover:text-white transition">Sản phẩm</a>
-            <span class="mx-2">/</span>
-            <span class="text-white font-bold">{{ $product->name }}</span>
-        </div>
+<div class="max-w-7xl mx-auto px-4 pt-32 pb-4">
+    <!-- Breadcrumbs -->
+    <div class="text-sm text-gray-500 mb-4 flex items-center gap-2">
+        <a href="{{ route('client.home') }}" class="hover:text-red-600 transition">Trang chủ</a>
+        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <a href="{{ route('client.products.index') }}" class="hover:text-red-600 transition">Sản phẩm</a>
+        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <span class="text-gray-900 truncate">{{ $product->name }}</span>
     </div>
-</section>
 
-<div class="max-w-7xl mx-auto px-4 py-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl shadow p-6">
-        <div>
+    <!-- Product Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-white rounded-2xl shadow p-6">
+        <div class="lg:col-span-5">
             <button type="button"
                     id="main-image-button"
                     class="block w-full border rounded-2xl overflow-hidden bg-gray-100 cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -157,7 +156,7 @@
             @endif
         </div>
 
-        <div>
+        <div class="lg:col-span-7">
             <p class="text-sm uppercase font-bold text-red-600 mb-2">
                 {{ $product->category->name ?? 'Danh mục' }}
             </p>
@@ -190,8 +189,66 @@
                 </span>
             </div>
 
-            <div class="text-sm text-gray-500 mb-6 flex items-center gap-2">
-                Kho:
+            <!-- Shopee Style Extra Info -->
+            <div class="flex flex-col gap-5 mb-6 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                <!-- Mã Giảm Giá -->
+                <div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+                    <span class="text-sm text-gray-500 sm:w-28 shrink-0 mt-1">Mã Giảm Giá</span>
+                    <div class="flex items-center flex-wrap gap-3">
+                        <button type="button" onclick="openVoucherModal()" class="text-[#d92525] font-bold text-sm hover:underline flex items-center gap-1">
+                            Chọn Voucher <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- An Tâm Mua Sắm -->
+                <div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 relative group cursor-pointer">
+                    <span class="text-sm text-gray-500 sm:w-28 shrink-0 mt-0.5">An Tâm Mua Sắm</span>
+                    <div class="flex items-center flex-wrap gap-1.5 text-sm text-gray-900">
+                        <svg class="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        <span>Trả hàng miễn phí 15 ngày <span class="text-gray-300 mx-1">•</span> Chính hãng 100% <span class="text-gray-300 mx-1">•</span> Miễn phí vận chuyển</span>
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+
+                    <!-- Tooltip / Dropdown on hover -->
+                    <div class="absolute top-full left-0 sm:left-32 mt-2 w-80 max-w-full bg-white shadow-xl border border-gray-100 rounded-xl p-4 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                        <h4 class="font-bold text-gray-900 mb-3 border-b pb-2">An tâm mua sắm cùng MaxBall</h4>
+                        <ul class="space-y-3">
+                            <li class="flex gap-3">
+                                <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                <div>
+                                    <div class="font-semibold text-sm text-gray-900">Trả hàng miễn phí 15 ngày</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Miễn phí Trả hàng trong 15 ngày nếu sản phẩm lỗi.</div>
+                                </div>
+                            </li>
+                            <li class="flex gap-3">
+                                <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <div class="font-semibold text-sm text-gray-900">Chính hãng 100%</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Cam kết đền bù nếu phát hiện hàng giả, hàng nhái.</div>
+                                </div>
+                            </li>
+                            <li class="flex gap-3">
+                                <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                <div>
+                                    <div class="font-semibold text-sm text-gray-900">Miễn phí vận chuyển</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Ưu đãi miễn phí vận chuyển cho đơn hàng trên 500k.</div>
+                                </div>
+                            </li>
+                            <li class="flex gap-3">
+                                <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                <div>
+                                    <div class="font-semibold text-sm text-gray-900">Bảo hiểm MaxBall</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Sản phẩm được bảo hành uy tín từ cửa hàng.</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-sm mb-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <span class="text-gray-500 sm:w-28 shrink-0">Kho hàng</span>
                 <span id="display-stock" class="font-bold text-gray-900">
                     {{ $totalStock > 0 ? $totalStock : 'Hết hàng' }}
                 </span>
@@ -199,7 +256,7 @@
 
 
 
-            @if($variantData->count())
+            @if($variantData->count() > 0 && !$isDefaultVariantOnly)
                 <div class="mb-6">
                     <h3 class="font-bold mb-3">Phân loại</h3>
 
@@ -236,7 +293,7 @@
             <form id="add-to-cart-form" action="{{ route('client.cart.store') ?? '#' }}" method="POST">
                 @csrf
                 <input type="hidden" name="product_id" value="{{ $product->id }}">
-                <input type="hidden" name="product_variant_id" id="selected_variant_id" value="">
+                <input type="hidden" name="product_variant_id" id="selected_variant_id" value="{{ $isDefaultVariantOnly ? $variantData->first()['id'] : '' }}">
 
                 <div class="mb-6">
                     <h3 class="font-bold mb-3">Số lượng</h3>
@@ -259,7 +316,6 @@
             </form>
         </div>
     </div>
-</div>
 
     <!-- Section Mô tả sản phẩm -->
     <section class="mt-8 rounded-2xl bg-white p-6 shadow border border-gray-100">
@@ -660,6 +716,158 @@ document.addEventListener('DOMContentLoaded', function() {
 
     refreshOptionAvailability();
 });
+    </script>
+@endpush
+
+<!-- Voucher Modal -->
+<div id="voucherModal" class="fixed inset-0 z-[100] hidden">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeVoucherModal()"></div>
+    
+    <!-- Modal Content -->
+    <div class="absolute inset-x-0 bottom-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 bg-[#f6f6f6] sm:rounded-2xl shadow-2xl w-full sm:max-w-lg transition-all transform flex flex-col max-h-[85vh]">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white sm:rounded-t-2xl shrink-0">
+            <h3 class="text-xl font-bold text-gray-900">Voucher của Shop</h3>
+            <button onclick="closeVoucherModal()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto" id="voucherModalBody">
+            <div class="flex justify-center py-8">
+                <svg class="animate-spin h-8 w-8 text-[#d92525]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    function openVoucherModal() {
+        document.getElementById('voucherModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        fetchVouchers();
+    }
+
+    function closeVoucherModal() {
+        document.getElementById('voucherModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function fetchVouchers() {
+        fetch('{{ route('vouchers.active') }}')
+            .then(res => res.json())
+            .then(data => {
+                const body = document.getElementById('voucherModalBody');
+                if (data.vouchers.length === 0) {
+                    body.innerHTML = '<div class="text-center text-gray-500 py-8">Hiện tại không có voucher nào khả dụng.</div>';
+                    return;
+                }
+
+                let html = '<div class="space-y-4">';
+                data.vouchers.forEach(v => {
+                    let discountText = v.discount_type === 'freeship'
+                        ? 'Miễn phí vận chuyển'
+                        : (v.discount_type === 'fixed' 
+                            ? 'Giảm ' + new Intl.NumberFormat('vi-VN').format(v.discount_value) + 'đ'
+                            : 'Giảm ' + v.discount_value + '%');
+                    
+                    let minOrderHtml = v.min_order_value 
+                        ? `<div class="text-xs text-gray-500 mt-1">Đơn Tối Thiểu ${new Intl.NumberFormat('vi-VN').format(v.min_order_value)}đ</div>`
+                        : '';
+
+                    let isFreeship = v.discount_type === 'freeship';
+                    let bgColor = isFreeship ? 'bg-[#10b981]' : 'bg-[#d92525]';
+                    let textIconColor = isFreeship ? 'text-[#10b981]' : 'text-[#d92525]';
+                    let btnColor = isFreeship ? 'bg-[#10b981] hover:bg-emerald-600' : 'bg-[#d92525] hover:bg-red-700';
+
+                    let actionBtn = v.is_saved
+                        ? `<button class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Đã lưu</button>`
+                        : `<button onclick="saveVoucher(${v.id}, this)" class="px-4 py-1.5 text-sm font-bold text-white ${btnColor} rounded transition-colors">Lưu</button>`;
+
+                    html += `
+                        <div class="bg-white rounded border border-gray-200 overflow-hidden shadow-sm flex">
+                            <!-- Left: Icon -->
+                            <div class="w-28 ${bgColor} flex flex-col justify-center items-center text-white p-2 shrink-0 border-r border-dashed border-gray-300 relative">
+                                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-1">
+                                    <span class="${textIconColor} font-black text-xl">M</span>
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Mall</span>
+                                <!-- Jagged edge simulation using circles -->
+                                <div class="absolute -left-1.5 top-0 bottom-0 flex flex-col justify-between py-1">
+                                    ${Array(6).fill('<div class="w-3 h-3 bg-[#f6f6f6] rounded-full"></div>').join('')}
+                                </div>
+                            </div>
+                            <!-- Right: Content -->
+                            <div class="flex-1 p-3 flex flex-col justify-between">
+                                <div>
+                                    <div class="font-bold text-gray-900 text-base leading-tight">${discountText}</div>
+                                    ${minOrderHtml}
+                                    <div class="text-[10px] text-gray-400 mt-1">HSD: ${v.expires_at}</div>
+                                </div>
+                                <div class="flex justify-end mt-2">
+                                    ${actionBtn}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                body.innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('voucherModalBody').innerHTML = '<div class="text-center text-red-500 py-8">Có lỗi xảy ra khi tải voucher.</div>';
+            });
+    }
+
+    function saveVoucher(id, btn) {
+        btn.innerHTML = '<svg class="animate-spin h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+        btn.disabled = true;
+
+        fetch('{{ route('vouchers.save') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ coupon_id: id })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                btn.outerHTML = `<button class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Đã lưu</button>`;
+                Toastify({
+                    text: data.message,
+                    duration: 3000,
+                    gravity: "bottom",
+                    position: "right",
+                    style: { background: "#10b981" }
+                }).showToast();
+            } else {
+                btn.innerHTML = 'Lưu';
+                btn.disabled = false;
+                if(data.message.includes('đăng nhập')) {
+                    window.location.href = '{{ route('login') }}';
+                } else {
+                    Toastify({
+                        text: data.message,
+                        duration: 3000,
+                        gravity: "bottom",
+                        position: "right",
+                        style: { background: "#ef4444" }
+                    }).showToast();
+                }
+            }
+        })
+        .catch(err => {
+            btn.innerHTML = 'Lưu';
+            btn.disabled = false;
+        });
+    }
 </script>
 @endpush
 @endsection

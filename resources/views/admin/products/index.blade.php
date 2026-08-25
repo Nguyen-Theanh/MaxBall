@@ -15,7 +15,7 @@
         <div class="card-body">
             <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 mb-4">
                 <form class="row g-2 flex-grow-1" method="GET" action="{{ route('admin.products.index') }}">
-                    <div class="col-12 col-md-6 col-xl-5">
+                    <div class="col-12 col-md-6 col-xl-4">
                         <input type="search" name="q" value="{{ request('q') }}" class="form-control" placeholder="Tìm theo tên, mô tả...">
                     </div>
                     <div class="col-12 col-md-3 col-xl-2">
@@ -33,6 +33,14 @@
                             <option value="">Tất cả trạng thái</option>
                             <option value="1" @selected(request('status') === '1')>Đang hiện</option>
                             <option value="0" @selected(request('status') === '0')>Đang ẩn</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 col-xl-2">
+                        <select name="per_page" class="form-select" onchange="this.form.submit()">
+                            <option value="10" @selected(request('per_page', 10) == 10)>10 dòng</option>
+                            <option value="25" @selected(request('per_page') == 25)>25 dòng</option>
+                            <option value="50" @selected(request('per_page') == 50)>50 dòng</option>
+                            <option value="100" @selected(request('per_page') == 100)>100 dòng</option>
                         </select>
                     </div>
                     <div class="col-12 col-md-auto">
@@ -118,8 +126,13 @@
                 </table>
             </div>
 
-            <div class="mt-3">
-                {{ $products->links() }}
+            <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap">
+                <div class="text-muted small mb-2 mb-md-0">
+                    Hiển thị {{ $products->firstItem() ?? 0 }} đến {{ $products->lastItem() ?? 0 }} của {{ $products->total() }} sản phẩm
+                </div>
+                <div>
+                    {{ $products->links() }}
+                </div>
             </div>
         </div>
     </div>

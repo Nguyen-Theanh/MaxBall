@@ -58,8 +58,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/gio-hang/{cartItem}', [CartController::class, 'destroy'])->name('client.cart.destroy');
 
     // Thanh toán
+    Route::post('/thanh-toan/prepare', [CheckoutController::class, 'prepare'])->name('client.checkout.prepare');
     Route::get('/thanh-toan', [CheckoutController::class, 'index'])->name('client.checkout.index');
     Route::post('/thanh-toan', [CheckoutController::class, 'store'])->name('client.checkout.store');
+
+    Route::get('/vouchers/active', [\App\Http\Controllers\Client\VoucherController::class, 'getActiveVouchers'])->name('vouchers.active');
+    Route::post('/vouchers/save', [\App\Http\Controllers\Client\VoucherController::class, 'saveVoucher'])->name('vouchers.save');
+    Route::post('/vouchers/validate', [\App\Http\Controllers\Client\VoucherController::class, 'validateVoucher'])->name('vouchers.validate');
     Route::get('/thanh-toan/vnpay-return', [CheckoutController::class, 'vnpayReturn'])->name('client.checkout.vnpay_return');
     Route::get('/thanh-toan/momo-return', [CheckoutController::class, 'momoReturn'])->name('client.checkout.momo_return');
 
@@ -104,6 +109,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::get('/products/check-name', [AdminProductController::class, 'checkName'])->name('products.check-name');
     Route::resource('products', AdminProductController::class);
+    Route::get('/coupons/check-code', [\App\Http\Controllers\Admin\CouponController::class, 'checkCode'])->name('coupons.check-code');
+    Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class);
+    Route::post('coupons/{coupon}/toggle-status', [\App\Http\Controllers\Admin\CouponController::class, 'toggleStatus'])->name('coupons.toggle-status');
 
     Route::get('/categories/check-name', [CategoryController::class, 'checkName'])->name('categories.check-name');
     Route::resource('categories', CategoryController::class)->except(['show']);
