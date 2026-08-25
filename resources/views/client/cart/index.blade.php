@@ -78,7 +78,7 @@
                                         @csrf
                                         @method('PUT')
                                         <button type="button" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-[#10271d] hover:bg-gray-100 rounded-lg transition-colors" onclick="updateQuantity(this, 'down')"><i class="fa-solid fa-minus text-xs"></i></button>
-                                        <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $variant->stock }}" class="w-10 text-center border-0 p-0 text-sm font-bold text-[#10271d] focus:ring-0 appearance-none bg-transparent" onchange="checkQuantity(this)">
+                                        <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" max="{{ $variant->available_stock }}" class="w-10 text-center border-0 p-0 text-sm font-bold text-[#10271d] focus:ring-0 appearance-none bg-transparent" onchange="checkQuantity(this)">
                                         <button type="button" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-[#10271d] hover:bg-gray-100 rounded-lg transition-colors" onclick="updateQuantity(this, 'up')"><i class="fa-solid fa-plus text-xs"></i></button>
                                     </form>
                                 </div>

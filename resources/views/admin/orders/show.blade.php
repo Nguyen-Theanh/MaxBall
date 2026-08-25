@@ -43,7 +43,7 @@
                                             <form action="{{ route('admin.orders.updatePaymentStatus', $order->id) }}" method="POST" class="m-0">
                                                 @csrf
                                                 @method('PATCH')
-                                                <select name="payment_status" class="form-select form-select-sm d-inline-block w-auto" onchange="if(confirm('Xác nhận đã thu tiền COD cho đơn hàng này?')) this.form.submit(); else this.value='pending';">
+                                                <select name="payment_status" class="form-select form-select-sm d-inline-block w-auto" onchange="confirmPaymentAndSubmit(this)">
                                                     <option value="pending" selected>Chưa thanh toán (COD)</option>
                                                     <option value="paid">Đã thanh toán (COD)</option>
                                                 </select>
@@ -69,7 +69,7 @@
                                         <span class="badge bg-danger px-3 py-2">Đã hủy</span>
                                         @if($order->cancellation_reason)
                                             <div class="mt-3 rounded border border-danger-subtle bg-danger-subtle p-3 small text-danger-emphasis">
-                                                <p class="mb-1"><strong>Người hủy:</strong> {{ $order->cancelled_by === 'admin' ? 'Cửa hàng' : 'Khách hàng' }}</p>
+                                                <p class="mb-1"><strong>Người hủy:</strong> {{ match($order->cancelled_by) { 'admin' => 'Cửa hàng', 'system' => 'Hệ thống', default => 'Khách hàng' } }}</p>
                                                 <p class="mb-1"><strong>Lý do:</strong> {{ $order->cancellation_reason_label }}</p>
                                                 @if($order->cancellation_note)
                                                     <p class="mb-1 whitespace-pre-line"><strong>Ghi chú:</strong> {{ $order->cancellation_note }}</p>
@@ -92,11 +92,10 @@
                                         data-cancel-action="{{ route('admin.orders.updateStatus', $order->id) }}">
                                     @if($order->order_status == 'pending')
                                         <option value="pending" selected>Chờ xác nhận</option>
-                                        <option value="processing">Đã xác nhận</option>
-                                        <option value="shipping">Đang giao hàng</option>
+                                        <option value="confirmed">Xác nhận đơn</option>
                                         <option value="cancelled">Hủy đơn hàng</option>
-                                    @elseif($order->order_status == 'processing')
-                                        <option value="processing" selected>Đã xác nhận</option>
+                                    @elseif(in_array($order->order_status, ['confirmed', 'processing']))
+                                        <option value="{{ $order->order_status }}" selected>Đã xác nhận</option>
                                         <option value="shipping">Đang giao hàng</option>
                                         <option value="cancelled">Hủy đơn hàng</option>
                                     @elseif($order->order_status == 'shipping')
@@ -106,6 +105,12 @@
                                         @endif
                                     @endif
                                 </select>
+                                @if($order->hasActiveReservation() && $order->reservation_expires_at)
+                                    <div class="alert alert-warning py-2 mt-3 mb-0 small">
+                                        Đang giữ hàng đến <strong>{{ $order->reservation_expires_at->format('H:i d/m/Y') }}</strong>.
+                                        Quá thời hạn, hệ thống sẽ tự hủy đơn và nhả hàng.
+                                    </div>
+                                @endif
                             @endif
                         </div>
                         
@@ -117,12 +122,34 @@
             </div>
 
 <script>
+async function confirmPaymentAndSubmit(selectElement) {
+    const confirmed = await window.AppConfirm.open({
+        title: 'Xác nhận thanh toán COD',
+        message: 'Xác nhận đã thu đủ tiền COD cho đơn hàng này?',
+        confirmLabel: 'Đã thu tiền',
+        variant: 'primary',
+    });
+
+    if (confirmed) {
+        HTMLFormElement.prototype.submit.call(selectElement.closest('form'));
+    } else {
+        selectElement.value = 'pending';
+    }
+}
+
 document.getElementById('order-status-form')?.addEventListener('submit', async (event) => {
     const form = event.currentTarget;
     const status = document.getElementById('orderStatusSelect')?.value;
     let options = null;
 
-    if (status === 'completed') {
+    if (status === 'confirmed') {
+        options = {
+            title: 'Xác nhận đơn COD',
+            message: 'Xác nhận đơn và trừ số hàng đang giữ khỏi tồn kho?',
+            confirmLabel: 'Xác nhận đơn',
+            variant: 'primary',
+        };
+    } else if (status === 'completed') {
         options = {
             title: 'Hoàn thành đơn hàng',
             message: 'Xác nhận đơn hàng đã được giao thành công và chuyển sang trạng thái hoàn thành?',

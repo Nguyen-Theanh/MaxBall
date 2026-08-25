@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderCancellationNotifier;
+use App\Services\OrderInventoryService;
 use App\Support\OrderCancellationReasons;
+use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +16,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $validated = $request->validate([
-            'status' => ['nullable', Rule::in(['pending', 'processing', 'shipping', 'completed', 'cancelled'])],
+            'status' => ['nullable', Rule::in(['pending', 'confirmed', 'processing', 'shipping', 'completed', 'cancelled'])],
             'search' => ['nullable', 'string', 'max:255'],
             'per_page' => ['nullable', Rule::in([10, 20, 50])],
         ]);
@@ -50,10 +52,14 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order', 'adminCancellationReasons'));
     }
 
-    public function updateStatus(Request $request, Order $order, OrderCancellationNotifier $notifier)
-    {
+    public function updateStatus(
+        Request $request,
+        Order $order,
+        OrderCancellationNotifier $notifier,
+        OrderInventoryService $inventoryService
+    ) {
         $rules = [
-            'order_status' => ['required', Rule::in(['pending', 'processing', 'shipping', 'completed', 'cancelled'])],
+            'order_status' => ['required', Rule::in(['pending', 'confirmed', 'processing', 'shipping', 'completed', 'cancelled'])],
         ];
 
         if ($request->input('order_status') === 'cancelled') {
@@ -84,7 +90,8 @@ class OrderController extends Controller
 
         // Validate sequence
         $validTransitions = [
-            'pending' => ['processing', 'shipping', 'cancelled'],
+            'pending' => ['confirmed', 'cancelled'],
+            'confirmed' => ['shipping', 'cancelled'],
             'processing' => ['shipping', 'cancelled'],
             'shipping' => ['completed', 'cancelled'],
         ];
@@ -98,31 +105,20 @@ class OrderController extends Controller
             return back()->with('error', 'Trạng thái chuyển đổi không hợp lệ.');
         }
 
-        // Handle stock deduction when COD order is confirmed
-        if ($newStatus === 'processing' && $currentStatus === 'pending' && $order->payment_method === 'cod') {
-            foreach ($order->details as $detail) {
-                if ($detail->variant) {
-                    $detail->variant->decrement('stock', $detail->quantity);
-                }
-            }
-        }
-
-        // Handle stock restoration when cancelling
-        if ($newStatus === 'cancelled') {
-            $stockWasDeducted = false;
-            if ($order->payment_method === 'cod' && in_array($currentStatus, ['processing', 'shipping', 'completed'])) {
-                $stockWasDeducted = true;
-            } elseif ($order->payment_method === 'vietqr' && $order->payment_status === 'paid') {
-                $stockWasDeducted = true;
+        if ($newStatus === 'confirmed' && $order->payment_method === 'cod') {
+            try {
+                $order = $inventoryService->confirmCod($order);
+            } catch (DomainException $e) {
+                return back()->with('error', $e->getMessage());
             }
 
-            if ($stockWasDeducted) {
-                foreach ($order->details as $detail) {
-                    if ($detail->variant) {
-                        $detail->variant->increment('stock', $detail->quantity);
-                    }
-                }
+            if ($order->order_status === 'cancelled') {
+                $notifier->send($order);
+
+                return back()->with('error', 'Đơn COD đã quá hạn 24 giờ nên hệ thống đã tự hủy và nhả hàng.');
             }
+
+            return back()->with('success', 'Đã xác nhận đơn COD và trừ số lượng khỏi kho.');
         }
 
         $updateData = [
@@ -140,7 +136,15 @@ class OrderController extends Controller
             ];
         }
 
-        $order->update($updateData);
+        try {
+            if ($newStatus === 'cancelled') {
+                $order = $inventoryService->cancel($order, $updateData);
+            } else {
+                $order->update($updateData);
+            }
+        } catch (DomainException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         if ($newStatus === 'cancelled') {
             $notifier->send($order);

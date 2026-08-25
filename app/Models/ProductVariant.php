@@ -17,6 +17,7 @@ class ProductVariant extends Model
         'base_price',
         'discount_price',
         'stock',
+        'reserved_stock',
         'image_url',
     ];
 
@@ -24,6 +25,7 @@ class ProductVariant extends Model
         'base_price' => 'integer',
         'discount_price' => 'integer',
         'stock' => 'integer',
+        'reserved_stock' => 'integer',
     ];
 
     public function product()
@@ -36,9 +38,14 @@ class ProductVariant extends Model
         return $this->hasMany(OrderDetail::class);
     }
 
+    public function getAvailableStockAttribute(): int
+    {
+        return max(0, (int) $this->stock - (int) $this->reserved_stock);
+    }
+
     public function getVariantImageUrlAttribute(): ?string
     {
-        if (!$this->image_url) {
+        if (! $this->image_url) {
             return null;
         }
 
@@ -46,6 +53,6 @@ class ProductVariant extends Model
             return $this->image_url;
         }
 
-        return asset('storage/' . ltrim($this->image_url, '/'));
+        return asset('storage/'.ltrim($this->image_url, '/'));
     }
 }

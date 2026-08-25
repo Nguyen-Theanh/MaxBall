@@ -29,6 +29,7 @@ class AdminDashboardReport
 
     private const ORDER_STATUS_LABELS = [
         'pending' => 'Chờ xác nhận',
+        'confirmed' => 'Đã xác nhận',
         'processing' => 'Đã xác nhận',
         'shipping' => 'Đang giao',
         'completed' => 'Hoàn thành',

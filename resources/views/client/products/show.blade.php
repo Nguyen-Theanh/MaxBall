@@ -82,7 +82,7 @@
             $attributeOptions[$attributeName] ??= [];
             $attributeOptions[$attributeName][$valueName] = $valueName;
 
-            if ((int) $variant->stock > 0) {
+            if ($variant->available_stock > 0) {
                 $availableAttributeValues[$attributeName][$valueName] = true;
             }
         }
@@ -93,7 +93,7 @@
             'sku' => $variant->sku,
             'price' => $variant->discount_price ?: $variant->base_price,
             'old_price' => $variant->discount_price ? $variant->base_price : null,
-            'stock' => $variant->stock,
+            'stock' => $variant->available_stock,
             'image' => $variant->variant_image_url,
             'options' => $options,
         ]);
@@ -113,7 +113,7 @@
         }
     }
 
-    $totalStock = (int) $product->variants->sum('stock');
+    $totalStock = (int) $product->variants->sum(fn ($variant) => $variant->available_stock);
     $averageRating = (float) ($product->reviews_avg_rating ?? 0);
 @endphp
 

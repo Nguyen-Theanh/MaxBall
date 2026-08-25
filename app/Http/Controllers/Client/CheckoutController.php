@@ -7,6 +7,8 @@ use App\Mail\OrderCreatedMail;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Services\OrderInventoryService;
+use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +33,7 @@ class CheckoutController extends Controller
         return view('client.checkout.index', compact('cart', 'addresses', 'defaultAddress', 'selectedAddress'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, OrderInventoryService $inventoryService)
     {
         $request->validate([
             'user_address_id' => 'required|exists:user_addresses,id',
@@ -48,7 +50,7 @@ class CheckoutController extends Controller
 
         // Validate stock
         foreach ($cart->items as $item) {
-            if ($item->quantity > $item->productVariant->stock) {
+            if ($item->quantity > $item->productVariant->available_stock) {
                 return back()->with('error', 'Sản phẩm "'.$item->productVariant->product->name.' - '.$item->productVariant->name.'" không đủ số lượng tồn kho.');
             }
         }
@@ -92,8 +94,9 @@ class CheckoutController extends Controller
                     'quantity' => $item->quantity,
                     'price' => $price,
                 ]);
-
             }
+
+            $order = $inventoryService->reserveCod($order);
 
             // Clear cart
             $cart->items()->delete();
@@ -116,8 +119,15 @@ class CheckoutController extends Controller
                 return redirect()->route('client.checkout.payment_qr', ['order_code' => $orderCode]);
             }
 
-            return redirect()->route('client.orders.index')->with('success', 'Đặt hàng thành công!');
+            return redirect()->route('client.orders.index')->with(
+                'success',
+                'Đặt hàng thành công! Sản phẩm được giữ trong 24 giờ để cửa hàng xác nhận.'
+            );
 
+        } catch (DomainException $e) {
+            DB::rollBack();
+
+            return back()->with('error', $e->getMessage());
         } catch (\Exception $e) {
             DB::rollBack();
 

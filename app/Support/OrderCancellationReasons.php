@@ -38,13 +38,27 @@ final class OrderCancellationReasons
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public static function system(): array
+    {
+        return [
+            'confirmation_timeout' => 'Cửa hàng không xác nhận đơn COD trong vòng 24 giờ.',
+        ];
+    }
+
     public static function label(?string $reason, ?string $cancelledBy): ?string
     {
         if (! $reason) {
             return null;
         }
 
-        $reasons = $cancelledBy === 'admin' ? self::admin() : self::customer();
+        $reasons = match ($cancelledBy) {
+            'admin' => self::admin(),
+            'system' => self::system(),
+            default => self::customer(),
+        };
 
         return $reasons[$reason] ?? $reason;
     }
@@ -56,6 +70,7 @@ final class OrderCancellationReasons
         }
 
         return match ($reason) {
+            'confirmation_timeout' => 'Đơn COD không được cửa hàng xác nhận trong vòng 24 giờ nên hệ thống đã tự động hủy và trả lại số lượng hàng đang giữ.',
             'out_of_stock' => 'Rất tiếc, sản phẩm trong đơn hàng hiện đã hết hàng nên chúng tôi không thể tiếp tục xử lý đơn hàng của bạn.',
             'cannot_contact_customer' => 'Chúng tôi đã nhiều lần cố gắng liên hệ để xác nhận đơn hàng nhưng không thành công, vì vậy đơn hàng đã được hủy để đảm bảo tiến độ xử lý.',
             'payment_failed' => 'Rất tiếc, giao dịch thanh toán của đơn hàng không thành công nên chúng tôi chưa thể tiếp tục xử lý đơn hàng.',

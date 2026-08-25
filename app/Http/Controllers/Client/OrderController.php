@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderCancellationNotifier;
+use App\Services\OrderInventoryService;
 use App\Support\OrderCancellationReasons;
+use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -38,8 +40,12 @@ class OrderController extends Controller
         return view('client.orders.show', compact('order', 'customerCancellationReasons'));
     }
 
-    public function cancel(Request $request, OrderCancellationNotifier $notifier, $id)
-    {
+    public function cancel(
+        Request $request,
+        OrderCancellationNotifier $notifier,
+        OrderInventoryService $inventoryService,
+        $id
+    ) {
         $validated = $request->validate([
             'cancellation_reason' => [
                 'required',
@@ -58,23 +64,20 @@ class OrderController extends Controller
 
         $order = Order::where('user_id', Auth::id())->findOrFail($id);
 
-        if (! in_array($order->order_status, ['pending', 'processing'], true)) {
+        if (! in_array($order->order_status, ['pending', 'confirmed', 'processing'], true)) {
             return back()->with('error', 'Không thể hủy đơn hàng này do đơn hàng đang được xử lý hoặc đã giao.');
         }
 
-        $order->update([
-            'order_status' => 'cancelled',
-            'cancelled_by' => 'customer',
-            'cancellation_reason' => $validated['cancellation_reason'],
-            'cancellation_note' => $validated['cancellation_reason'] === 'other'
-                ? trim($validated['cancellation_note'])
-                : null,
-            'cancelled_at' => now(),
-        ]);
-
-        // Restore stock
-        foreach ($order->details as $detail) {
-            $detail->variant->increment('stock', $detail->quantity);
+        try {
+            $order = $inventoryService->cancel($order, [
+                'cancelled_by' => 'customer',
+                'cancellation_reason' => $validated['cancellation_reason'],
+                'cancellation_note' => $validated['cancellation_reason'] === 'other'
+                    ? trim($validated['cancellation_note'])
+                    : null,
+            ]);
+        } catch (DomainException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
         $notifier->send($order);

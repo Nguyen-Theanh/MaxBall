@@ -92,19 +92,24 @@
                         <p class="text-xs text-gray-500 uppercase font-bold mb-1">Trạng thái giao hàng</p>
                         <span class="inline-block px-3 py-1 text-sm font-bold uppercase rounded-full 
                             @if($order->order_status == 'pending') bg-yellow-100 text-yellow-800
-                            @elseif($order->order_status == 'processing') bg-blue-100 text-blue-800
+                            @elseif(in_array($order->order_status, ['confirmed', 'processing'])) bg-blue-100 text-blue-800
                             @elseif($order->order_status == 'shipping') bg-indigo-100 text-indigo-800
                             @elseif($order->order_status == 'completed') bg-green-100 text-green-800
                             @elseif($order->order_status == 'cancelled') bg-red-100 text-red-800
                             @endif
                         ">
                             @if($order->order_status == 'pending') Chờ xác nhận
-                            @elseif($order->order_status == 'processing') Đã xác nhận
+                            @elseif(in_array($order->order_status, ['confirmed', 'processing'])) Đã xác nhận
                             @elseif($order->order_status == 'shipping') Đang giao hàng
                             @elseif($order->order_status == 'completed') Hoàn thành
                             @elseif($order->order_status == 'cancelled') Đã hủy
                             @endif
                         </span>
+                        @if($order->hasActiveReservation() && $order->reservation_expires_at)
+                            <p class="mt-2 text-sm text-amber-700">
+                                Hàng đang được giữ đến {{ $order->reservation_expires_at->format('H:i d/m/Y') }} để cửa hàng xác nhận.
+                            </p>
+                        @endif
                     </div>
                     
                     <div>
@@ -124,7 +129,7 @@
             @if($order->order_status === 'cancelled' && $order->cancellation_reason)
                 <div class="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-900">
                     <p class="font-bold">Thông tin hủy đơn</p>
-                    <p class="mt-2"><span class="font-medium">Người hủy:</span> {{ $order->cancelled_by === 'admin' ? 'Cửa hàng' : 'Khách hàng' }}</p>
+                    <p class="mt-2"><span class="font-medium">Người hủy:</span> {{ match($order->cancelled_by) { 'admin' => 'Cửa hàng', 'system' => 'Hệ thống', default => 'Khách hàng' } }}</p>
                     <p class="mt-1"><span class="font-medium">Lý do:</span> {{ $order->cancellation_reason_label }}</p>
                     @if($order->cancellation_note)
                         <p class="mt-1 whitespace-pre-line"><span class="font-medium">Ghi chú:</span> {{ $order->cancellation_note }}</p>
@@ -146,7 +151,7 @@
                 </div>
             </div>
             
-@if(in_array($order->order_status, ['pending', 'processing']))
+@if(in_array($order->order_status, ['pending', 'confirmed', 'processing']))
                 <div class="flex gap-3">
                     @if($order->payment_method === 'vietqr' && $order->payment_status === 'pending')
                         <a href="{{ route('client.checkout.payment_qr', $order->order_code) }}" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-center">
@@ -163,7 +168,11 @@
                     </button>
                 </div>
             @elseif($order->order_status == 'shipping')
-                <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?');">
+                <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST"
+                      data-confirm="Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?"
+                      data-confirm-title="Xác nhận đã nhận hàng"
+                      data-confirm-label="Đã nhận hàng"
+                      data-confirm-variant="success">
                     @csrf
                     @method('PUT')
                     <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-sm">

@@ -39,19 +39,22 @@
                         <div class="mt-4 sm:mt-0 text-right">
                             <span class="inline-block px-3 py-1 text-xs font-bold uppercase rounded-full 
                                 @if($order->order_status == 'pending') bg-yellow-100 text-yellow-800
-                                @elseif($order->order_status == 'processing') bg-blue-100 text-blue-800
+                                @elseif(in_array($order->order_status, ['confirmed', 'processing'])) bg-blue-100 text-blue-800
                                 @elseif($order->order_status == 'shipping') bg-indigo-100 text-indigo-800
                                 @elseif($order->order_status == 'completed') bg-green-100 text-green-800
                                 @else bg-red-100 text-red-800 @endif
                             ">
                                 @if($order->order_status == 'pending') Chờ xác nhận
-                                @elseif($order->order_status == 'processing') Đã xác nhận
+                                @elseif(in_array($order->order_status, ['confirmed', 'processing'])) Đã xác nhận
                                 @elseif($order->order_status == 'shipping') Đang giao hàng
                                 @elseif($order->order_status == 'completed') Hoàn thành
                                 @else Đã hủy @endif
                             </span>
                             @if($order->order_status === 'cancelled' && $order->cancellation_reason)
                                 <p class="mt-2 max-w-xs text-xs text-red-700">{{ $order->cancellation_reason_label }}</p>
+                            @endif
+                            @if($order->hasActiveReservation() && $order->reservation_expires_at)
+                                <p class="mt-2 max-w-xs text-xs text-amber-700">Giữ hàng đến {{ $order->reservation_expires_at->format('H:i d/m/Y') }}</p>
                             @endif
                         </div>
                     </div>
@@ -98,7 +101,7 @@
                                 Xem chi tiết
                             </a>
                             
-@if(in_array($order->order_status, ['pending', 'processing']))
+@if(in_array($order->order_status, ['pending', 'confirmed', 'processing']))
                                 <button type="button"
                                         data-customer-cancel
                                         data-order-id="{{ $order->id }}"
@@ -108,7 +111,11 @@
                                     Hủy đơn
                                 </button>
                             @elseif($order->order_status == 'shipping')
-                                <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" onsubmit="return confirm('Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?');">
+                                <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST"
+                                      data-confirm="Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?"
+                                      data-confirm-title="Xác nhận đã nhận hàng"
+                                      data-confirm-label="Đã nhận hàng"
+                                      data-confirm-variant="success">
                                     @csrf
                                     @method('PUT')
                                     <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-bold rounded hover:bg-green-700 transition-colors shadow-sm">

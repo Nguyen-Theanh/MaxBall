@@ -272,7 +272,7 @@
                                     <span class="text-sm font-bold text-[#d92525] uppercase">
                                         @if($order->order_status == 'pending')
                                             CHỜ XÁC NHẬN
-                                        @elseif($order->order_status == 'processing')
+                                        @elseif(in_array($order->order_status, ['confirmed', 'processing']))
                                             ĐÃ XÁC NHẬN
                                         @elseif($order->order_status == 'shipping')
                                             ĐANG GIAO HÀNG
@@ -331,7 +331,7 @@
                                         Xem chi tiết
                                     </a>
 
-                                    @if(in_array($order->order_status, ['pending', 'processing']))
+                                    @if(in_array($order->order_status, ['pending', 'confirmed', 'processing']))
                                         <button type="button"
                                                 data-customer-cancel
                                                 data-order-id="{{ $order->id }}"

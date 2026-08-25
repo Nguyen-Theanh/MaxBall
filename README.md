@@ -53,6 +53,12 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## COD inventory reservations
+
+COD orders reserve their product quantities for 24 hours while waiting for shop confirmation. The scheduler runs `orders:expire-cod-reservations` every minute to cancel overdue orders and release their reserved quantities.
+
+`composer run dev` starts the scheduler locally. In production, configure Laravel's scheduler so `php artisan schedule:run` executes every minute.
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

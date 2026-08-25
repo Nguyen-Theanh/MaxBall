@@ -26,12 +26,12 @@ class CartController extends Controller
             'product_id' => 'required|exists:products,id',
             'product_variant_id' => 'required|exists:product_variants,id',
             'quantity' => 'required|integer|min:1',
-            'action' => 'required|in:add_cart,buy_now'
+            'action' => 'required|in:add_cart,buy_now',
         ]);
 
         $variant = ProductVariant::findOrFail($request->product_variant_id);
 
-        if ($variant->stock < $request->quantity) {
+        if ($variant->available_stock < $request->quantity) {
             return back()->with('error', 'Số lượng sản phẩm trong kho không đủ!');
         }
 
@@ -41,7 +41,7 @@ class CartController extends Controller
 
         if ($cartItem) {
             $newQuantity = $cartItem->quantity + $request->quantity;
-            if ($newQuantity > $variant->stock) {
+            if ($newQuantity > $variant->available_stock) {
                 return back()->with('error', 'Bạn đã thêm quá số lượng tồn kho của sản phẩm này!');
             }
             $cartItem->update(['quantity' => $newQuantity]);
@@ -62,14 +62,14 @@ class CartController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'required|integer|min:1',
         ]);
 
-        $cartItem = CartItem::whereHas('cart', function($q) {
+        $cartItem = CartItem::whereHas('cart', function ($q) {
             $q->where('user_id', Auth::id());
         })->findOrFail($id);
 
-        if ($cartItem->productVariant->stock < $request->quantity) {
+        if ($cartItem->productVariant->available_stock < $request->quantity) {
             return back()->with('error', 'Số lượng vượt quá tồn kho!');
         }
 
@@ -80,7 +80,7 @@ class CartController extends Controller
 
     public function destroy($id)
     {
-        $cartItem = CartItem::whereHas('cart', function($q) {
+        $cartItem = CartItem::whereHas('cart', function ($q) {
             $q->where('user_id', Auth::id());
         })->findOrFail($id);
 

@@ -251,6 +251,7 @@ class DashboardReportExporter
     {
         return match ($status) {
             'pending' => 'Chờ xác nhận',
+            'confirmed' => 'Đã xác nhận',
             'processing' => 'Đã xác nhận',
             'shipping' => 'Đang giao',
             'completed' => 'Hoàn thành',
