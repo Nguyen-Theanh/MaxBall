@@ -40,4 +40,14 @@ return [
         'ca_bundle' => env('VIETNAM_ADDRESS_API_CA_BUNDLE'),
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+        'base_url' => env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com'),
+        'ca_bundle' => env('GEMINI_API_CA_BUNDLE'),
+        'thinking_level' => env('GEMINI_THINKING_LEVEL', 'low'),
+        'connect_timeout' => (int) env('GEMINI_CONNECT_TIMEOUT', 5),
+        'timeout' => (int) env('GEMINI_TIMEOUT', 45),
+    ],
+
 ];

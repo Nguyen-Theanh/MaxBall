@@ -100,6 +100,8 @@
 
     @include('shared.confirm-dialog')
 
+    @include('client.partials.chatbot')
+
     @stack('scripts')
     
     <!-- Swiper JS -->
