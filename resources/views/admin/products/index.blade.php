@@ -19,6 +19,16 @@
                         <input type="search" name="q" value="{{ request('q') }}" class="form-control" placeholder="Tìm theo tên, mô tả...">
                     </div>
                     <div class="col-12 col-md-3 col-xl-2">
+                        <select name="category_id" class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat->id }}" @selected(request('category_id') == $cat->id)>
+                                    {{ $cat->display_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3 col-xl-2">
                         <select name="status" class="form-select">
                             <option value="">Tất cả trạng thái</option>
                             <option value="1" @selected(request('status') === '1')>Đang hiện</option>
@@ -31,7 +41,12 @@
                     </div>
                 </form>
 
-                <a href="{{ route('admin.products.create') }}" class="btn btn-primary align-self-start">Thêm sản phẩm</a>
+                <div class="d-flex align-items-center gap-3 align-self-start mt-2 mt-xl-0">
+                    <div class="badge bg-info text-dark px-3 py-2 fs-6">
+                        Tổng tồn kho: <strong>{{ number_format($totalStock, 0, ',', '.') }}</strong>
+                    </div>
+                    <a href="{{ route('admin.products.create') }}" class="btn btn-primary text-nowrap">Thêm sản phẩm</a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -69,8 +84,19 @@
                                     @else
                                         <span class="badge text-bg-secondary">Đang ẩn</span>
                                     @endif
+                                    
+                                    @if ($product->variants_sum_stock > 0 && $product->variants_sum_stock < 5)
+                                        <div class="text-warning fw-bold mt-2" style="font-size: 0.8rem;">
+                                            Sắp hết hàng: còn {{ (int)$product->variants_sum_stock }}
+                                        </div>
+                                    @elseif ($product->variants_sum_stock == 0)
+                                        <div class="text-danger fw-bold mt-2" style="font-size: 0.8rem;">
+                                            Hết hàng
+                                        </div>
+                                    @endif
                                 </td>
-                                <td class="text-end">
+                                <td class="text-end text-nowrap">
+                                    <a href="{{ route('admin.products.show', $product) }}" class="btn btn-sm btn-outline-info">Xem</a>
                                     <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-sm btn-outline-primary">Sửa</a>
                                     <form method="POST" action="{{ route('admin.products.destroy', $product) }}" class="d-inline"
                                           data-confirm="Sản phẩm sẽ bị xóa khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục?"

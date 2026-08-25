@@ -57,7 +57,7 @@
     $availableAttributeValues = [];
 
     foreach ($product->variants as $variant) {
-        $parts = collect(preg_split('/\s*-\s*/u', (string) $variant->name))
+        $parts = collect(explode(' - ', (string) $variant->name))
             ->map(fn ($part) => trim($part))
             ->filter()
             ->values();
@@ -113,7 +113,7 @@
         }
     }
 
-    $totalStock = $product->variants->count() ? $product->variants->sum('stock') : 999999;
+    $totalStock = (int) $product->variants->sum('stock');
     $averageRating = (float) ($product->reviews_avg_rating ?? 0);
 @endphp
 
@@ -259,6 +259,7 @@
             </form>
         </div>
     </div>
+</div>
 
     <!-- Section Mô tả sản phẩm -->
     <section class="mt-8 rounded-2xl bg-white p-6 shadow border border-gray-100">

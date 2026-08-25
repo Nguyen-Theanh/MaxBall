@@ -297,6 +297,11 @@
                         </div>
                         @error('discount_price') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                     </div>
+                    <div class="col-12">
+                        <label class="form-label">Số lượng chung</label>
+                        <input type="number" name="stock" class="form-control" value="{{ old('stock', $product->variants->first()?->stock ?? 0) }}" min="0">
+                        @error('stock') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                    </div>
                 </div>
 
                 <div class="form-check form-switch mt-4">

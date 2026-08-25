@@ -18,6 +18,7 @@ class ProductController extends Controller
     public function index(Request $request): View
     {
         $products = Product::with('category')
+            ->withSum('variants', 'stock')
             ->when($request->filled('q'), function ($query) use ($request) {
                 $keyword = trim($request->input('q'));
 
@@ -30,12 +31,24 @@ class ProductController extends Controller
             ->when($request->filled('status'), function ($query) use ($request) {
                 $query->where('status', $request->integer('status'));
             })
+            ->when($request->filled('category_id'), function ($query) use ($request) {
+                $query->where('category_id', $request->integer('category_id'));
+            })
             ->orderByDesc('updated_at')
             ->orderByDesc('id')
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.products.index', compact('products'));
+        $categories = $this->categories();
+        $totalStock = \App\Models\ProductVariant::sum('stock');
+
+        return view('admin.products.index', compact('products', 'categories', 'totalStock'));
+    }
+
+    public function show(Product $product): View
+    {
+        $product->load('category', 'variants', 'productImages');
+        return view('admin.products.show', compact('product'));
     }
 
     public function create(): View
@@ -64,7 +77,22 @@ class ProductController extends Controller
         $product = Product::create($data);
         $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
-        $this->storeVariants($product, $request->input('variants', []), $request);
+        
+        $variantsInput = $request->input('variants', []);
+        if (empty($variantsInput)) {
+            $variantsInput = [
+                [
+                    'id' => null,
+                    'name' => 'Mặc định',
+                    'sku' => $data['slug'],
+                    'base_price' => $data['base_price'],
+                    'discount_price' => $data['discount_price'],
+                    'stock' => $request->integer('stock', 0),
+                ]
+            ];
+        }
+        $this->storeVariants($product, $variantsInput, $request);
+        
         $this->syncProductAverages($product);
 
         return redirect()
@@ -101,7 +129,22 @@ class ProductController extends Controller
         $product->update($data);
         $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
-        $this->storeVariants($product, $request->input('variants', []), $request);
+        
+        $variantsInput = $request->input('variants', []);
+        if (empty($variantsInput)) {
+            $variantsInput = [
+                [
+                    'id' => $product->variants->first()?->id,
+                    'name' => 'Mặc định',
+                    'sku' => $data['slug'],
+                    'base_price' => $data['base_price'],
+                    'discount_price' => $data['discount_price'],
+                    'stock' => $request->integer('stock', 0),
+                ]
+            ];
+        }
+        $this->storeVariants($product, $variantsInput, $request);
+        
         $this->syncProductAverages($product);
 
         return redirect()
@@ -164,6 +207,7 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'base_price' => ['required', 'numeric', 'min:0'],
             'discount_price' => ['nullable', 'numeric', 'min:0', 'lte:base_price'],
+            'stock' => ['nullable', 'integer', 'min:0'],
             'new_attributes' => ['nullable', 'array'],
             'new_attributes.*.name' => ['nullable', 'string', 'max:255'],
             'new_attributes.*.values_text' => ['nullable', 'string', 'max:2000'],
