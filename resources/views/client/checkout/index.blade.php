@@ -54,6 +54,18 @@
                 <div class="bg-white rounded-xl shadow p-6">
                     <h2 class="text-xl font-bold mb-6 border-b pb-2">Phương thức thanh toán</h2>
                     
+                    @php
+                        $subTotal = 0;
+                        foreach ($cart->items as $item) {
+                            $price = $item->productVariant->discount_price ?: $item->productVariant->base_price;
+                            $subTotal += $price * $item->quantity;
+                        }
+                        $shippingFee = $subTotal >= 500000 ? 0 : 30000;
+                        $total = $subTotal + $shippingFee;
+                        $walletBalance = Auth::user()->wallet_balance ?? 0;
+                        $canPayWithWallet = $walletBalance >= $total;
+                    @endphp
+
                     <div class="space-y-4">
                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                             <input type="radio" name="payment_method" value="cod" class="w-5 h-5 text-red-600 focus:ring-red-600" checked>
@@ -67,6 +79,17 @@
                             <input type="radio" name="payment_method" value="vietqr" class="w-5 h-5 text-red-600 focus:ring-red-600">
                             <div class="ml-3 flex items-center gap-2">
                                 <span class="block text-sm font-bold text-gray-900">Chuyển khoản (VietQR / App Ngân Hàng / MoMo)</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-center p-4 border rounded-lg {{ $canPayWithWallet ? 'cursor-pointer hover:bg-gray-50' : 'opacity-60 cursor-not-allowed bg-gray-50' }} transition-colors">
+                            <input type="radio" name="payment_method" value="wallet" class="w-5 h-5 text-red-600 focus:ring-red-600" {{ !$canPayWithWallet ? 'disabled' : '' }}>
+                            <div class="ml-3">
+                                <span class="block text-sm font-bold text-gray-900">Thanh toán bằng Ví MaxBall</span>
+                                <span class="block text-xs text-gray-500 mt-1">Số dư hiện tại: <strong class="{{ $canPayWithWallet ? 'text-green-600' : 'text-red-500' }}">{{ number_format($walletBalance, 0, ',', '.') }}đ</strong></span>
+                                @if(!$canPayWithWallet)
+                                    <span class="block text-xs text-red-500 mt-1">Số dư không đủ để thanh toán đơn hàng này.</span>
+                                @endif
                             </div>
                         </label>
                         @error('payment_method')
@@ -100,23 +123,54 @@
                     </div>
                     
                     @php
-                        $shippingFee = 30000;
+                        $shippingFee = $subTotal >= 500000 ? 0 : 30000;
                         $total = $subTotal + $shippingFee;
                     @endphp
                     
+                    <!-- Voucher Section -->
+                    <div class="mb-6 border-t border-gray-100 pt-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="font-bold text-gray-900 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                                MaxBall Voucher
+                            </span>
+                            <button type="button" onclick="openCheckoutVoucherModal()" class="text-sm font-bold text-blue-600 hover:text-blue-700">Chọn Voucher</button>
+                        </div>
+                        
+                        <!-- Applied Vouchers Container -->
+                        <div id="appliedVouchersContainer" class="flex flex-col gap-2 mb-3">
+                            <!-- JS will populate tags here -->
+                        </div>
+
+                        <div class="flex gap-2 relative">
+                            <input type="text" id="voucherCodeInput" placeholder="Nhập mã giảm giá" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none uppercase">
+                            <button type="button" onclick="applyVoucher()" id="applyVoucherBtn" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-900 transition-colors shrink-0">Áp dụng</button>
+                        </div>
+                        <div id="voucherMessage" class="mt-2 text-sm hidden"></div>
+                        
+                        <!-- Hidden inputs for form submission -->
+                        <input type="hidden" name="coupon_code" id="appliedDiscountCode" value="">
+                        <input type="hidden" name="freeship_coupon_code" id="appliedFreeshipCode" value="">
+                    </div>
+
                     <div class="flex justify-between mb-3 text-gray-600 text-sm">
                         <span>Tạm tính</span>
                         <span class="font-bold text-gray-900">{{ number_format($subTotal, 0, ',', '.') }}đ</span>
                     </div>
+
+                    <div id="discountRow" class="flex justify-between mb-3 text-sm hidden">
+                        <span class="text-gray-600">Giảm giá voucher</span>
+                        <span class="font-bold text-red-600" id="discountAmountDisplay">-0đ</span>
+                    </div>
                     
                     <div class="flex justify-between mb-6 text-gray-600 text-sm pb-4 border-b">
-                        <span>Phí giao hàng</span>
-                        <span class="font-bold text-gray-900">{{ number_format($shippingFee, 0, ',', '.') }}đ</span>
+                        <span class="flex items-center gap-1">Phí giao hàng</span>
+                        <span class="font-bold text-gray-900" id="shippingFeeDisplay" data-base-shipping="{{ $shippingFee }}">{{ $shippingFee == 0 ? 'Miễn phí' : number_format($shippingFee, 0, ',', '.') . 'đ' }}</span>
                     </div>
                     
                     <div class="flex justify-between mb-6">
                         <span class="font-bold text-lg">Tổng cộng</span>
-                        <span class="font-black text-2xl text-red-600">{{ number_format($total, 0, ',', '.') }}đ</span>
+                        <span class="font-black text-2xl text-red-600" id="totalAmountDisplay" data-base-total="{{ $total }}">{{ number_format($total, 0, ',', '.') }}đ</span>
                     </div>
                     
                     <button type="submit" class="w-full text-center bg-red-600 text-white py-4 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200">
@@ -371,6 +425,325 @@
                 : null;
             openCheckoutAddressModal(restoredAddress, true);
         @endif
+
+        const checkoutForm = document.querySelector('form[action="{{ route('client.checkout.store') }}"]');
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', function(e) {
+                const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+                if (selectedPayment && selectedPayment.value === 'wallet') {
+                    if (!confirm('Bạn có chắc chắn muốn thanh toán đơn hàng này bằng số dư trong Ví MaxBall không?')) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
     });
+    // Calculate base wallet sufficient check
+    function updateWalletSufficientCheck(finalTotal) {
+        let walletRadio = document.getElementById('payment_wallet');
+        if(walletRadio) {
+            let userBalance = {{ Auth::user()->wallet_balance }};
+            if(userBalance < finalTotal) {
+                walletRadio.disabled = true;
+                if(walletRadio.checked) {
+                    document.getElementById('payment_cod').checked = true;
+                }
+                let span = walletRadio.parentElement.querySelector('span.text-xs.text-red-500');
+                if(!span) {
+                    let container = walletRadio.parentElement.querySelector('.flex-col');
+                    if(container) {
+                        container.innerHTML += `<span class="text-xs text-red-500 block mt-1">(Số dư không đủ)</span>`;
+                    }
+                }
+            } else {
+                walletRadio.disabled = false;
+                let span = walletRadio.parentElement.querySelector('span.text-xs.text-red-500');
+                if(span) span.remove();
+            }
+        }
+    }
+</script>
+
+<!-- Checkout Voucher Modal -->
+<div id="checkoutVoucherModal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeCheckoutVoucherModal()"></div>
+    
+    <div class="absolute inset-x-0 bottom-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 bg-[#f6f6f6] sm:rounded-2xl shadow-2xl w-full sm:max-w-lg transition-all transform flex flex-col max-h-[85vh]">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white sm:rounded-t-2xl shrink-0">
+            <h3 class="text-xl font-bold text-gray-900">Voucher của bạn</h3>
+            <button onclick="closeCheckoutVoucherModal()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto" id="checkoutVoucherModalBody">
+            <div class="flex justify-center py-8">
+                <svg class="animate-spin h-8 w-8 text-[#d92525]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let subTotal = {{ $subTotal }};
+    let baseShippingFee = subTotal >= 500000 ? 0 : 30000;
+    let baseTotal = subTotal + baseShippingFee;
+    
+    let appliedVouchers = {
+        discount: null, // {code, amount, rawCoupon}
+        freeship: null  // {code, amount, rawCoupon}
+    };
+
+    function openCheckoutVoucherModal() {
+        document.getElementById('checkoutVoucherModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        fetchSavedVouchers();
+    }
+
+    function closeCheckoutVoucherModal() {
+        document.getElementById('checkoutVoucherModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function fetchSavedVouchers() {
+        fetch('{{ route('vouchers.active') }}')
+            .then(res => res.json())
+            .then(data => {
+                const body = document.getElementById('checkoutVoucherModalBody');
+                // Filter only saved vouchers that meet min order value
+                let myVouchers = data.vouchers.filter(v => v.is_saved);
+
+                if (myVouchers.length === 0) {
+                    body.innerHTML = '<div class="text-center text-gray-500 py-8">Bạn chưa lưu voucher nào hoặc không có voucher khả dụng.</div>';
+                    return;
+                }
+
+                let html = '<div class="space-y-4">';
+                myVouchers.forEach(v => {
+                    let isFreeship = v.discount_type === 'freeship';
+                    let bgColor = isFreeship ? 'bg-[#10b981]' : 'bg-[#d92525]';
+                    let textIconColor = isFreeship ? 'text-[#10b981]' : 'text-[#d92525]';
+                    let btnColor = isFreeship ? 'bg-[#10b981] hover:bg-emerald-600' : 'bg-[#d92525] hover:bg-red-700';
+
+                    let discountText = isFreeship
+                        ? 'Miễn phí vận chuyển'
+                        : (v.discount_type === 'fixed' 
+                            ? 'Giảm ' + new Intl.NumberFormat('vi-VN').format(v.discount_value) + 'đ'
+                            : 'Giảm ' + v.discount_value + '%');
+                    
+                    let minOrderHtml = v.min_order_value 
+                        ? `<div class="text-xs ${subTotal < v.min_order_value ? 'text-red-500' : 'text-gray-500'} mt-1">Đơn Tối Thiểu ${new Intl.NumberFormat('vi-VN').format(v.min_order_value)}đ</div>`
+                        : '';
+
+                    let isValid = subTotal >= (v.min_order_value || 0);
+                    let isApplied = (isFreeship && appliedVouchers.freeship?.code === v.code) || (!isFreeship && appliedVouchers.discount?.code === v.code);
+                    
+                    let actionBtn = '';
+                    if (isApplied) {
+                        actionBtn = `<button onclick="removeVoucher('${isFreeship ? 'freeship' : 'discount'}'); fetchSavedVouchers();" class="px-4 py-1.5 text-sm font-bold text-gray-500 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Bỏ chọn</button>`;
+                    } else if (isValid) {
+                        actionBtn = `<button onclick="applyVoucherCode('${v.code}')" class="px-4 py-1.5 text-sm font-bold text-white ${btnColor} rounded transition-colors">Dùng ngay</button>`;
+                    } else {
+                        actionBtn = `<button disabled class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed" title="Chưa đạt giá trị đơn tối thiểu">Chưa đạt</button>`;
+                    }
+
+                    html += `
+                        <div class="bg-white rounded border ${isApplied ? (isFreeship ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500' : 'border-red-500 shadow-md ring-1 ring-red-500') : 'border-gray-200 shadow-sm'} overflow-hidden flex ${!isValid && !isApplied ? 'opacity-50' : ''}">
+                            <div class="w-28 ${bgColor} flex flex-col justify-center items-center text-white p-2 shrink-0 border-r border-dashed border-gray-300 relative">
+                                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-1">
+                                    <span class="${textIconColor} font-black text-xl">M</span>
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Mall</span>
+                                <div class="absolute -left-1.5 top-0 bottom-0 flex flex-col justify-between py-1">
+                                    ${Array(6).fill('<div class="w-3 h-3 bg-[#f6f6f6] rounded-full"></div>').join('')}
+                                </div>
+                            </div>
+                            <div class="flex-1 p-3 flex flex-col justify-between">
+                                <div>
+                                    <div class="font-bold text-gray-900 text-base leading-tight">${discountText}</div>
+                                    ${minOrderHtml}
+                                    <div class="text-[10px] text-gray-400 mt-1">HSD: ${v.expires_at}</div>
+                                </div>
+                                <div class="flex justify-end mt-2">
+                                    ${actionBtn}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                body.innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('checkoutVoucherModalBody').innerHTML = '<div class="text-center text-red-500 py-8">Lỗi tải dữ liệu.</div>';
+            });
+    }
+
+    function applyVoucherCode(code) {
+        document.getElementById('voucherCodeInput').value = code;
+        closeCheckoutVoucherModal();
+        applyVoucher();
+    }
+
+    function applyVoucher() {
+        let code = document.getElementById('voucherCodeInput').value.trim();
+        let msgEl = document.getElementById('voucherMessage');
+        let btn = document.getElementById('applyVoucherBtn');
+        
+        if (!code) {
+            msgEl.textContent = 'Vui lòng nhập mã giảm giá';
+            msgEl.className = 'mt-2 text-sm text-red-500 block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        fetch('{{ route('vouchers.validate') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ code: code })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = 'Áp dụng';
+            document.getElementById('voucherCodeInput').value = '';
+
+            if (data.success) {
+                let coupon = data.coupon;
+                if (coupon.min_order_value && subTotal < coupon.min_order_value) {
+                    msgEl.textContent = 'Đơn hàng chưa đạt giá trị tối thiểu ' + new Intl.NumberFormat('vi-VN').format(coupon.min_order_value) + 'đ để dùng mã này.';
+                    msgEl.className = 'mt-2 text-sm text-red-500 block';
+                    return;
+                }
+
+                let isFreeship = coupon.discount_type === 'freeship';
+                
+                // Calculate discount
+                let amount = 0;
+                if (isFreeship) {
+                    amount = baseShippingFee;
+                } else if (coupon.discount_type === 'fixed') {
+                    amount = parseFloat(coupon.discount_value);
+                } else {
+                    amount = (subTotal * parseFloat(coupon.discount_value)) / 100;
+                }
+
+                let voucherObj = {
+                    code: coupon.code,
+                    amount: amount,
+                    rawCoupon: coupon
+                };
+
+                if (isFreeship) {
+                    appliedVouchers.freeship = voucherObj;
+                } else {
+                    appliedVouchers.discount = voucherObj;
+                }
+
+                msgEl.textContent = 'Đã áp dụng mã giảm giá thành công!';
+                msgEl.className = 'mt-2 text-sm text-green-600 block font-medium';
+                setTimeout(() => { msgEl.className = 'hidden'; }, 3000);
+
+                renderAppliedVouchers();
+                calculateTotal();
+            } else {
+                msgEl.textContent = data.message;
+                msgEl.className = 'mt-2 text-sm text-red-500 block';
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = 'Áp dụng';
+            msgEl.textContent = 'Có lỗi xảy ra.';
+            msgEl.className = 'mt-2 text-sm text-red-500 block';
+        });
+    }
+
+    function removeVoucher(type) {
+        if (type === 'freeship') {
+            appliedVouchers.freeship = null;
+        } else {
+            appliedVouchers.discount = null;
+        }
+        renderAppliedVouchers();
+        calculateTotal();
+    }
+
+    function renderAppliedVouchers() {
+        let container = document.getElementById('appliedVouchersContainer');
+        container.innerHTML = '';
+        
+        let discountInput = document.getElementById('appliedDiscountCode');
+        let freeshipInput = document.getElementById('appliedFreeshipCode');
+        discountInput.value = '';
+        freeshipInput.value = '';
+
+        if (appliedVouchers.freeship) {
+            freeshipInput.value = appliedVouchers.freeship.code;
+            container.innerHTML += `
+                <div class="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded px-3 py-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span class="text-sm font-medium text-emerald-800">Miễn phí vận chuyển: ${appliedVouchers.freeship.code}</span>
+                    </div>
+                    <button type="button" onclick="removeVoucher('freeship')" class="text-emerald-500 hover:text-emerald-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `;
+        }
+
+        if (appliedVouchers.discount) {
+            discountInput.value = appliedVouchers.discount.code;
+            let displayDiscount = new Intl.NumberFormat('vi-VN').format(appliedVouchers.discount.amount) + 'đ';
+            container.innerHTML += `
+                <div class="flex items-center justify-between bg-red-50 border border-red-200 rounded px-3 py-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <span class="text-sm font-medium text-red-800">Giảm ${displayDiscount}: ${appliedVouchers.discount.code}</span>
+                    </div>
+                    <button type="button" onclick="removeVoucher('discount')" class="text-red-500 hover:text-red-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    function calculateTotal() {
+        let shippingFee = baseShippingFee;
+        let discount = 0;
+
+        if (appliedVouchers.freeship) {
+            shippingFee = 0;
+        }
+
+        if (appliedVouchers.discount) {
+            discount = appliedVouchers.discount.amount;
+            if (discount > subTotal) {
+                discount = subTotal;
+            }
+        }
+
+        let finalTotal = subTotal + shippingFee - discount;
+
+        document.getElementById('shippingFeeDisplay').textContent = shippingFee === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN').format(shippingFee) + 'đ';
+        document.getElementById('shippingFeeDisplay').className = shippingFee === 0 ? 'font-bold text-green-600' : 'font-bold text-gray-900';
+
+        if (discount > 0) {
+            document.getElementById('discountAmountDisplay').textContent = '-' + new Intl.NumberFormat('vi-VN').format(discount) + 'đ';
+            document.getElementById('discountRow').classList.remove('hidden');
+        } else {
+            document.getElementById('discountRow').classList.add('hidden');
+        }
+
+        document.getElementById('totalAmountDisplay').textContent = new Intl.NumberFormat('vi-VN').format(finalTotal) + 'đ';
+        updateWalletSufficientCheck(finalTotal);
+    }
 </script>
 @endpush

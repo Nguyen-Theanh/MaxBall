@@ -36,7 +36,7 @@ class ProductController extends Controller
             })
             ->orderByDesc('updated_at')
             ->orderByDesc('id')
-            ->paginate(10)
+            ->paginate($request->integer('per_page', 10))
             ->withQueryString();
 
         $categories = $this->categories();

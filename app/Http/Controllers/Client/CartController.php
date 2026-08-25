@@ -13,6 +13,10 @@ class CartController extends Controller
 {
     public function index()
     {
+        if (session()->has('buy_now_item')) {
+            session()->forget('buy_now_item');
+        }
+
         $cart = Cart::with(['items.productVariant.product'])->firstOrCreate(
             ['user_id' => Auth::id()]
         );
@@ -35,6 +39,14 @@ class CartController extends Controller
             return back()->with('error', 'Số lượng sản phẩm trong kho không đủ!');
         }
 
+        if ($request->action === 'buy_now') {
+            session(['buy_now_item' => [
+                'product_variant_id' => $variant->id,
+                'quantity' => $request->quantity,
+            ]]);
+            return redirect()->route('client.checkout.index');
+        }
+
         $cart = Cart::firstOrCreate(['user_id' => Auth::id()]);
 
         $cartItem = $cart->items()->where('product_variant_id', $variant->id)->first();
@@ -50,10 +62,6 @@ class CartController extends Controller
                 'product_variant_id' => $variant->id,
                 'quantity' => $request->quantity,
             ]);
-        }
-
-        if ($request->action === 'buy_now') {
-            return redirect()->route('client.checkout.index');
         }
 
         return back()->with('success', 'Đã thêm sản phẩm vào giỏ hàng!');

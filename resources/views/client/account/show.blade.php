@@ -46,11 +46,74 @@
                     <i class="fa-solid fa-clipboard-list w-5 text-center text-blue-500"></i>
                     <span class="font-bold text-gray-700 group-hover:text-[#d92525]">Đơn Mua</span>
                 </button>
+
+                <button onclick="switchTab('wallet')" id="nav-wallet" class="w-full text-left flex items-center gap-3 px-2 py-2 rounded transition-colors group">
+                    <i class="fa-solid fa-wallet w-5 text-center text-green-500"></i>
+                    <span class="font-bold text-gray-700 group-hover:text-[#d92525]">Ví MaxBall</span>
+                </button>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="flex-1 bg-white rounded-sm shadow-sm border border-gray-100 min-h-[500px]">
+
+            <!-- TAB: WALLET -->
+            <div id="tab-wallet" class="tab-content p-6 md:p-8 hidden">
+                <div class="border-b pb-4 mb-6">
+                    <h2 class="text-xl font-medium text-gray-900">Ví MaxBall</h2>
+                    <p class="text-sm text-gray-500 mt-1">Quản lý số dư và lịch sử giao dịch ví</p>
+                </div>
+
+                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-8 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Số dư hiện tại</p>
+                        <p class="text-3xl font-black text-red-600">{{ number_format($user->wallet_balance ?? 0, 0, ',', '.') }}đ</p>
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Lịch sử giao dịch</h3>
+                @if($walletTransactions && $walletTransactions->count() > 0)
+                    <div class="overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="w-full text-left text-sm text-gray-600">
+                            <thead class="bg-gray-50 text-gray-900 uppercase">
+                                <tr>
+                                    <th class="px-4 py-3 font-bold border-b">Thời gian</th>
+                                    <th class="px-4 py-3 font-bold border-b">Giao dịch</th>
+                                    <th class="px-4 py-3 font-bold border-b">Số tiền</th>
+                                    <th class="px-4 py-3 font-bold border-b">Mô tả</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                @foreach($walletTransactions as $transaction)
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap">{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
+                                        <td class="px-4 py-3">
+                                            @if($transaction->type === 'deposit')
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">Nạp tiền</span>
+                                            @elseif($transaction->type === 'refund')
+                                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">Hoàn tiền</span>
+                                            @elseif($transaction->type === 'payment')
+                                                <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Thanh toán</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3 font-bold {{ in_array($transaction->type, ['deposit', 'refund']) ? 'text-green-600' : 'text-red-600' }}">
+                                            {{ in_array($transaction->type, ['deposit', 'refund']) ? '+' : '-' }}{{ number_format($transaction->amount, 0, ',', '.') }}đ
+                                        </td>
+                                        <td class="px-4 py-3 text-gray-500">{{ $transaction->description }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        {{ $walletTransactions->links() }}
+                    </div>
+                @else
+                    <div class="text-center py-8 text-gray-500">
+                        Chưa có giao dịch nào.
+                    </div>
+                @endif
+            </div>
 
             <!-- TAB: PROFILE -->
             <div id="tab-profile" class="tab-content p-6 md:p-8 hidden">
@@ -259,6 +322,17 @@
                     <button class="text-gray-600 hover:text-[#d92525] pb-4 -mb-4 font-medium">Đã hủy</button>
                 </div>
 
+                <div class="mb-4">
+                    <form method="GET" action="{{ route('account.show') }}#orders">
+                        <div class="relative">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Bạn có thể tìm kiếm theo ID đơn hàng hoặc Tên Sản phẩm" class="w-full bg-[#eaeaea] border border-transparent text-gray-800 text-sm rounded px-4 py-3 outline-none focus:border-gray-300 transition-colors">
+                            <button type="submit" class="absolute right-0 top-0 bottom-0 px-6 text-gray-500 hover:text-[#d92525]">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="space-y-4">
                     @forelse ($orders as $order)
                         <div class="bg-white rounded shadow-sm border border-gray-100 p-6">
@@ -452,6 +526,9 @@
         document.getElementById('nav-orders').querySelector('span').classList.remove('text-[#d92525]');
         document.getElementById('nav-orders').querySelector('span').classList.add('text-gray-700');
 
+        document.getElementById('nav-wallet').querySelector('span').classList.remove('text-[#d92525]');
+        document.getElementById('nav-wallet').querySelector('span').classList.add('text-gray-700');
+
         // Apply active styles
         if (tabId === 'profile' || tabId === 'password') {
             document.getElementById('nav-profile-group').querySelector('span').classList.remove('text-[#10271d]');
@@ -470,6 +547,9 @@
         } else if (tabId === 'orders') {
             document.getElementById('nav-orders').querySelector('span').classList.remove('text-gray-700');
             document.getElementById('nav-orders').querySelector('span').classList.add('text-[#d92525]');
+        } else if (tabId === 'wallet') {
+            document.getElementById('nav-wallet').querySelector('span').classList.remove('text-gray-700');
+            document.getElementById('nav-wallet').querySelector('span').classList.add('text-[#d92525]');
         }
     }
 

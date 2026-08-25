@@ -53,7 +53,7 @@ class PaymentController extends Controller
      */
     public function success($order_code)
     {
-        $order = Order::where('order_code', $order_code)->firstOrFail();
+        $order = Order::with('details.variant.product')->where('order_code', $order_code)->firstOrFail();
         return view('client.checkout.success', compact('order'));
     }
 

@@ -1106,12 +1106,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function checkSubmitButtonState() {
         if (!submitButton) return;
-        if (isNameDuplicate || isCategoryDuplicate) {
+        const hasPriceError = document.querySelectorAll('.is-invalid-price').length > 0;
+        if (isNameDuplicate || isCategoryDuplicate || hasPriceError) {
             submitButton.disabled = true;
         } else {
             submitButton.disabled = false;
         }
     }
+    window.checkSubmitButtonStateGlobal = checkSubmitButtonState;
 
     if (nameInput) {
         nameInput.addEventListener('input', function() {
@@ -1202,6 +1204,40 @@ document.addEventListener('input', function(e) {
         }
 
         e.target.value = rawValue ? new Intl.NumberFormat('en-US').format(rawValue) : '';
+
+        // Validate price: discount_price <= base_price
+        let row = e.target.closest('.row');
+        if (row) {
+            let basePriceHidden = row.querySelector('input[type="hidden"][name$="[base_price]"]') || row.querySelector('input[type="hidden"][name="base_price"]');
+            let discountPriceHidden = row.querySelector('input[type="hidden"][name$="[discount_price]"]') || row.querySelector('input[type="hidden"][name="discount_price"]');
+
+            if (basePriceHidden && discountPriceHidden) {
+                let basePrice = parseInt(basePriceHidden.value || 0);
+                let discountPrice = parseInt(discountPriceHidden.value || 0);
+                
+                let discountInput = discountPriceHidden.previousElementSibling;
+                if (discountInput) {
+                    let errorMsg = discountInput.parentElement.parentElement.querySelector('.dynamic-price-error');
+
+                    if (discountPrice > 0 && discountPrice > basePrice) {
+                        discountInput.classList.add('is-invalid', 'is-invalid-price');
+                        if (!errorMsg) {
+                            let newError = document.createElement('div');
+                            newError.className = 'text-danger small mt-1 dynamic-price-error';
+                            newError.textContent = 'Giá khuyến mãi không được lớn hơn giá gốc';
+                            discountInput.parentElement.insertAdjacentElement('afterend', newError);
+                        }
+                    } else {
+                        discountInput.classList.remove('is-invalid', 'is-invalid-price');
+                        if (errorMsg) errorMsg.remove();
+                    }
+                    
+                    if (typeof window.checkSubmitButtonStateGlobal === 'function') {
+                        window.checkSubmitButtonStateGlobal();
+                    }
+                }
+            }
+        }
     }
 });
 </script>

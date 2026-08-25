@@ -73,8 +73,53 @@ class OrderController extends Controller
         ]);
 
         // Restore stock
-        foreach ($order->details as $detail) {
-            $detail->variant->increment('stock', $detail->quantity);
+        $stockWasDeducted = false;
+        if ($order->payment_method === 'cod' && $order->order_status === 'processing') {
+            $stockWasDeducted = true;
+        } elseif (in_array($order->payment_method, ['vietqr', 'wallet']) && $order->payment_status === 'paid') {
+            $stockWasDeducted = true;
+        }
+
+        if ($stockWasDeducted) {
+            foreach ($order->details as $detail) {
+                if ($detail->variant) {
+                    $detail->variant->increment('stock', $detail->quantity);
+                }
+            }
+        }
+
+        // Refund logic
+        if ($order->payment_status === 'paid' && in_array($order->payment_method, ['vietqr', 'wallet'])) {
+            $user = Auth::user();
+            $user->increment('wallet_balance', $order->total_amount);
+            \App\Models\WalletTransaction::create([
+                'user_id' => $user->id,
+                'type' => 'refund',
+                'amount' => $order->total_amount,
+                'description' => 'Hoàn tiền do khách hàng tự hủy đơn hàng #' . $order->order_code,
+            ]);
+        }
+
+        // Refund discount voucher
+        if ($order->coupon_id) {
+            $userVoucher = \App\Models\UserVoucher::where('user_id', $order->user_id)->where('coupon_id', $order->coupon_id)->first();
+            if ($userVoucher) {
+                $userVoucher->update(['is_used' => false, 'used_at' => null]);
+                if ($order->coupon) {
+                    $order->coupon->decrement('used_count');
+                }
+            }
+        }
+
+        // Refund freeship voucher
+        if ($order->freeship_coupon_id) {
+            $userVoucherFreeship = \App\Models\UserVoucher::where('user_id', $order->user_id)->where('coupon_id', $order->freeship_coupon_id)->first();
+            if ($userVoucherFreeship) {
+                $userVoucherFreeship->update(['is_used' => false, 'used_at' => null]);
+                if ($order->freeshipCoupon) {
+                    $order->freeshipCoupon->decrement('used_count');
+                }
+            }
         }
 
         $notifier->send($order);
