@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Client\CartController;
+use App\Http\Controllers\Client\ChatbotController;
 use App\Http\Controllers\Client\CheckoutController;
 use App\Http\Controllers\Client\ContactController;
 use App\Http\Controllers\Client\OrderController as ClientOrderController;
@@ -19,10 +21,15 @@ use App\Http\Controllers\Client\ProductController as ClientProductController;
 use App\Http\Controllers\Client\ReviewController;
 use App\Http\Controllers\Client\UserAddressController;
 use App\Http\Controllers\Client\VietnamAddressController;
+use App\Http\Controllers\Client\VoucherController;
 use Illuminate\Support\Facades\Route;
 
 // Client
 Route::get('/', [ClientProductController::class, 'home'])->name('client.home');
+
+Route::post('/api/chatbot', ChatbotController::class)
+    ->middleware('throttle:chatbot')
+    ->name('api.chatbot');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
@@ -62,9 +69,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/thanh-toan', [CheckoutController::class, 'index'])->name('client.checkout.index');
     Route::post('/thanh-toan', [CheckoutController::class, 'store'])->name('client.checkout.store');
 
-    Route::get('/vouchers/active', [\App\Http\Controllers\Client\VoucherController::class, 'getActiveVouchers'])->name('vouchers.active');
-    Route::post('/vouchers/save', [\App\Http\Controllers\Client\VoucherController::class, 'saveVoucher'])->name('vouchers.save');
-    Route::post('/vouchers/validate', [\App\Http\Controllers\Client\VoucherController::class, 'validateVoucher'])->name('vouchers.validate');
+    Route::get('/vouchers/active', [VoucherController::class, 'getActiveVouchers'])->name('vouchers.active');
+    Route::post('/vouchers/save', [VoucherController::class, 'saveVoucher'])->name('vouchers.save');
+    Route::post('/vouchers/validate', [VoucherController::class, 'validateVoucher'])->name('vouchers.validate');
     Route::get('/thanh-toan/vnpay-return', [CheckoutController::class, 'vnpayReturn'])->name('client.checkout.vnpay_return');
     Route::get('/thanh-toan/momo-return', [CheckoutController::class, 'momoReturn'])->name('client.checkout.momo_return');
 
@@ -109,9 +116,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::get('/products/check-name', [AdminProductController::class, 'checkName'])->name('products.check-name');
     Route::resource('products', AdminProductController::class);
-    Route::get('/coupons/check-code', [\App\Http\Controllers\Admin\CouponController::class, 'checkCode'])->name('coupons.check-code');
-    Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class);
-    Route::post('coupons/{coupon}/toggle-status', [\App\Http\Controllers\Admin\CouponController::class, 'toggleStatus'])->name('coupons.toggle-status');
+    Route::get('/coupons/check-code', [CouponController::class, 'checkCode'])->name('coupons.check-code');
+    Route::resource('coupons', CouponController::class);
+    Route::post('coupons/{coupon}/toggle-status', [CouponController::class, 'toggleStatus'])->name('coupons.toggle-status');
 
     Route::get('/categories/check-name', [CategoryController::class, 'checkName'])->name('categories.check-name');
     Route::resource('categories', CategoryController::class)->except(['show']);
