@@ -15,12 +15,19 @@ class ProductController extends Controller
     {
         $products = Product::where('status', 1)->latest()->take(8)->get();
 
-        $topCustomers = User::withSum(['orders' => function ($query) {
+        $completedOrdersThisMonth = function ($query): void {
             $query->where('order_status', 'completed')
                 ->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year);
-        }], 'total_amount')
-            ->having('orders_sum_total_amount', '>', 0)
+        };
+
+        $topCustomers = User::whereHas('orders', function ($query): void {
+            $query->where('order_status', 'completed')
+                ->where('total_amount', '>', 0)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year);
+        })
+            ->withSum(['orders' => $completedOrdersThisMonth], 'total_amount')
             ->orderByDesc('orders_sum_total_amount')
             ->take(5)
             ->get();

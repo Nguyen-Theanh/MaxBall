@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute as ProductAttributeOption;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -19,6 +22,7 @@ class ProductController extends Controller
     {
         $products = Product::with('category')
             ->withSum('variants', 'stock')
+            ->withSum('variants', 'reserved_stock')
             ->when($request->filled('q'), function ($query) use ($request) {
                 $keyword = trim($request->input('q'));
 
@@ -40,14 +44,16 @@ class ProductController extends Controller
             ->withQueryString();
 
         $categories = $this->categories();
-        $totalStock = \App\Models\ProductVariant::sum('stock');
+        $totalStock = ProductVariant::sum('stock');
+        $totalReservedStock = ProductVariant::sum('reserved_stock');
 
-        return view('admin.products.index', compact('products', 'categories', 'totalStock'));
+        return view('admin.products.index', compact('products', 'categories', 'totalStock', 'totalReservedStock'));
     }
 
     public function show(Product $product): View
     {
         $product->load('category', 'variants', 'productImages');
+
         return view('admin.products.show', compact('product'));
     }
 
@@ -77,7 +83,7 @@ class ProductController extends Controller
         $product = Product::create($data);
         $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
-        
+
         $variantsInput = $request->input('variants', []);
         if (empty($variantsInput)) {
             $variantsInput = [
@@ -88,11 +94,11 @@ class ProductController extends Controller
                     'base_price' => $data['base_price'],
                     'discount_price' => $data['discount_price'],
                     'stock' => $request->integer('stock', 0),
-                ]
+                ],
             ];
         }
         $this->storeVariants($product, $variantsInput, $request);
-        
+
         $this->syncProductAverages($product);
 
         return redirect()
@@ -129,7 +135,7 @@ class ProductController extends Controller
         $product->update($data);
         $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
-        
+
         $variantsInput = $request->input('variants', []);
         if (empty($variantsInput)) {
             $variantsInput = [
@@ -140,11 +146,11 @@ class ProductController extends Controller
                     'base_price' => $data['base_price'],
                     'discount_price' => $data['discount_price'],
                     'stock' => $request->integer('stock', 0),
-                ]
+                ],
             ];
         }
         $this->storeVariants($product, $variantsInput, $request);
-        
+
         $this->syncProductAverages($product);
 
         return redirect()
@@ -187,17 +193,16 @@ class ProductController extends Controller
         ]);
     }
 
-
     private function validatedData(Request $request): array
     {
         $validator = Validator::make($request->all(), [
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'category_name' => ['nullable', 'string', 'max:255'],
             'name' => [
-                'required', 
-                'string', 
+                'required',
+                'string',
                 'max:255',
-                \Illuminate\Validation\Rule::unique('products')->ignore($request->route('product'))
+                Rule::unique('products')->ignore($request->route('product')),
             ],
             'slug' => ['nullable', 'string', 'max:255'],
             'thumbnail' => ['nullable', 'string', 'max:2048'],
@@ -226,6 +231,7 @@ class ProductController extends Controller
         $validator->after(function ($validator) use ($request): void {
             $seenNames = [];
             $seenSkus = [];
+            $product = $request->route('product');
 
             foreach ($request->input('variants', []) as $index => $variant) {
                 if (! is_array($variant)) {
@@ -254,6 +260,30 @@ class ProductController extends Controller
                     } else {
                         $seenSkus[$skuKey] = $index;
                     }
+                }
+
+                if ($product instanceof Product && ! empty($variant['id']) && array_key_exists('stock', $variant)) {
+                    $reservedStock = (int) $product->variants()
+                        ->whereKey((int) $variant['id'])
+                        ->value('reserved_stock');
+
+                    if ((int) $variant['stock'] < $reservedStock) {
+                        $validator->errors()->add(
+                            "variants.{$index}.stock",
+                            "Tồn kho không được thấp hơn {$reservedStock} sản phẩm đang giữ cho đơn COD."
+                        );
+                    }
+                }
+            }
+
+            if ($product instanceof Product && empty($request->input('variants', [])) && $request->filled('stock')) {
+                $reservedStock = (int) $product->variants()->value('reserved_stock');
+
+                if ($request->integer('stock') < $reservedStock) {
+                    $validator->errors()->add(
+                        'stock',
+                        "Tồn kho không được thấp hơn {$reservedStock} sản phẩm đang giữ cho đơn COD."
+                    );
                 }
             }
         });
@@ -401,16 +431,16 @@ class ProductController extends Controller
         }
     }
 
-    public function checkName(Request $request): \Illuminate\Http\JsonResponse
+    public function checkName(Request $request): JsonResponse
     {
         $name = $request->query('name');
         $ignoreId = $request->query('ignore_id');
 
-        if (!$name) {
+        if (! $name) {
             return response()->json(['exists' => false]);
         }
 
-        $query = Product::whereRaw('LOWER(name) = ?', [\Illuminate\Support\Str::lower($name)]);
+        $query = Product::whereRaw('LOWER(name) = ?', [Str::lower($name)]);
 
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);

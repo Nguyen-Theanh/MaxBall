@@ -170,6 +170,7 @@
                     @php
                         $orderStatus = match($order->order_status) {
                             'pending' => 'Chờ xác nhận',
+                            'confirmed' => 'Đã xác nhận',
                             'processing' => 'Đã xác nhận',
                             'shipping' => 'Đang giao',
                             'completed' => 'Hoàn thành',

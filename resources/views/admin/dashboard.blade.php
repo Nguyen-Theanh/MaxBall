@@ -28,6 +28,7 @@
     ];
     $statusLegendColors = [
         'pending' => 'bg-amber-500',
+        'confirmed' => 'bg-blue-500',
         'processing' => 'bg-blue-500',
         'shipping' => 'bg-cyan-500',
         'completed' => 'bg-emerald-500',
@@ -249,6 +250,7 @@
                             @php
                                 [$statusText, $statusClass] = match($order->order_status) {
                                     'pending' => ['Chờ xác nhận', 'bg-amber-50 text-amber-700'],
+                                    'confirmed' => ['Đã xác nhận', 'bg-blue-50 text-blue-700'],
                                     'processing' => ['Đã xác nhận', 'bg-blue-50 text-blue-700'],
                                     'shipping' => ['Đang giao', 'bg-cyan-50 text-cyan-700'],
                                     'completed' => ['Hoàn thành', 'bg-emerald-50 text-emerald-700'],

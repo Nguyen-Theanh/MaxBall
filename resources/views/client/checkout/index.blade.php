@@ -71,7 +71,7 @@
                             <input type="radio" name="payment_method" value="cod" class="w-5 h-5 text-red-600 focus:ring-red-600" checked>
                             <div class="ml-3">
                                 <span class="block text-sm font-bold text-gray-900">Thanh toán khi nhận hàng (COD)</span>
-                                <span class="block text-xs text-gray-500 mt-1">Khách hàng thanh toán bằng tiền mặt cho nhân viên giao hàng.</span>
+                                <span class="block text-xs text-gray-500 mt-1">Hàng được giữ tối đa 24 giờ để cửa hàng xác nhận; nếu bị từ chối hoặc quá hạn, đơn sẽ tự hủy và hàng được trả lại.</span>
                             </div>
                         </label>
                         

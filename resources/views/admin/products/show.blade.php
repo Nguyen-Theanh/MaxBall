@@ -59,7 +59,11 @@
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 fw-bold text-primary">Biến thể sản phẩm ({{ $product->variants->count() }})</h6>
-                <span class="badge bg-primary">Tổng tồn: {{ number_format($product->variants->sum('stock'), 0, ',', '.') }}</span>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-primary">Tồn thực tế: {{ number_format($product->variants->sum('stock'), 0, ',', '.') }}</span>
+                    <span class="badge bg-warning text-dark">Đang giữ: {{ number_format($product->variants->sum('reserved_stock'), 0, ',', '.') }}</span>
+                    <span class="badge bg-success">Có thể bán: {{ number_format($product->variants->sum(fn ($variant) => $variant->available_stock), 0, ',', '.') }}</span>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -70,7 +74,9 @@
                                 <th>Tên biến thể</th>
                                 <th>SKU</th>
                                 <th>Giá bán</th>
-                                <th>Tồn kho</th>
+                                <th>Tồn thực tế</th>
+                                <th>Đang giữ (COD)</th>
+                                <th>Có thể bán</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -100,10 +106,18 @@
                                             <span class="badge bg-danger">Hết hàng</span>
                                         @endif
                                     </td>
+                                    <td><span class="badge bg-warning text-dark">{{ number_format($variant->reserved_stock, 0, ',', '.') }}</span></td>
+                                    <td>
+                                        @if($variant->available_stock > 0)
+                                            <span class="badge bg-success">{{ number_format($variant->available_stock, 0, ',', '.') }}</span>
+                                        @else
+                                            <span class="badge bg-danger">Hết hàng</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">Sản phẩm này không có biến thể nào.</td>
+                                    <td colspan="7" class="text-center py-4 text-muted">Sản phẩm này không có biến thể nào.</td>
                                 </tr>
                             @endforelse
                         </tbody>

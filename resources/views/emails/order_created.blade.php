@@ -257,7 +257,11 @@
             </table>
 
             <div class="notice-box">
-                Chúng tôi sẽ gửi email thông báo khi đơn hàng được xác nhận, đóng gói và giao cho đơn vị vận chuyển.
+                @if($order->payment_method === 'cod' && $order->reservation_expires_at)
+                    Sản phẩm trong đơn đang được giữ đến {{ $order->reservation_expires_at->format('H:i d/m/Y') }} để cửa hàng xác nhận. Nếu cửa hàng từ chối hoặc quá thời hạn này, đơn sẽ tự động hủy và hàng được trả lại kho khả dụng.
+                @else
+                    Chúng tôi sẽ gửi email thông báo khi đơn hàng được xác nhận, đóng gói và giao cho đơn vị vận chuyển.
+                @endif
             </div>
 
             <div class="support-box">

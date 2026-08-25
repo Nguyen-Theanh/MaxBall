@@ -10,6 +10,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
+
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
@@ -19,31 +20,112 @@
 
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Danh sách Đơn hàng</h6>
-            
-            <form action="{{ route('admin.orders.index') }}" method="GET" class="d-flex gap-2">
-                <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            <h6 class="m-0 font-weight-bold text-primary">
+                Danh sách Đơn hàng
+            </h6>
+
+            <form
+                action="{{ route('admin.orders.index') }}"
+                method="GET"
+                class="d-flex gap-2"
+            >
+                <select
+                    name="status"
+                    class="form-select form-select-sm w-auto"
+                    onchange="this.form.submit()"
+                >
                     <option value="">Tất cả trạng thái</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
-                    <option value="processing" {{ request('status') == 'processing' ? 'selected' : '' }}>Đã xác nhận</option>
-                    <option value="shipping" {{ request('status') == 'shipping' ? 'selected' : '' }}>Đang giao hàng</option>
-                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
-                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
+
+                    <option
+                        value="pending"
+                        {{ request('status') == 'pending' ? 'selected' : '' }}
+                    >
+                        Chờ xác nhận
+                    </option>
+
+                    <option
+                        value="confirmed"
+                        {{ request('status') == 'confirmed' ? 'selected' : '' }}
+                    >
+                        Đã xác nhận
+                    </option>
+
+                    <option
+                        value="shipping"
+                        {{ request('status') == 'shipping' ? 'selected' : '' }}
+                    >
+                        Đang giao hàng
+                    </option>
+
+                    <option
+                        value="completed"
+                        {{ request('status') == 'completed' ? 'selected' : '' }}
+                    >
+                        Hoàn thành
+                    </option>
+
+                    <option
+                        value="cancelled"
+                        {{ request('status') == 'cancelled' ? 'selected' : '' }}
+                    >
+                        Đã hủy
+                    </option>
                 </select>
-                <select name="per_page" class="form-select form-select-sm w-auto" aria-label="Số đơn mỗi trang" onchange="this.form.submit()">
-                    <option value="10" @selected((int) request('per_page', 10) === 10)>10 đơn/trang</option>
-                    <option value="20" @selected((int) request('per_page', 10) === 20)>20 đơn/trang</option>
-                    <option value="50" @selected((int) request('per_page', 10) === 50)>50 đơn/trang</option>
+
+                <select
+                    name="per_page"
+                    class="form-select form-select-sm w-auto"
+                    aria-label="Số đơn mỗi trang"
+                    onchange="this.form.submit()"
+                >
+                    <option
+                        value="10"
+                        @selected((int) request('per_page', 10) === 10)
+                    >
+                        10 đơn/trang
+                    </option>
+
+                    <option
+                        value="20"
+                        @selected((int) request('per_page', 10) === 20)
+                    >
+                        20 đơn/trang
+                    </option>
+
+                    <option
+                        value="50"
+                        @selected((int) request('per_page', 10) === 50)
+                    >
+                        50 đơn/trang
+                    </option>
                 </select>
+
                 <div class="input-group input-group-sm w-auto">
-                    <input type="text" name="search" class="form-control" placeholder="Mã ĐH, Tên, SĐT..." value="{{ request('search') }}">
-                    <button class="btn btn-outline-secondary" type="submit">Tìm</button>
+                    <input
+                        type="text"
+                        name="search"
+                        class="form-control"
+                        placeholder="Mã ĐH, Tên, SĐT..."
+                        value="{{ request('search') }}"
+                    >
+
+                    <button
+                        class="btn btn-outline-secondary"
+                        type="submit"
+                    >
+                        Tìm
+                    </button>
                 </div>
             </form>
         </div>
+
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle" width="100%" cellspacing="0">
+                <table
+                    class="table table-bordered table-hover align-middle"
+                    width="100%"
+                    cellspacing="0"
+                >
                     <thead class="table-light">
                         <tr>
                             <th>Mã ĐH</th>
@@ -52,99 +134,236 @@
                             <th>Thanh toán</th>
                             <th>Trạng thái</th>
                             <th>Ngày đặt</th>
-                            <th class="text-center" width="120">Hành động</th>
+                            <th
+                                class="text-center"
+                                width="120"
+                            >
+                                Hành động
+                            </th>
                         </tr>
                     </thead>
+
                     <tbody>
                         @forelse($orders as $order)
                             <tr>
-                                <td class="font-weight-bold">#{{ $order->order_code }}</td>
-                                <td>
-                                    <div class="fw-bold">{{ $order->customer_name }}</div>
-                                    <div class="small text-muted">{{ $order->customer_phone }}</div>
+                                <td class="font-weight-bold">
+                                    #{{ $order->order_code }}
                                 </td>
-                                <td class="text-danger fw-bold">{{ number_format($order->total_amount, 0, ',', '.') }}đ</td>
+
+                                <td>
+                                    <div class="fw-bold">
+                                        {{ $order->customer_name }}
+                                    </div>
+
+                                    <div class="small text-muted">
+                                        {{ $order->customer_phone }}
+                                    </div>
+                                </td>
+
+                                <td class="text-danger fw-bold">
+                                    {{ number_format($order->total_amount, 0, ',', '.') }}đ
+                                </td>
+
                                 <td>
                                     @if($order->payment_status == 'paid')
-                                        <span class="badge bg-success">Đã thanh toán ({{ strtoupper($order->payment_method) }})</span>
+                                        <span class="badge bg-success">
+                                            Đã thanh toán
+                                            ({{ strtoupper($order->payment_method) }})
+                                        </span>
+
                                     @elseif($order->payment_status == 'failed')
-                                        <span class="badge bg-danger">Thất bại</span>
+                                        <span class="badge bg-danger">
+                                            Thất bại
+                                        </span>
+
                                     @else
-                                        @if($order->payment_method == 'cod' && $order->order_status == 'shipping')
-                                            <form action="{{ route('admin.orders.updatePaymentStatus', $order->id) }}" method="POST" class="m-0">
+                                        @if(
+                                            $order->payment_method == 'cod'
+                                            && $order->order_status == 'shipping'
+                                        )
+                                            <form
+                                                action="{{ route('admin.orders.updatePaymentStatus', $order->id) }}"
+                                                method="POST"
+                                                class="m-0"
+                                            >
                                                 @csrf
                                                 @method('PATCH')
-                                                <select name="payment_status" class="form-select form-select-sm" onchange="if(confirm('Xác nhận đã thu tiền COD cho đơn hàng này?')) this.form.submit(); else this.value='pending';">
-                                                    <option value="pending" selected>Chưa thanh toán (COD)</option>
-                                                    <option value="paid">Đã thanh toán (COD)</option>
+
+                                                <select
+                                                    name="payment_status"
+                                                    class="form-select form-select-sm"
+                                                    onchange="confirmPaymentAndSubmit(this)"
+                                                >
+                                                    <option
+                                                        value="pending"
+                                                        selected
+                                                    >
+                                                        Chưa thanh toán (COD)
+                                                    </option>
+
+                                                    <option value="paid">
+                                                        Đã thanh toán (COD)
+                                                    </option>
                                                 </select>
                                             </form>
                                         @else
-                                            <span class="badge bg-warning text-dark">Chưa thanh toán (COD)</span>
+                                            <span class="badge bg-warning text-dark">
+                                                Chưa thanh toán
+                                                ({{ strtoupper($order->payment_method) }})
+                                            </span>
                                         @endif
                                     @endif
                                 </td>
+
                                 <td>
-                                    @if(in_array($order->order_status, ['completed', 'cancelled']))
+                                    @if(
+                                        in_array(
+                                            $order->order_status,
+                                            ['completed', 'cancelled']
+                                        )
+                                    )
                                         @if($order->order_status == 'completed')
-                                            <span class="badge bg-success px-2 py-2">Hoàn thành</span>
+                                            <span class="badge bg-success px-2 py-2">
+                                                Hoàn thành
+                                            </span>
                                         @else
-                                            <span class="badge bg-danger px-2 py-2">Đã hủy</span>
+                                            <span class="badge bg-danger px-2 py-2">
+                                                Đã hủy
+                                            </span>
+
                                             @if($order->cancellation_reason)
-                                                <div class="mt-1 small text-danger" style="max-width: 220px;">{{ $order->cancellation_reason_label }}</div>
+                                                <div
+                                                    class="mt-1 small text-danger"
+                                                    style="max-width: 220px;"
+                                                >
+                                                    {{ $order->cancellation_reason_label }}
+                                                </div>
                                             @endif
                                         @endif
                                     @else
-                                        <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST" class="m-0">
+                                        <form
+                                            action="{{ route('admin.orders.updateStatus', $order->id) }}"
+                                            method="POST"
+                                            class="m-0"
+                                        >
                                             @csrf
                                             @method('PATCH')
-                                            <select name="order_status"
-                                                    class="form-select form-select-sm"
-                                                    style="min-width: 140px;"
-                                                    data-admin-cancel
-                                                    data-order-id="{{ $order->id }}"
-                                                    data-order-code="{{ $order->order_code }}"
-                                                    data-current-status="{{ $order->order_status }}"
-                                                    data-cancel-action="{{ route('admin.orders.updateStatus', $order->id) }}"
-                                                    onchange="confirmAndSubmit(this)">
+
+                                            <select
+                                                name="order_status"
+                                                class="form-select form-select-sm"
+                                                style="min-width: 140px;"
+                                                data-admin-cancel
+                                                data-order-id="{{ $order->id }}"
+                                                data-order-code="{{ $order->order_code }}"
+                                                data-current-status="{{ $order->order_status }}"
+                                                data-cancel-action="{{ route('admin.orders.updateStatus', $order->id) }}"
+                                                onchange="confirmAndSubmit(this)"
+                                            >
                                                 @if($order->order_status == 'pending')
-                                                    <option value="pending" selected>Chờ xác nhận</option>
-                                                    <option value="processing">Đã xác nhận</option>
-                                                    <option value="cancelled">Hủy đơn hàng</option>
-                                                @elseif($order->order_status == 'processing')
-                                                    <option value="processing" selected>Đã xác nhận</option>
-                                                    <option value="shipping">Đang giao hàng</option>
-                                                    <option value="cancelled">Hủy đơn hàng</option>
+                                                    <option
+                                                        value="pending"
+                                                        selected
+                                                    >
+                                                        Chờ xác nhận
+                                                    </option>
+
+                                                    <option value="confirmed">
+                                                        Xác nhận đơn
+                                                    </option>
+
+                                                    <option value="cancelled">
+                                                        Hủy đơn hàng
+                                                    </option>
+
+                                                @elseif(
+                                                    in_array(
+                                                        $order->order_status,
+                                                        ['confirmed', 'processing']
+                                                    )
+                                                )
+                                                    <option
+                                                        value="{{ $order->order_status }}"
+                                                        selected
+                                                    >
+                                                        Đã xác nhận
+                                                    </option>
+
+                                                    <option value="shipping">
+                                                        Đang giao hàng
+                                                    </option>
+
+                                                    <option value="cancelled">
+                                                        Hủy đơn hàng
+                                                    </option>
+
                                                 @elseif($order->order_status == 'shipping')
-                                                    <option value="shipping" selected>Đang giao hàng</option>
+                                                    <option
+                                                        value="shipping"
+                                                        selected
+                                                    >
+                                                        Đang giao hàng
+                                                    </option>
+
                                                     @if($order->payment_status == 'paid')
-                                                        <option value="completed">Hoàn thành</option>
+                                                        <option value="completed">
+                                                            Hoàn thành
+                                                        </option>
                                                     @endif
                                                 @endif
                                             </select>
+
+                                            @if(
+                                                $order->hasActiveReservation()
+                                                && $order->reservation_expires_at
+                                            )
+                                                <div class="mt-1 small text-warning">
+                                                    Giữ hàng đến
+                                                    {{ $order->reservation_expires_at->format('H:i d/m/Y') }}
+                                                </div>
+                                            @endif
                                         </form>
                                     @endif
                                 </td>
-                                <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
+
+                                <td>
+                                    {{ $order->created_at->format('d/m/Y H:i') }}
+                                </td>
+
                                 <td class="text-center">
-                                    <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-primary btn-sm" title="Chi tiết">
+                                    <a
+                                        href="{{ route('admin.orders.show', $order->id) }}"
+                                        class="btn btn-primary btn-sm"
+                                        title="Chi tiết"
+                                    >
                                         Chi tiết
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-4">Chưa có đơn hàng nào!</td>
+                                <td
+                                    colspan="7"
+                                    class="text-center py-4"
+                                >
+                                    Chưa có đơn hàng nào!
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            
-            <div class="mt-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+
+            <div
+                class="mt-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2"
+            >
                 <div class="small text-muted">
                     @if($orders->total() > 0)
-                        Hiển thị {{ $orders->firstItem() }}–{{ $orders->lastItem() }} trên tổng {{ number_format($orders->total()) }} đơn hàng
+                        Hiển thị
+                        {{ $orders->firstItem() }}–{{ $orders->lastItem() }}
+                        trên tổng
+                        {{ number_format($orders->total()) }}
+                        đơn hàng
                     @else
                         Không có đơn hàng phù hợp
                     @endif
@@ -159,26 +378,60 @@
 </div>
 
 <script>
+async function confirmPaymentAndSubmit(selectElement) {
+    const confirmed = await window.AppConfirm.open({
+        title: 'Xác nhận thanh toán COD',
+        message: 'Xác nhận đã thu đủ tiền COD cho đơn hàng này?',
+        confirmLabel: 'Đã thu tiền',
+        variant: 'primary',
+    });
+
+    if (confirmed) {
+        HTMLFormElement.prototype.submit.call(
+            selectElement.closest('form')
+        );
+    } else {
+        selectElement.value = 'pending';
+    }
+}
+
 async function confirmAndSubmit(selectElement) {
     const form = selectElement.closest('form');
     const status = selectElement.value;
+
     let options = null;
 
-    if (status === 'completed') {
+    if (status === 'confirmed') {
+        options = {
+            title: 'Xác nhận đơn COD',
+            message:
+                'Xác nhận đơn và trừ số hàng đang giữ khỏi tồn kho?',
+            confirmLabel: 'Xác nhận đơn',
+            variant: 'primary',
+        };
+    } else if (status === 'completed') {
         options = {
             title: 'Hoàn thành đơn hàng',
-            message: 'Xác nhận đơn hàng đã được giao thành công và chuyển sang trạng thái hoàn thành?',
+            message:
+                'Xác nhận đơn hàng đã được giao thành công và chuyển sang trạng thái hoàn thành?',
             confirmLabel: 'Hoàn thành',
             variant: 'primary',
         };
     } else if (status === 'cancelled') {
-        window.openAdminCancelModal(selectElement);
+        window.openAdminCancelModal(
+            selectElement
+        );
 
         return;
     }
 
-    if (!options || await window.AppConfirm.open(options)) {
-        HTMLFormElement.prototype.submit.call(form);
+    if (
+        !options
+        || await window.AppConfirm.open(options)
+    ) {
+        HTMLFormElement.prototype.submit.call(
+            form
+        );
     } else {
         form.reset();
     }

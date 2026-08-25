@@ -53,6 +53,9 @@
                     <div class="badge bg-info text-dark px-3 py-2 fs-6">
                         Tổng tồn kho: <strong>{{ number_format($totalStock, 0, ',', '.') }}</strong>
                     </div>
+                    <div class="badge bg-warning text-dark px-3 py-2 fs-6">
+                        Đang giữ: <strong>{{ number_format($totalReservedStock, 0, ',', '.') }}</strong>
+                    </div>
                     <a href="{{ route('admin.products.create') }}" class="btn btn-primary text-nowrap">Thêm sản phẩm</a>
                 </div>
             </div>
@@ -71,6 +74,9 @@
                     </thead>
                     <tbody>
                         @forelse ($products as $product)
+                            @php
+                                $availableStock = max(0, (int) $product->variants_sum_stock - (int) $product->variants_sum_reserved_stock);
+                            @endphp
                             <tr>
                                 <td>
                                     <img src="{{ $product->thumbnail_url }}" alt="{{ $product->name }}" class="product-thumb rounded border">
@@ -93,13 +99,19 @@
                                         <span class="badge text-bg-secondary">Đang ẩn</span>
                                     @endif
                                     
-                                    @if ($product->variants_sum_stock > 0 && $product->variants_sum_stock < 5)
-                                        <div class="text-warning fw-bold mt-2" style="font-size: 0.8rem;">
-                                            Sắp hết hàng: còn {{ (int)$product->variants_sum_stock }}
+                                    @if ((int) $product->variants_sum_reserved_stock > 0)
+                                        <div class="text-primary fw-bold mt-2" style="font-size: 0.8rem;">
+                                            Đang giữ: {{ (int) $product->variants_sum_reserved_stock }}
                                         </div>
-                                    @elseif ($product->variants_sum_stock == 0)
+                                    @endif
+
+                                    @if ($availableStock > 0 && $availableStock < 5)
+                                        <div class="text-warning fw-bold mt-2" style="font-size: 0.8rem;">
+                                            Có thể bán: còn {{ $availableStock }}
+                                        </div>
+                                    @elseif ($availableStock === 0)
                                         <div class="text-danger fw-bold mt-2" style="font-size: 0.8rem;">
-                                            Hết hàng
+                                            Hết hàng khả dụng
                                         </div>
                                     @endif
                                 </td>
