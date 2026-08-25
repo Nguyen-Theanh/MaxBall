@@ -13,6 +13,7 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'coupon_id',
+        'freeship_coupon_id',
         'order_code',
         'customer_name',
         'customer_phone',
@@ -50,6 +51,21 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function review()
+    {
+        return $this->hasOneThrough(Review::class, OrderDetail::class);
+    }
+
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
+    public function freeshipCoupon()
+    {
+        return $this->belongsTo(Coupon::class, 'freeship_coupon_id');
     }
 
     public function details()

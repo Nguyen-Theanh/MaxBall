@@ -8,6 +8,13 @@
 
 <div class="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-12 md:pb-16">
 
+    <!-- Breadcrumbs -->
+    <div class="text-sm text-gray-500 mb-6 flex items-center gap-2">
+        <a href="{{ route('client.home') }}" class="hover:text-red-600 transition">Trang chủ</a>
+        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <span class="text-gray-900 font-medium">Giỏ hàng</span>
+    </div>
+
     @if($cart && $cart->items->count() > 0)
         <div class="flex items-center gap-3 mb-8">
             <h1 class="text-3xl md:text-4xl font-black text-[#10271d] tracking-tight">Giỏ hàng của bạn</h1>
@@ -19,7 +26,10 @@
                 <div class="bg-white rounded-3xl shadow-xl shadow-[#10271d]/5 border border-gray-100 overflow-hidden">
                     <!-- Header -->
                     <div class="hidden sm:grid grid-cols-12 gap-4 p-6 border-b border-gray-100 bg-gray-50/50 text-xs font-black uppercase tracking-wider text-gray-500">
-                        <div class="col-span-5 pl-2">Sản phẩm</div>
+                        <div class="col-span-5 pl-2 flex items-center gap-3">
+                            <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 text-[#d92525] bg-white border-gray-300 rounded focus:ring-0 cursor-pointer transition-colors accent-[#d92525]" checked>
+                            <span>Sản phẩm</span>
+                        </div>
                         <div class="col-span-2 text-center">Đơn giá</div>
                         <div class="col-span-2 text-center">Số lượng</div>
                         <div class="col-span-3 text-right pr-2">Thành tiền</div>
@@ -45,7 +55,10 @@
                             @endphp
                             
                             <div class="grid grid-cols-1 sm:grid-cols-12 gap-6 p-6 items-center hover:bg-gray-50/50 transition-colors group">
-                                <div class="col-span-1 sm:col-span-5 flex gap-5 items-start">
+                                <div class="col-span-1 sm:col-span-5 flex gap-4 sm:gap-5 items-start">
+                                    <div class="pt-2 sm:pt-4 shrink-0 flex items-center">
+                                        <input type="checkbox" class="item-checkbox w-4 h-4 text-[#d92525] bg-white border-gray-300 rounded focus:ring-0 cursor-pointer transition-colors accent-[#d92525]" value="{{ $item->id }}" data-price="{{ $price }}" data-quantity="{{ $item->quantity }}" checked>
+                                    </div>
                                     <a href="{{ route('client.products.show', $product->slug) }}" class="shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white">
                                         <img src="{{ $thumbnail }}" alt="{{ $product->name }}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover object-center group-hover:scale-105 transition-transform duration-500">
                                     </a>
@@ -111,26 +124,26 @@
                     
                     <div class="space-y-4 mb-6 text-sm">
                         <div class="flex justify-between text-gray-600">
-                            <span class="font-medium">Tạm tính ({{ $cart->items->sum('quantity') }} sản phẩm)</span>
-                            <span class="font-bold text-gray-900">{{ number_format($totalPrice, 0, ',', '.') }}đ</span>
+                            <span class="font-medium" id="summary-total-qty">Tạm tính ({{ $cart->items->sum('quantity') }} sản phẩm)</span>
+                            <span class="font-bold text-gray-900" id="summary-total-price">{{ number_format($totalPrice, 0, ',', '.') }}đ</span>
                         </div>
                         
                         <div class="flex justify-between text-gray-600 pb-6 border-b border-gray-100">
-                            <span class="font-medium">Phí giao hàng</span>
-                            <span class="text-gray-400 italic">Sẽ tính khi thanh toán</span>
+                            <span class="font-medium flex items-center gap-1">Phí giao hàng</span>
+                            <span class="text-gray-400 italic text-xs">Freeship đơn từ 500K</span>
                         </div>
                         
                         <div class="flex justify-between items-center pt-2">
                             <span class="text-lg font-black text-[#10271d]">Tổng cộng</span>
-                            <span class="text-3xl font-black text-[#d92525] tracking-tight">{{ number_format($totalPrice, 0, ',', '.') }}đ</span>
+                            <span class="text-3xl font-black text-[#d92525] tracking-tight" id="summary-final-price">{{ number_format($totalPrice, 0, ',', '.') }}đ</span>
                         </div>
                         <p class="text-right text-xs text-gray-400 mt-1">Đã bao gồm VAT (nếu có)</p>
                     </div>
                     
-                    <a href="{{ route('client.checkout.index') ?? '#' }}" class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[#d92525] px-8 py-4 font-black text-white transition-all hover:bg-red-700 shadow-xl shadow-red-500/20 hover:shadow-red-500/40 hover:-translate-y-0.5">
+                    <button type="button" onclick="prepareCheckout()" class="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[#d92525] px-8 py-4 font-black text-white transition-all hover:bg-red-700 shadow-xl shadow-red-500/20 hover:shadow-red-500/40 hover:-translate-y-0.5">
                         <span class="relative z-10">Tiến hành thanh toán</span>
                         <i class="fa-solid fa-arrow-right relative z-10 transition-transform group-hover:translate-x-1"></i>
-                    </a>
+                    </button>
                     
                     <!-- Trust badges -->
                     <div class="mt-8 pt-6 border-t border-gray-100">
@@ -236,6 +249,98 @@ function checkQuantity(input) {
         return;
     }
     input.form.submit();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+    const summaryQty = document.getElementById('summary-total-qty');
+    const summaryPrice = document.getElementById('summary-total-price');
+    const summaryFinal = document.getElementById('summary-final-price');
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
+    }
+
+    function calculateTotals() {
+        let totalQty = 0;
+        let totalPrice = 0;
+        let allChecked = true;
+        let hasItems = itemCheckboxes.length > 0;
+
+        itemCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const price = parseInt(checkbox.dataset.price);
+                const qty = parseInt(checkbox.dataset.quantity);
+                totalQty += qty;
+                totalPrice += (price * qty);
+            } else {
+                allChecked = false;
+            }
+        });
+
+        if (hasItems) {
+            selectAllCheckbox.checked = allChecked;
+        }
+
+        if (summaryQty) summaryQty.textContent = `Tạm tính (${totalQty} sản phẩm)`;
+        if (summaryPrice) summaryPrice.textContent = formatCurrency(totalPrice);
+        if (summaryFinal) summaryFinal.textContent = formatCurrency(totalPrice);
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            calculateTotals();
+        });
+    }
+
+    itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calculateTotals);
+    });
+
+    calculateTotals();
+});
+
+function prepareCheckout() {
+    const selectedItems = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+    
+    if (selectedItems.length === 0) {
+        alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
+        return;
+    }
+
+    const btn = document.querySelector('button[onclick="prepareCheckout()"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="relative z-10"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang xử lý...</span>';
+    btn.disabled = true;
+
+    fetch('{{ route('client.checkout.prepare') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ selected_items: selectedItems })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert(data.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Lỗi kết nối. Vui lòng thử lại.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
 }
 </script>
 @endpush

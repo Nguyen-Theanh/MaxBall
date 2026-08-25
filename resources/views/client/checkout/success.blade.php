@@ -12,7 +12,7 @@
             </div>
             
             <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Thanh Toán Thành Công!</h1>
-            <p class="text-gray-500 text-lg mb-8">Cảm ơn bạn đã mua sắm. Đơn hàng <span class="font-bold text-gray-900">#{{ $order->order_code }}</span> của bạn đã được xác nhận.</p>
+            <p class="text-gray-500 text-lg mb-8">Cảm ơn bạn đã mua sắm.</p>
             
             <div class="bg-gray-50 rounded-xl p-6 mb-8 text-left border border-gray-100">
                 <div class="flex justify-between items-center mb-3">
@@ -23,13 +23,48 @@
                     <span class="text-gray-500">Ngày đặt:</span>
                     <span class="font-medium text-gray-900">{{ $order->created_at->format('d/m/Y H:i') }}</span>
                 </div>
-                <div class="flex justify-between items-center mb-3">
+                <div class="flex justify-between items-center mb-5">
                     <span class="text-gray-500">Thanh toán:</span>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Đã thanh toán (VietQR)
                     </span>
                 </div>
-                <div class="flex justify-between items-center pt-3 border-t mt-3 border-gray-200">
+                
+                <!-- Products -->
+                <div class="border-t border-gray-200 pt-4 pb-2">
+                    <h3 class="text-sm font-bold text-gray-900 mb-3">Chi tiết sản phẩm</h3>
+                    <div class="space-y-3">
+                        @php $subTotal = 0; @endphp
+                        @foreach($order->details as $detail)
+                            @php $subTotal += $detail->price * $detail->quantity; @endphp
+                            <div class="flex justify-between items-start text-sm">
+                                <div class="flex flex-col gap-1 pr-4">
+                                    <span class="font-medium text-gray-900 leading-tight">{{ $detail->variant->product->name ?? 'Sản phẩm không xác định' }}</span>
+                                    @if($detail->variant && $detail->variant->name !== 'Mặc định')
+                                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded w-fit">{{ $detail->variant->name }} <span class="font-bold text-gray-700 ml-1">x{{ $detail->quantity }}</span></span>
+                                    @else
+                                        <span class="text-xs text-gray-500 w-fit">Số lượng: <span class="font-bold text-gray-700">{{ $detail->quantity }}</span></span>
+                                    @endif
+                                </div>
+                                <span class="font-bold text-gray-900 shrink-0">{{ number_format($detail->price * $detail->quantity, 0, ',', '.') }}đ</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                @php
+                    // Tính phí ship bằng tổng tiền trừ đi tổng tiền các món
+                    $shippingFee = $order->total_amount - $subTotal;
+                @endphp
+                <div class="flex justify-between items-center pt-4 border-t mt-2 border-gray-200">
+                    <span class="text-gray-500">Tạm tính:</span>
+                    <span class="font-bold text-gray-900">{{ number_format($subTotal, 0, ',', '.') }}đ</span>
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <span class="text-gray-500">Phí giao hàng:</span>
+                    <span class="font-bold {{ $shippingFee == 0 ? 'text-green-600' : 'text-gray-900' }}">{{ $shippingFee == 0 ? 'Miễn phí' : number_format($shippingFee, 0, ',', '.') . 'đ' }}</span>
+                </div>
+                <div class="flex justify-between items-center pt-3 mt-3 border-t border-gray-200">
                     <span class="text-gray-700 font-bold">Tổng tiền:</span>
                     <span class="font-black text-xl text-red-600">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
                 </div>

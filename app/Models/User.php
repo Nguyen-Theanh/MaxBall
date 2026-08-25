@@ -55,4 +55,14 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
+
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function userVouchers()
+    {
+        return $this->hasMany(UserVoucher::class);
+    }
 }
