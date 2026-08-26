@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('orders:expire-cod-reservations')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('coupons:delete-expired')
+    ->hourly()
+    ->withoutOverlapping();

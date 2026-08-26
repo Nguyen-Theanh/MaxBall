@@ -95,19 +95,9 @@
                                 @endphp
                                 <a href="{{ route('client.products.show', $product->slug) }}" class="block w-full h-full">
                                     <img src="{{ $imgSrc }}"
-                                         alt="{{ $product->name }}"
+                                         alt="{{ trim((string) $product->name) ?: 'Sản phẩm MaxBall' }}"
                                          class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                                 </a>
-                                
-                                <!-- Overlay Actions -->
-                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
-                                    <button class="w-12 h-12 bg-white rounded-full text-[#10271d] hover:bg-[#d92525] hover:text-white transition-colors flex items-center justify-center shadow-lg" title="Thêm vào giỏ hàng">
-                                        <i class="fa-solid fa-cart-plus"></i>
-                                    </button>
-                                    <a href="{{ route('client.products.show', $product->slug) }}" class="w-12 h-12 bg-white rounded-full text-[#10271d] hover:bg-[#d92525] hover:text-white transition-colors flex items-center justify-center shadow-lg" title="Xem chi tiết">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </a>
-                                </div>
                             </div>
 
                             <div class="p-6 flex flex-col flex-grow text-center">

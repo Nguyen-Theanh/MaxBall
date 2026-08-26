@@ -17,7 +17,7 @@
                 $isAvailable = $userVoucher->is_available;
             @endphp
 
-            <article class="relative overflow-hidden rounded-2xl border {{ $isAvailable ? 'border-amber-200 bg-amber-50/40' : 'border-gray-200 bg-gray-50' }}">
+            <article class="relative overflow-hidden rounded-2xl border {{ $isAvailable ? 'border-amber-200 bg-amber-50/40' : 'border-gray-200 bg-gray-50 opacity-60 grayscale' }}">
                 <div class="absolute inset-y-0 left-0 w-1.5 {{ $isAvailable ? 'bg-amber-500' : 'bg-gray-300' }}"></div>
 
                 <div class="p-5 pl-6">

@@ -511,7 +511,7 @@
             .then(res => res.json())
             .then(data => {
                 const body = document.getElementById('checkoutVoucherModalBody');
-                // Filter only saved vouchers that meet min order value
+                // Chỉ hiển thị voucher khách đã lưu; voucher hết lượt vẫn hiển thị nhưng không thể chọn.
                 let myVouchers = data.vouchers.filter(v => v.is_saved);
 
                 if (myVouchers.length === 0) {
@@ -539,11 +539,16 @@
                         ? `<div class="text-xs text-gray-500 mt-1">Giảm tối đa ${new Intl.NumberFormat('vi-VN').format(v.max_discount_amount)}đ</div>`
                         : '';
 
-                    let isValid = subTotal >= (v.min_order_value || 0);
+                    let meetsMinimum = subTotal >= (v.min_order_value || 0);
+                    let isValid = v.is_available && meetsMinimum;
                     let isApplied = (isFreeship && appliedVouchers.freeship?.code === v.code) || (!isFreeship && appliedVouchers.discount?.code === v.code);
                     
                     let actionBtn = '';
-                    if (isApplied) {
+                    if (v.is_exhausted) {
+                        actionBtn = `<button disabled class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Hết lượt</button>`;
+                    } else if (v.is_used) {
+                        actionBtn = `<button disabled class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Đã dùng</button>`;
+                    } else if (isApplied) {
                         actionBtn = `<button onclick="removeVoucher('${isFreeship ? 'freeship' : 'discount'}'); fetchSavedVouchers();" class="px-4 py-1.5 text-sm font-bold text-gray-500 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Bỏ chọn</button>`;
                     } else if (isValid) {
                         actionBtn = `<button onclick="applyVoucherCode('${v.code}')" class="px-4 py-1.5 text-sm font-bold text-white ${btnColor} rounded transition-colors">Dùng ngay</button>`;
@@ -552,7 +557,7 @@
                     }
 
                     html += `
-                        <div class="bg-white rounded border ${isApplied ? (isFreeship ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500' : 'border-red-500 shadow-md ring-1 ring-red-500') : 'border-gray-200 shadow-sm'} overflow-hidden flex ${!isValid && !isApplied ? 'opacity-50' : ''}">
+                        <div class="bg-white rounded border ${isApplied ? (isFreeship ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500' : 'border-red-500 shadow-md ring-1 ring-red-500') : 'border-gray-200 shadow-sm'} overflow-hidden flex ${(!v.is_available || !meetsMinimum) && !isApplied ? 'opacity-50 grayscale' : ''}">
                             <div class="w-28 ${bgColor} flex flex-col justify-center items-center text-white p-2 shrink-0 border-r border-dashed border-gray-300 relative">
                                 <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-1">
                                     <span class="${textIconColor} font-black text-xl">M</span>

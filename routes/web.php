@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\PromotionAnnouncementController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AuthController;
@@ -119,6 +120,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/coupons/check-code', [CouponController::class, 'checkCode'])->name('coupons.check-code');
     Route::resource('coupons', CouponController::class);
     Route::post('coupons/{coupon}/toggle-status', [CouponController::class, 'toggleStatus'])->name('coupons.toggle-status');
+    Route::resource('promotion-announcements', PromotionAnnouncementController::class)->except(['show']);
+    Route::patch('promotion-announcements/{promotionAnnouncement}/toggle-status', [PromotionAnnouncementController::class, 'toggleStatus'])
+        ->name('promotion-announcements.toggle-status');
 
     Route::get('/categories/check-name', [CategoryController::class, 'checkName'])->name('categories.check-name');
     Route::resource('categories', CategoryController::class)->except(['show']);

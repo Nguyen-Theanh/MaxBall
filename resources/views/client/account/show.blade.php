@@ -387,7 +387,7 @@
                                                         $thumbnail = 'https://via.placeholder.com/150';
                                                     }
                                                 @endphp
-                                                <img src="{{ $thumbnail }}" class="w-full h-full object-cover">
+                                                <img src="{{ $thumbnail }}" alt="{{ trim((string) ($detail->variant?->product?->name ?? '')) ?: 'Sản phẩm MaxBall' }}" class="w-full h-full object-cover">
                                             </div>
                                             <div class="flex-1">
                                                 <h4 class="font-medium text-gray-900">{{ $detail->variant?->product?->name ?? 'Sản phẩm' }}</h4>

@@ -32,17 +32,19 @@ class VoucherController extends Controller
                 $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
             })
             ->where(function ($q) {
-                $q->whereNull('usage_limit')->orWhereRaw('used_count < usage_limit');
-            })
-            ->where(function ($q) {
                 $q->where('discount_type', '!=', 'percent')
                     ->orWhere('max_discount_amount', '>', 0);
             })
             ->get();
 
-        $savedVoucherIds = $user ? $user->userVouchers()->pluck('coupon_id')->toArray() : [];
+        $savedVouchers = $user
+            ? $user->userVouchers()->get(['coupon_id', 'is_used'])->keyBy('coupon_id')
+            : collect();
 
-        $data = $vouchers->map(function ($coupon) use ($savedVoucherIds) {
+        $data = $vouchers->map(function ($coupon) use ($savedVouchers) {
+            $savedVoucher = $savedVouchers->get($coupon->id);
+            $isUsed = (bool) $savedVoucher?->is_used;
+
             return [
                 'id' => $coupon->id,
                 'code' => $coupon->code,
@@ -52,7 +54,10 @@ class VoucherController extends Controller
                 'max_discount_amount' => $coupon->max_discount_amount,
                 'min_order_value' => $coupon->min_order_value,
                 'expires_at' => $coupon->expires_at ? $coupon->expires_at->format('d/m/Y') : 'Không giới hạn',
-                'is_saved' => in_array($coupon->id, $savedVoucherIds),
+                'is_saved' => $savedVoucher !== null,
+                'is_used' => $isUsed,
+                'is_exhausted' => $coupon->is_exhausted,
+                'is_available' => ! $isUsed && ! $coupon->is_exhausted,
             ];
         });
 

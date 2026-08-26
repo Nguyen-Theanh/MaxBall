@@ -33,6 +33,8 @@ class Coupon extends Model
         'discount_value' => 'decimal:2',
         'max_discount_amount' => 'decimal:2',
         'min_order_value' => 'decimal:2',
+        'usage_limit' => 'integer',
+        'used_count' => 'integer',
         'status' => 'boolean',
         'is_public' => 'boolean',
     ];
@@ -45,6 +47,12 @@ class Coupon extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function getIsExhaustedAttribute(): bool
+    {
+        return $this->usage_limit !== null
+            && $this->used_count >= $this->usage_limit;
     }
 
     public function scopeCurrentlyAvailable(Builder $query): Builder

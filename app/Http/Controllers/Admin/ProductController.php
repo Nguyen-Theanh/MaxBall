@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute as ProductAttributeOption;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +22,11 @@ class ProductController extends Controller
         $products = Product::with('category')
             ->withSum('variants', 'stock')
             ->withSum('variants', 'reserved_stock')
+            ->withCount([
+                'variants as out_of_stock_variants_count' => function ($variantQuery) {
+                    $variantQuery->whereRaw('COALESCE(stock, 0) <= COALESCE(reserved_stock, 0)');
+                },
+            ])
             ->when($request->filled('q'), function ($query) use ($request) {
                 $keyword = trim($request->input('q'));
 
@@ -38,16 +42,40 @@ class ProductController extends Controller
             ->when($request->filled('category_id'), function ($query) use ($request) {
                 $query->where('category_id', $request->integer('category_id'));
             })
+            ->when($request->input('stock_status') === 'in_stock', function ($query) {
+                $query
+                    ->whereHas('variants')
+                    ->whereDoesntHave('variants', function ($variantQuery) {
+                        $variantQuery->whereRaw('COALESCE(stock, 0) <= COALESCE(reserved_stock, 0)');
+                    });
+            })
+            ->when($request->input('stock_status') === 'out_of_stock', function ($query) {
+                $query->where(function ($stockQuery) {
+                    $stockQuery
+                        ->whereDoesntHave('variants')
+                        ->orWhereHas('variants', function ($variantQuery) {
+                            $variantQuery->whereRaw('COALESCE(stock, 0) <= COALESCE(reserved_stock, 0)');
+                        });
+                });
+            })
+            ->when($request->input('stock_status') === 'out_of_stock', function ($query) {
+                $query->with([
+                    'variants' => function ($variantQuery) {
+                        $variantQuery
+                            ->whereRaw('COALESCE(stock, 0) <= COALESCE(reserved_stock, 0)')
+                            ->orderBy('name')
+                            ->orderBy('id');
+                    },
+                ]);
+            })
             ->orderByDesc('updated_at')
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', 10))
             ->withQueryString();
 
         $categories = $this->categories();
-        $totalStock = ProductVariant::sum('stock');
-        $totalReservedStock = ProductVariant::sum('reserved_stock');
 
-        return view('admin.products.index', compact('products', 'categories', 'totalStock', 'totalReservedStock'));
+        return view('admin.products.index', compact('products', 'categories'));
     }
 
     public function show(Product $product): View
@@ -103,7 +131,7 @@ class ProductController extends Controller
 
         return redirect()
             ->route('admin.products.index')
-            ->with('success', 'Da them san pham moi.');
+            ->with('success', 'Đã thêm sản phẩm mới.');
     }
 
     public function edit(Product $product): View
@@ -155,7 +183,7 @@ class ProductController extends Controller
 
         return redirect()
             ->route('admin.products.index')
-            ->with('success', 'Da cap nhat san pham.');
+            ->with('success', 'Đã cập nhật sản phẩm.');
     }
 
     public function destroy(Product $product): RedirectResponse

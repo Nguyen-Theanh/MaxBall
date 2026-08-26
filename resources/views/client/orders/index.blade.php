@@ -72,7 +72,7 @@
                                 }
                             @endphp
                             <div class="flex gap-4 {{ !$loop->last ? 'mb-4 pb-4 border-b border-gray-100' : '' }}">
-                                <img src="{{ $thumbnail }}" alt="{{ $product->name }}" class="w-16 h-20 object-cover rounded border">
+                                <img src="{{ $thumbnail }}" alt="{{ trim((string) ($product->name ?? '')) ?: 'Sản phẩm MaxBall' }}" class="w-16 h-20 object-cover rounded border">
                                 <div class="flex-1">
                                     <a href="{{ route('client.products.show', $product->slug) }}" class="font-bold text-gray-900 hover:text-red-600 line-clamp-1">
                                         {{ $product->name }}

@@ -165,6 +165,13 @@
                 Mã giảm giá
             </a>
 
+            <div class="ml-7 border-l border-gray-200 pl-3">
+                <a href="{{ route('admin.promotion-announcements.index') }}" class="sidebar-link flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 {{ request()->routeIs('admin.promotion-announcements.*') ? 'active' : '' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>
+                    Thông báo khuyến mãi
+                </a>
+            </div>
+
             <a href="{{ route('admin.categories.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                 Danh mục
@@ -200,6 +207,7 @@
                 request()->routeIs('admin.products.*') => 'Quản lý sản phẩm',
                 request()->routeIs('admin.orders.*') => 'Quản lý đơn hàng',
                 request()->routeIs('admin.reviews.*') => 'Quản lý đánh giá',
+                request()->routeIs('admin.promotion-announcements.*') => 'Thông báo khuyến mãi',
                 request()->routeIs('admin.categories.*') => 'Quản lý danh mục',
                 request()->routeIs('admin.attributes.*') => 'Quản lý thuộc tính',
                 request()->routeIs('admin.users.*') => 'Quản lý người dùng',
@@ -256,27 +264,26 @@
         <!-- Main Scrollable Area -->
         <main class="flex-1 overflow-y-auto p-8">
 
-            <!-- Alerts -->
-            @if (session('success'))
-                <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg flex items-center justify-between animate-slide-up">
-                    <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <p class="text-green-700 font-medium">{{ session('success') }}</p>
-                    </div>
-                    <button onclick="this.parentElement.style.display='none'" class="text-green-500 hover:text-green-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-            @endif
+            <!-- Thông báo chung: tự động ẩn sau 5 giây -->
+            @php
+                $adminFlashType = session('error') || $errors->any() ? 'error' : (session('success') ? 'success' : null);
+                $adminFlashMessage = session('error') ?? ($errors->any() ? $errors->first() : session('success'));
+            @endphp
 
-            @if ($errors->any())
-                <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg flex items-center justify-between animate-slide-up">
+            @if ($adminFlashType && $adminFlashMessage)
+                <div data-admin-flash
+                    class="mb-6 flex items-center justify-between rounded-r-lg border-l-4 p-4 shadow-sm transition-all duration-300 {{ $adminFlashType === 'success' ? 'border-green-500 bg-green-50 text-green-700' : 'border-red-500 bg-red-50 text-red-700' }}"
+                    role="alert">
                     <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <p class="text-red-700 font-medium">{{ $errors->first() }}</p>
+                        @if ($adminFlashType === 'success')
+                            <svg class="h-5 w-5 shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        @else
+                            <svg class="h-5 w-5 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        @endif
+                        <p class="font-medium">{!! nl2br(e($adminFlashMessage)) !!}</p>
                     </div>
-                    <button onclick="this.parentElement.style.display='none'" class="text-red-500 hover:text-red-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <button type="button" data-admin-flash-close class="ml-4 rounded p-1 opacity-70 transition hover:opacity-100" aria-label="Đóng thông báo">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
             @endif
@@ -290,6 +297,24 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
     @include('shared.confirm-dialog')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-admin-flash]').forEach((alert) => {
+                let removed = false;
+                const dismiss = () => {
+                    if (removed) return;
+                    removed = true;
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateY(-10px)';
+                    window.setTimeout(() => alert.remove(), 300);
+                };
+
+                alert.querySelector('[data-admin-flash-close]')?.addEventListener('click', dismiss);
+                window.setTimeout(dismiss, 5000);
+            });
+        });
+    </script>
 
     @stack('scripts')
 </body>

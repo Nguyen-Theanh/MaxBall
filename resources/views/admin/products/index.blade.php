@@ -1,21 +1,18 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Quan ly san pham - MaxBall')
+@section('title', 'Quản lý sản phẩm - MaxBall')
 @section('page_title', 'Quản lý sản phẩm')
 
 @section('content')
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            {!! nl2br(e(session('error'))) !!}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+    @php
+        $showOutOfStockVariants = request('stock_status') === 'out_of_stock';
+    @endphp
 
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 mb-4">
-                <form class="row g-2 flex-grow-1" method="GET" action="{{ route('admin.products.index') }}">
-                    <div class="col-12 col-md-6 col-xl-4">
+                <form id="admin-product-filters" class="row g-2 flex-grow-1" method="GET" action="{{ route('admin.products.index') }}">
+                    <div class="col-12 col-md-6 col-xl-3">
                         <input type="search" name="q" value="{{ request('q') }}" class="form-control" placeholder="Tìm theo tên, mô tả...">
                     </div>
                     <div class="col-12 col-md-3 col-xl-2">
@@ -35,6 +32,13 @@
                             <option value="0" @selected(request('status') === '0')>Đang ẩn</option>
                         </select>
                     </div>
+                    <div class="col-12 col-md-3 col-xl-2">
+                        <select name="stock_status" class="form-select">
+                            <option value="">Tất cả tồn kho</option>
+                            <option value="in_stock" @selected(request('stock_status') === 'in_stock')>Còn hàng</option>
+                            <option value="out_of_stock" @selected(request('stock_status') === 'out_of_stock')>Hết hàng</option>
+                        </select>
+                    </div>
                     <div class="col-12 col-md-2 col-xl-2">
                         <select name="per_page" class="form-select" onchange="this.form.submit()">
                             <option value="10" @selected(request('per_page', 10) == 10)>10 dòng</option>
@@ -43,18 +47,12 @@
                             <option value="100" @selected(request('per_page') == 100)>100 dòng</option>
                         </select>
                     </div>
-                    <div class="col-12 col-md-auto">
-                        <button class="btn btn-dark" type="submit">Lọc</button>
-                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">Xóa</a>
-                    </div>
                 </form>
 
-                <div class="d-flex align-items-center gap-3 align-self-start mt-2 mt-xl-0">
-                    <div class="badge bg-info text-dark px-3 py-2 fs-6">
-                        Tổng tồn kho: <strong>{{ number_format($totalStock, 0, ',', '.') }}</strong>
-                    </div>
-                    <div class="badge bg-warning text-dark px-3 py-2 fs-6">
-                        Đang giữ: <strong>{{ number_format($totalReservedStock, 0, ',', '.') }}</strong>
+                <div class="d-flex flex-column gap-2 align-self-start mt-2 mt-xl-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn btn-dark" type="submit" form="admin-product-filters">Lọc</button>
+                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">Xóa</a>
                     </div>
                     <a href="{{ route('admin.products.create') }}" class="btn btn-primary text-nowrap">Thêm sản phẩm</a>
                 </div>
@@ -68,7 +66,11 @@
                             <th>Sản phẩm</th>
                             <th>Danh mục</th>
                             <th>Giá</th>
-                            <th class="text-center">Tồn kho</th>
+                            @if ($showOutOfStockVariants)
+                                <th>Biến thể hết hàng</th>
+                            @else
+                                <th class="text-center">Tồn kho</th>
+                            @endif
                             <th>Trạng thái</th>
                             <th class="text-end">Thao tác</th>
                         </tr>
@@ -93,21 +95,39 @@
                                         <small class="text-muted text-decoration-line-through">{{ number_format($product->base_price, 0, ',', '.') }}d</small>
                                     @endif
                                 </td>
-                                <td class="text-center">
-                                    <span class="fw-bold text-dark">
-                                        {{ number_format((int) $product->variants_sum_stock, 0, ',', '.') }}
-                                    </span>
-                                </td>
+                                @if ($showOutOfStockVariants)
+                                    <td>
+                                        @forelse ($product->variants as $variant)
+                                            <span class="badge text-bg-danger me-1 mb-1">
+                                                {{ trim((string) $variant->name) ?: 'Mặc định' }}
+                                            </span>
+                                        @empty
+                                            <span class="text-muted fst-italic">Chưa có biến thể</span>
+                                        @endforelse
+                                    </td>
+                                @else
+                                    <td class="text-center">
+                                        <span class="fw-bold text-dark">
+                                            {{ number_format((int) $product->variants_sum_stock, 0, ',', '.') }}
+                                        </span>
+                                    </td>
+                                @endif
                                 <td>
                                     @if ($product->status)
                                         <span class="badge text-bg-success">Đang hiện</span>
                                     @else
                                         <span class="badge text-bg-secondary">Đang ẩn</span>
                                     @endif
-                                    
+
                                     @if ((int) $product->variants_sum_reserved_stock > 0)
                                         <div class="text-primary fw-bold mt-2" style="font-size: 0.8rem;">
                                             Đang giữ: {{ (int) $product->variants_sum_reserved_stock }}
+                                        </div>
+                                    @endif
+
+                                    @if ((int) $product->out_of_stock_variants_count > 0)
+                                        <div class="text-danger fw-bold mt-2" style="font-size: 0.8rem;">
+                                            {{ (int) $product->out_of_stock_variants_count }} biến thể hết hàng
                                         </div>
                                     @endif
 
@@ -148,9 +168,7 @@
                 <div class="text-muted small mb-2 mb-md-0">
                     Hiển thị {{ $products->firstItem() ?? 0 }} đến {{ $products->lastItem() ?? 0 }} của {{ $products->total() }} sản phẩm
                 </div>
-                <div>
-                    {{ $products->links() }}
-                </div>
+                <div>{{ $products->links() }}</div>
             </div>
         </div>
     </div>
