@@ -33,6 +33,7 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class);
     }
 
+<<<<<<< Updated upstream
     public function orderDetails()
     {
         return $this->hasMany(OrderDetail::class);
@@ -54,5 +55,15 @@ class ProductVariant extends Model
         }
 
         return asset('storage/'.ltrim($this->image_url, '/'));
+=======
+    public function attributeValues()
+    {
+        return $this->belongsToMany(
+            ProductAttributeValue::class,
+            'product_variant_attribute_value',
+            'product_variant_id',
+            'product_attribute_value_id'
+        )->with('attribute')->withTimestamps();
+>>>>>>> Stashed changes
     }
 }
