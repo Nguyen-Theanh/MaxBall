@@ -123,6 +123,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/categories/check-name', [CategoryController::class, 'checkName'])->name('categories.check-name');
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('users', AdminUserController::class)->only(['index']);
+    Route::patch('users/{user}/toggle-role', [AdminUserController::class, 'toggleRole'])->name('users.toggle-role');
     Route::patch('users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
 
     // Quản lý đơn hàng

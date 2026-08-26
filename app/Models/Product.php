@@ -44,15 +44,9 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
-<<<<<<< Updated upstream
     public function reviews()
     {
         return $this->hasMany(Review::class);
-=======
-    public function productAttributes()
-    {
-        return $this->hasMany(ProductAttribute::class);
->>>>>>> Stashed changes
     }
 
     public function getImageUrlsAttribute(): array
