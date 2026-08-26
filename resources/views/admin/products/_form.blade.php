@@ -1,6 +1,5 @@
 @csrf
 
-<<<<<<< Updated upstream
 <style>
     .attribute-picker {
         max-width: 340px;
@@ -60,43 +59,6 @@
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
     }
 </style>
-=======
-@php
-    $attributeRows = old('attributes');
-
-    if ($attributeRows === null) {
-        $attributeRows = $product->exists
-            ? $product->productAttributes->map(fn ($attribute) => [
-                'name' => $attribute->name,
-                'values_text' => $attribute->values->pluck('value')->implode(', '),
-            ])->values()->all()
-            : [];
-    }
-
-    $variantRows = old('variants');
-
-    if ($variantRows === null) {
-        $variantRows = $product->exists
-            ? $product->variants->map(function ($variant) {
-                return [
-                    'id' => $variant->id,
-                    'name' => $variant->name,
-                    'sku' => $variant->sku,
-                    'base_price' => $variant->base_price,
-                    'discount_price' => $variant->discount_price,
-                    'stock' => $variant->stock,
-                    'options' => $variant->attributeValues
-                        ->filter(fn ($value) => $value->attribute)
-                        ->mapWithKeys(fn ($value) => [$value->attribute->name => $value->value])
-                        ->all(),
-                ];
-            })->values()->all()
-            : [];
-    }
-
-    $attributeLibrary = collect($attributeLibrary ?? [])->values();
-@endphp
->>>>>>> Stashed changes
 
 <div class="row g-4">
     <div class="col-lg-8">
@@ -116,7 +78,6 @@
                 </div>
 
                 <div class="mb-4">
-<<<<<<< Updated upstream
                     <label class="form-label">Biến thể sản phẩm</label>
                     <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
                         <div>
@@ -229,130 +190,16 @@
                                                 </div>
                                             @endif
                                         </div>
-=======
-                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
-                        <div>
-                            <label class="form-label mb-1">Thuộc tính sản phẩm</label>
-                            <div class="form-text mt-0">Ví dụ: Size có S, M, L hoặc Màu có Đỏ, Xanh, Đen.</div>
-                        </div>
-                        <div class="d-flex gap-2 align-items-start">
-                            <select id="attribute-preset" class="form-select form-select-sm" style="min-width: 190px;">
-                                <option value="">Chọn thuộc tính có sẵn</option>
-                                @foreach ($attributeLibrary as $libraryAttribute)
-                                    <option value="{{ $libraryAttribute['name'] }}" data-values="{{ implode(', ', $libraryAttribute['values']) }}">
-                                        {{ $libraryAttribute['name'] }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <button type="button" id="use-attribute-preset" class="btn btn-sm btn-outline-primary text-nowrap">Chọn</button>
-                        </div>
-                    </div>
-
-                    <div id="attributes-container" class="vstack gap-2">
-                        @foreach ($attributeRows as $aIndex => $attribute)
-                            <div class="border rounded p-3 attribute-row" data-index="{{ $aIndex }}">
-                                <div class="row g-2 align-items-start">
-                                    <div class="col-md-4">
-                                        <label class="form-label small text-muted">Tên thuộc tính</label>
-                                        <input type="text" name="attributes[{{ $aIndex }}][name]" value="{{ data_get($attribute, 'name') }}" class="form-control attribute-name" list="attribute-name-list" placeholder="Size, Màu, Chất liệu">
-                                    </div>
-                                    <div class="col-md-7">
-                                        <label class="form-label small text-muted">Giá trị</label>
-                                        <input type="text" name="attributes[{{ $aIndex }}][values_text]" value="{{ data_get($attribute, 'values_text') }}" class="form-control attribute-values" placeholder="S, M, L">
-                                        <div class="form-text">Ngăn cách nhiều giá trị bằng dấu phẩy.</div>
-                                    </div>
-                                    <div class="col-md-1 d-grid pt-md-4">
-                                        <button type="button" class="btn btn-outline-danger remove-attribute" aria-label="Xóa thuộc tính">×</button>
->>>>>>> Stashed changes
                                     </div>
                                 </div>
                             </div>
+                            @php $vIndex++; @endphp
                         @endforeach
                     </div>
-<<<<<<< Updated upstream
                     <div class="d-flex flex-wrap gap-2 mt-2">
                         <button type="button" id="generate-variants" class="btn btn-sm btn-dark">Tạo biến thể</button>
                         <button type="button" id="add-variant" class="btn btn-sm btn-outline-secondary">Thêm biến thể thủ công</button>
                     </div>
-=======
-
-                    <div class="d-flex flex-wrap gap-2 mt-3">
-                        <button type="button" id="add-attribute" class="btn btn-sm btn-outline-secondary">Thêm thuộc tính</button>
-                        <button type="button" id="generate-variants" class="btn btn-sm btn-dark">Tạo biến thể từ thuộc tính</button>
-                    </div>
-
-                    <datalist id="attribute-name-list">
-                        @foreach ($attributeLibrary as $libraryAttribute)
-                            <option value="{{ $libraryAttribute['name'] }}"></option>
-                        @endforeach
-                    </datalist>
-                </div>
-
-                <div class="mb-4">
-                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
-                        <div>
-                            <label class="form-label mb-1">Biến thể sản phẩm</label>
-                            <div class="form-text mt-0">Mỗi dòng là một phiên bản bán riêng với SKU, giá và tồn kho riêng.</div>
-                        </div>
-                        <button type="button" id="add-manual-variant" class="btn btn-sm btn-outline-primary align-self-start">Thêm biến thể thủ công</button>
-                    </div>
-
-                    <div class="table-responsive border rounded">
-                        <table class="table align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="min-width: 180px;">Tổ hợp</th>
-                                    <th style="min-width: 180px;">Tên hiển thị</th>
-                                    <th style="min-width: 120px;">SKU</th>
-                                    <th style="min-width: 130px;">Giá</th>
-                                    <th style="min-width: 130px;">Giá KM</th>
-                                    <th style="min-width: 110px;">Tồn kho</th>
-                                    <th class="text-end" style="width: 80px;">Xóa</th>
-                                </tr>
-                            </thead>
-                            <tbody id="variants-container">
-                                @foreach ($variantRows as $vIndex => $variant)
-                                    @php $options = data_get($variant, 'options', []); @endphp
-                                    <tr class="variant-row" data-index="{{ $vIndex }}">
-                                        <td>
-                                            <input type="hidden" name="variants[{{ $vIndex }}][id]" value="{{ data_get($variant, 'id') }}">
-                                            <div class="variant-options d-flex flex-wrap gap-1">
-                                                @forelse ($options as $optionName => $optionValue)
-                                                    <span class="badge text-bg-light border">{{ $optionName }}: {{ $optionValue }}</span>
-                                                    <input type="hidden" name="variants[{{ $vIndex }}][options][{{ $optionName }}]" value="{{ $optionValue }}">
-                                                @empty
-                                                    <span class="text-muted small">Thủ công</span>
-                                                @endforelse
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <input type="text" name="variants[{{ $vIndex }}][name]" value="{{ data_get($variant, 'name') }}" class="form-control form-control-sm" placeholder="VD: Size M / Đỏ">
-                                        </td>
-                                        <td>
-                                            <input type="text" name="variants[{{ $vIndex }}][sku]" value="{{ data_get($variant, 'sku') }}" class="form-control form-control-sm" placeholder="SKU">
-                                        </td>
-                                        <td>
-                                            <input type="number" name="variants[{{ $vIndex }}][base_price]" value="{{ data_get($variant, 'base_price') }}" min="0" step="1000" class="form-control form-control-sm" placeholder="Giá">
-                                        </td>
-                                        <td>
-                                            <input type="number" name="variants[{{ $vIndex }}][discount_price]" value="{{ data_get($variant, 'discount_price') }}" min="0" step="1000" class="form-control form-control-sm" placeholder="KM">
-                                        </td>
-                                        <td>
-                                            <input type="number" name="variants[{{ $vIndex }}][stock]" value="{{ data_get($variant, 'stock') }}" min="0" class="form-control form-control-sm" placeholder="SL">
-                                        </td>
-                                        <td class="text-end">
-                                            <button type="button" class="btn btn-sm btn-outline-danger remove-variant">×</button>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        <div id="variants-empty" class="text-center text-muted py-4 border-top {{ count($variantRows) ? 'd-none' : '' }}">
-                            Chưa có biến thể nào.
-                        </div>
-                    </div>
-                    @error('variants') <div class="text-danger small mt-2">{{ $message }}</div> @enderror
->>>>>>> Stashed changes
                 </div>
 
                 <div class="mb-3">
@@ -382,7 +229,7 @@
                     <div class="form-text">Chọn nhiều ảnh để thêm ảnh chi tiết cho sản phẩm.</div>
                 </div>
 
-                @if ($product->exists && $product->productImages->isNotEmpty())
+                @if ($product->productImages->isNotEmpty())
                     <div class="mb-3">
                         <label class="form-label">Ảnh chi tiết hiện có</label>
                         <div class="row g-2">
@@ -432,7 +279,6 @@
 
                 <div class="row g-3" id="product-price-section">
                     <div class="col-12">
-<<<<<<< Updated upstream
                         <label class="form-label">Giá gốc chung <span class="text-danger">*</span></label>
                         <small class="text-muted d-block mb-2">Giá hiển thị đại diện ở danh sách sản phẩm (giá tham khảo)</small>
                         <div class="input-group">
@@ -455,17 +301,6 @@
                         <label class="form-label">Số lượng chung</label>
                         <input type="number" name="stock" class="form-control" value="{{ old('stock', $product->variants->first()?->stock ?? 0) }}" min="0">
                         @error('stock') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-=======
-                        <label for="base_price" class="form-label">Giá mặc định <span class="text-danger">*</span></label>
-                        <input type="number" id="base_price" name="base_price" value="{{ old('base_price', $product->base_price) }}" min="0" step="1000" class="form-control @error('base_price') is-invalid @enderror" required>
-                        @error('base_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-text">Dùng làm giá mặc định nếu biến thể chưa nhập giá riêng.</div>
-                    </div>
-                    <div class="col-12">
-                        <label for="discount_price" class="form-label">Giá khuyến mãi mặc định</label>
-                        <input type="number" id="discount_price" name="discount_price" value="{{ old('discount_price', $product->discount_price) }}" min="0" step="1000" class="form-control @error('discount_price') is-invalid @enderror">
-                        @error('discount_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
->>>>>>> Stashed changes
                     </div>
                 </div>
 
@@ -494,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const nameField = document.getElementById('name');
     const slugField = document.getElementById('slug');
-<<<<<<< Updated upstream
     const variantsContainer = document.getElementById('variants-container');
     const addVariantBtn = document.getElementById('add-variant');
     const generateVariantsBtn = document.getElementById('generate-variants');
@@ -1218,29 +1052,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const row = createVariantRow(variantIndex++, { options, name: variantName });
             variantsContainer.appendChild(row);
             createdCount++;
-=======
-
-    if (nameField && slugField) {
-        const toSlug = (str) => {
-            return str
-                .normalize('NFD')
-                .replace(/\p{Diacritic}/gu, '')
-                .toLowerCase()
-                .trim()
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-');
-        };
-
-        nameField.addEventListener('input', function() {
-            if (!slugField.dataset.userEdited) {
-                slugField.value = toSlug(this.value);
-            }
-        });
-
-        slugField.addEventListener('input', function() {
-            this.dataset.userEdited = this.value.length > 0;
->>>>>>> Stashed changes
         });
 
         if (generationMessage) {
@@ -1428,256 +1239,5 @@ document.addEventListener('input', function(e) {
             }
         }
     }
-
-    const attributesContainer = document.getElementById('attributes-container');
-    const variantsContainer = document.getElementById('variants-container');
-    const variantsEmpty = document.getElementById('variants-empty');
-    const addAttributeBtn = document.getElementById('add-attribute');
-    const generateVariantsBtn = document.getElementById('generate-variants');
-    const addManualVariantBtn = document.getElementById('add-manual-variant');
-    const attributePreset = document.getElementById('attribute-preset');
-    const useAttributePresetBtn = document.getElementById('use-attribute-preset');
-
-    let attributeIndex = nextIndex(attributesContainer, '.attribute-row');
-    let variantIndex = nextIndex(variantsContainer, '.variant-row');
-
-    function nextIndex(container, selector) {
-        if (!container) {
-            return 0;
-        }
-
-        const rows = container.querySelectorAll(selector);
-
-        if (!rows.length) {
-            return 0;
-        }
-
-        return Number(rows[rows.length - 1].dataset.index) + 1;
-    }
-
-    function createAttributeRow(index, data = {}) {
-        const row = document.createElement('div');
-        row.className = 'border rounded p-3 attribute-row';
-        row.dataset.index = index;
-        row.innerHTML = `
-            <div class="row g-2 align-items-start">
-                <div class="col-md-4">
-                    <label class="form-label small text-muted">Tên thuộc tính</label>
-                    <input type="text" name="attributes[${index}][name]" class="form-control attribute-name" list="attribute-name-list" placeholder="Size, Màu, Chất liệu">
-                </div>
-                <div class="col-md-7">
-                    <label class="form-label small text-muted">Giá trị</label>
-                    <input type="text" name="attributes[${index}][values_text]" class="form-control attribute-values" placeholder="S, M, L">
-                    <div class="form-text">Ngăn cách nhiều giá trị bằng dấu phẩy.</div>
-                </div>
-                <div class="col-md-1 d-grid pt-md-4">
-                    <button type="button" class="btn btn-outline-danger remove-attribute" aria-label="Xóa thuộc tính">×</button>
-                </div>
-            </div>`;
-
-        row.querySelector('.attribute-name').value = data.name || '';
-        row.querySelector('.attribute-values').value = data.values || '';
-        bindAttributeRow(row);
-
-        return row;
-    }
-
-    function bindAttributeRow(row) {
-        row.querySelector('.remove-attribute')?.addEventListener('click', function() {
-            row.remove();
-        });
-    }
-
-    function readAttributes() {
-        return Array.from(attributesContainer.querySelectorAll('.attribute-row'))
-            .map((row) => {
-                const name = row.querySelector('.attribute-name')?.value.trim() || '';
-                const values = parseValues(row.querySelector('.attribute-values')?.value || '');
-
-                return { name, values };
-            })
-            .filter((attribute) => attribute.name && attribute.values.length);
-    }
-
-    function parseValues(value) {
-        const seen = new Set();
-
-        return value
-            .split(/[\n,;|]+/)
-            .map((item) => item.trim())
-            .filter((item) => {
-                const key = item.toLowerCase();
-
-                if (!item || seen.has(key)) {
-                    return false;
-                }
-
-                seen.add(key);
-                return true;
-            });
-    }
-
-    function createVariantRow(index, data = {}) {
-        const row = document.createElement('tr');
-        row.className = 'variant-row';
-        row.dataset.index = index;
-        row.innerHTML = `
-            <td>
-                <input type="hidden" data-field="id" name="variants[${index}][id]">
-                <div class="variant-options d-flex flex-wrap gap-1"></div>
-            </td>
-            <td><input type="text" data-field="name" name="variants[${index}][name]" class="form-control form-control-sm" placeholder="VD: Size M / Đỏ"></td>
-            <td><input type="text" data-field="sku" name="variants[${index}][sku]" class="form-control form-control-sm" placeholder="SKU"></td>
-            <td><input type="number" data-field="base_price" name="variants[${index}][base_price]" min="0" step="1000" class="form-control form-control-sm" placeholder="Giá"></td>
-            <td><input type="number" data-field="discount_price" name="variants[${index}][discount_price]" min="0" step="1000" class="form-control form-control-sm" placeholder="KM"></td>
-            <td><input type="number" data-field="stock" name="variants[${index}][stock]" min="0" class="form-control form-control-sm" placeholder="SL"></td>
-            <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger remove-variant">×</button></td>`;
-
-        row.querySelector('[data-field="id"]').value = data.id || '';
-        row.querySelector('[data-field="name"]').value = data.name || buildVariantName(data.options || {});
-        row.querySelector('[data-field="sku"]').value = data.sku || '';
-        row.querySelector('[data-field="base_price"]').value = data.base_price || '';
-        row.querySelector('[data-field="discount_price"]').value = data.discount_price || '';
-        row.querySelector('[data-field="stock"]').value = data.stock || '';
-
-        renderVariantOptions(row, index, data.options || {});
-        bindVariantRow(row);
-
-        return row;
-    }
-
-    function renderVariantOptions(row, index, options) {
-        const holder = row.querySelector('.variant-options');
-        holder.innerHTML = '';
-
-        const entries = Object.entries(options);
-
-        if (!entries.length) {
-            const label = document.createElement('span');
-            label.className = 'text-muted small';
-            label.textContent = 'Thủ công';
-            holder.appendChild(label);
-            return;
-        }
-
-        entries.forEach(([name, value]) => {
-            const badge = document.createElement('span');
-            badge.className = 'badge text-bg-light border';
-            badge.textContent = `${name}: ${value}`;
-            holder.appendChild(badge);
-
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = `variants[${index}][options][${name}]`;
-            hidden.value = value;
-            holder.appendChild(hidden);
-        });
-    }
-
-    function bindVariantRow(row) {
-        row.querySelector('.remove-variant')?.addEventListener('click', function() {
-            row.remove();
-            updateVariantEmptyState();
-        });
-    }
-
-    function buildVariantName(options) {
-        return Object.values(options).filter(Boolean).join(' / ');
-    }
-
-    function generateCombinations(attributes) {
-        return attributes.reduce((combinations, attribute) => {
-            const next = [];
-
-            combinations.forEach((combo) => {
-                attribute.values.forEach((value) => {
-                    next.push({
-                        ...combo,
-                        [attribute.name]: value,
-                    });
-                });
-            });
-
-            return next;
-        }, [{}]);
-    }
-
-    function variantSignature(options) {
-        return Object.entries(options)
-            .map(([name, value]) => `${name.trim().toLowerCase()}:${value.trim().toLowerCase()}`)
-            .sort()
-            .join('|');
-    }
-
-    function existingVariantSignatures() {
-        return new Set(Array.from(variantsContainer.querySelectorAll('.variant-row')).map((row) => {
-            const options = {};
-
-            row.querySelectorAll('.variant-options input[type="hidden"]').forEach((input) => {
-                const match = input.name.match(/\[options\]\[(.*)\]$/);
-
-                if (match) {
-                    options[match[1]] = input.value;
-                }
-            });
-
-            return variantSignature(options);
-        }).filter(Boolean));
-    }
-
-    function updateVariantEmptyState() {
-        variantsEmpty?.classList.toggle('d-none', variantsContainer.querySelectorAll('.variant-row').length > 0);
-    }
-
-    attributesContainer?.querySelectorAll('.attribute-row').forEach(bindAttributeRow);
-    variantsContainer?.querySelectorAll('.variant-row').forEach(bindVariantRow);
-    updateVariantEmptyState();
-
-    addAttributeBtn?.addEventListener('click', function() {
-        attributesContainer.appendChild(createAttributeRow(attributeIndex++));
-    });
-
-    useAttributePresetBtn?.addEventListener('click', function() {
-        const selected = attributePreset.options[attributePreset.selectedIndex];
-
-        if (!selected || !selected.value) {
-            return;
-        }
-
-        attributesContainer.appendChild(createAttributeRow(attributeIndex++, {
-            name: selected.value,
-            values: selected.dataset.values || '',
-        }));
-
-        attributePreset.value = '';
-    });
-
-    generateVariantsBtn?.addEventListener('click', function() {
-        const attributes = readAttributes();
-
-        if (!attributes.length) {
-            return;
-        }
-
-        const signatures = existingVariantSignatures();
-
-        generateCombinations(attributes).forEach((options) => {
-            const signature = variantSignature(options);
-
-            if (signatures.has(signature)) {
-                return;
-            }
-
-            signatures.add(signature);
-            variantsContainer.appendChild(createVariantRow(variantIndex++, { options }));
-        });
-
-        updateVariantEmptyState();
-    });
-
-    addManualVariantBtn?.addEventListener('click', function() {
-        variantsContainer.appendChild(createVariantRow(variantIndex++));
-        updateVariantEmptyState();
-    });
 });
 </script>

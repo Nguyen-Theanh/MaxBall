@@ -55,9 +55,29 @@
                                 </td>
                                 <td>{{ $user->phone ?: '-' }}</td>
                                 <td>
-                                    <span class="badge {{ $user->role === 'admin' ? 'text-bg-danger' : 'text-bg-info' }}">
-                                        {{ ucfirst($user->role) }}
-                                    </span>
+                                    <form method="POST"
+                                          action="{{ route('admin.users.toggle-role', $user) }}"
+                                          class="role-toggle-form d-inline-flex align-items-center gap-2"
+                                          data-user-name="{{ $user->name }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="form-check form-switch m-0">
+                                            <input class="form-check-input role-toggle"
+                                                   type="checkbox"
+                                                   role="switch"
+                                                   id="role-toggle-{{ $user->id }}"
+                                                   aria-label="Đổi role của {{ $user->name }}"
+                                                   @checked($user->role === 'admin')
+                                                   @disabled(auth()->id() === $user->id)>
+                                        </div>
+                                        <label for="role-toggle-{{ $user->id }}"
+                                               class="badge {{ $user->role === 'admin' ? 'text-bg-danger' : 'text-bg-info' }}">
+                                            {{ ucfirst($user->role) }}
+                                        </label>
+                                        @if(auth()->id() === $user->id)
+                                            <small class="text-muted fst-italic">(Bạn)</small>
+                                        @endif
+                                    </form>
                                 </td>
                                 <td>
                                     @if ($user->status)
@@ -102,3 +122,52 @@
         </div>
     </div>
 @endsection
+
+@push('styles')
+    <style>
+        .role-toggle-form .form-check-input {
+            width: 2.35rem;
+            height: 1.2rem;
+            cursor: pointer;
+        }
+
+        .role-toggle-form .form-check-input:checked {
+            border-color: #dc3545;
+            background-color: #dc3545;
+        }
+
+        .role-toggle-form .form-check-input:disabled,
+        .role-toggle-form .form-check-input:disabled + * {
+            cursor: not-allowed;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+    <script>
+        document.querySelectorAll('.role-toggle-form .role-toggle').forEach((toggle) => {
+            toggle.addEventListener('change', async () => {
+                const form = toggle.closest('form');
+                const nextRole = toggle.checked ? 'Admin' : 'Customer';
+                const userName = form.dataset.userName;
+                const accepted = window.AppConfirm
+                    ? await window.AppConfirm.open({
+                        title: 'Thay đổi quyền tài khoản',
+                        message: `Bạn có chắc muốn chuyển ${userName} thành ${nextRole}?`,
+                        confirmLabel: 'Đổi quyền',
+                        cancelLabel: 'Hủy',
+                        variant: toggle.checked ? 'danger' : 'warning',
+                    })
+                    : true;
+
+                if (!accepted) {
+                    toggle.checked = !toggle.checked;
+                    return;
+                }
+
+                toggle.disabled = true;
+                HTMLFormElement.prototype.submit.call(form);
+            });
+        });
+    </script>
+@endpush
