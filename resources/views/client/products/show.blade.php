@@ -1,6 +1,101 @@
 @extends('client.layouts.app')
 
-@section('title', $product->name)
+@php
+    $productSeoName = trim((string) $product->name) ?: 'Sản phẩm MaxBall';
+    $productDescriptionText = html_entity_decode(strip_tags((string) $product->description), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $productDescriptionText = preg_replace('/\s+/u', ' ', trim($productDescriptionText)) ?? trim($productDescriptionText);
+    $limitSeoDescription = static function (string $text, int $limit = 155): string {
+        if (mb_strlen($text, 'UTF-8') <= $limit) {
+            return $text;
+        }
+
+        $slice = mb_substr($text, 0, $limit + 1, 'UTF-8');
+        $lastSpace = mb_strrpos($slice, ' ', 0, 'UTF-8');
+
+        return rtrim(mb_substr($slice, 0, $lastSpace === false ? $limit : $lastSpace, 'UTF-8'));
+    };
+    $productSeoDescription = $limitSeoDescription(
+        $productDescriptionText !== ''
+            ? $productDescriptionText
+            : "Khám phá {$productSeoName} tại MaxBall, phù hợp cho tập luyện, thi đấu và phong cách thể thao hằng ngày."
+    );
+    $productCanonicalUrl = url()->current();
+
+    $productSeoImages = collect();
+    if (filled($product->thumbnail)) {
+        $productSeoImages->push($product->thumbnail_url);
+    }
+    foreach ($product->productImages as $productImage) {
+        if (filled($productImage->image_url) && filled($productImage->url)) {
+            $productSeoImages->push($productImage->url);
+        }
+    }
+    foreach ($product->variants as $productVariant) {
+        if (filled($productVariant->image_url) && filled($productVariant->variant_image_url)) {
+            $productSeoImages->push($productVariant->variant_image_url);
+        }
+    }
+    $productSeoImages = $productSeoImages->filter()->unique()->values();
+    $productSeoImage = $productSeoImages->first();
+
+    $productSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Product',
+        'name' => $productSeoName,
+        'description' => $productSeoDescription,
+        'url' => $productCanonicalUrl,
+    ];
+
+    if ($productSeoImages->isNotEmpty()) {
+        $productSchema['image'] = $productSeoImages->all();
+    }
+
+    $productSchemaSku = $product->variants
+        ->pluck('sku')
+        ->first(fn ($sku) => filled($sku));
+    if ($productSchemaSku) {
+        $productSchema['sku'] = (string) $productSchemaSku;
+    }
+
+    $rawDiscountPrice = $product->getRawOriginal('discount_price');
+    $rawBasePrice = $product->getRawOriginal('base_price');
+    $productSchemaPrice = is_numeric($rawDiscountPrice)
+        ? (int) $rawDiscountPrice
+        : (is_numeric($rawBasePrice) ? (int) $rawBasePrice : null);
+    $hasStockData = $product->variants->isNotEmpty();
+
+    if ($productSchemaPrice !== null || $hasStockData) {
+        $productSchemaOffer = [
+            '@type' => 'Offer',
+            'url' => $productCanonicalUrl,
+            'priceCurrency' => 'VND',
+        ];
+
+        if ($productSchemaPrice !== null) {
+            $productSchemaOffer['price'] = (string) $productSchemaPrice;
+        }
+
+        if ($hasStockData) {
+            $productSchemaOffer['availability'] = $product->variants->contains(fn ($variant) => $variant->available_stock > 0)
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock';
+        }
+
+        $productSchema['offers'] = $productSchemaOffer;
+    }
+@endphp
+
+@section('title', $productSeoName . ' | MaxBall')
+@section('meta_description', $productSeoDescription)
+@section('canonical_url', $productCanonicalUrl)
+@section('og_title', $productSeoName . ' | MaxBall')
+@section('og_description', $productSeoDescription)
+@section('og_image', $productSeoImage ?: '')
+@section('og_type', 'product')
+
+@push('head')
+    <script type="application/ld+json">{!! json_encode($productSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+@endpush
 
 @section('content')
 @php
@@ -10,14 +105,14 @@
 
     $galleryImages = collect([[
         'url' => $thumbnail,
-        'label' => $product->name,
+        'label' => $productSeoName,
     ]]);
 
     foreach ($product->productImages as $image) {
         if ($image->url) {
             $galleryImages->push([
                 'url' => $image->url,
-                'label' => $product->name,
+                'label' => $productSeoName,
             ]);
         }
     }
@@ -26,7 +121,7 @@
         if ($variant->variant_image_url) {
             $galleryImages->push([
                 'url' => $variant->variant_image_url,
-                'label' => $variant->name ?: $product->name,
+                'label' => $variant->name ? "{$productSeoName} - {$variant->name}" : $productSeoName,
             ]);
         }
     }
@@ -135,7 +230,7 @@
                     id="main-image-button"
                     class="block w-full border rounded-2xl overflow-hidden bg-gray-100 cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-red-500">
                 <img src="{{ $galleryImages->first()['url'] }}"
-                     alt="{{ $product->name }}"
+                     alt="{{ $productSeoName }}"
                      id="main-product-image"
                      class="w-full aspect-[4/5] max-h-[460px] object-cover">
             </button>
@@ -389,7 +484,7 @@
                                     <a href="{{ $media->url }}" target="_blank" rel="noopener noreferrer" class="block overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
                                         <img
                                             src="{{ $media->url }}"
-                                            alt="Ảnh đánh giá sản phẩm"
+                                            alt="Ảnh đánh giá {{ $productSeoName }}"
                                             class="h-32 w-full object-cover transition hover:scale-105"
                                             loading="lazy"
                                         >
@@ -424,12 +519,13 @@
                     @php
                         $itemPrice = $item->discount_price ?: $item->base_price;
                         $itemImage = $item->thumbnail_url ?: 'https://via.placeholder.com/400x500?text=No+Image';
+                        $itemAlt = trim((string) $item->name) ?: 'Sản phẩm MaxBall';
                     @endphp
 
                     <a href="{{ route('client.products.show', $item->slug) }}"
                        class="block bg-white border rounded-2xl overflow-hidden hover:shadow-lg transition no-underline">
                         <img src="{{ $itemImage }}"
-                             alt="{{ $item->name }}"
+                             alt="{{ $itemAlt }}"
                              class="w-full h-64 object-cover bg-gray-100">
 
                         <div class="p-4">
@@ -455,7 +551,7 @@
         Đóng
     </button>
     <img src="{{ $galleryImages->first()['url'] }}"
-         alt="{{ $product->name }}"
+         alt="{{ $productSeoName }}"
          id="lightbox-image"
          class="max-h-[88vh] max-w-full rounded-xl object-contain bg-white">
 </div>
@@ -788,12 +884,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     let textIconColor = isFreeship ? 'text-[#10b981]' : 'text-[#d92525]';
                     let btnColor = isFreeship ? 'bg-[#10b981] hover:bg-emerald-600' : 'bg-[#d92525] hover:bg-red-700';
 
-                    let actionBtn = v.is_saved
-                        ? `<button class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Đã lưu</button>`
-                        : `<button onclick="saveVoucher(${v.id}, this)" class="px-4 py-1.5 text-sm font-bold text-white ${btnColor} rounded transition-colors">Lưu</button>`;
+                    let actionBtn = '';
+                    if (v.is_exhausted) {
+                        actionBtn = `<button disabled class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Hết lượt</button>`;
+                    } else if (v.is_used) {
+                        actionBtn = `<button disabled class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Đã dùng</button>`;
+                    } else if (v.is_saved) {
+                        actionBtn = `<button disabled class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Đã lưu</button>`;
+                    } else {
+                        actionBtn = `<button onclick="saveVoucher(${v.id}, this)" class="px-4 py-1.5 text-sm font-bold text-white ${btnColor} rounded transition-colors">Lưu</button>`;
+                    }
 
                     html += `
-                        <div class="bg-white rounded border border-gray-200 overflow-hidden shadow-sm flex">
+                        <div class="bg-white rounded border border-gray-200 overflow-hidden shadow-sm flex ${!v.is_available ? 'opacity-50 grayscale' : ''}">
                             <!-- Left: Icon -->
                             <div class="w-28 ${bgColor} flex flex-col justify-center items-center text-white p-2 shrink-0 border-r border-dashed border-gray-300 relative">
                                 <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-1">

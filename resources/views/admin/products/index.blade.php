@@ -1,19 +1,12 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Quan ly san pham - MaxBall')
+@section('title', 'Quản lý sản phẩm - MaxBall')
 @section('page_title', 'Quản lý sản phẩm')
 
 @section('content')
     @php
         $showOutOfStockVariants = request('stock_status') === 'out_of_stock';
     @endphp
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            {!! nl2br(e(session('error'))) !!}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
 
     <div class="card border-0 shadow-sm">
         <div class="card-body">

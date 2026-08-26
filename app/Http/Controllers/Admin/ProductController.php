@@ -131,7 +131,7 @@ class ProductController extends Controller
 
         return redirect()
             ->route('admin.products.index')
-            ->with('success', 'Da them san pham moi.');
+            ->with('success', 'Đã thêm sản phẩm mới.');
     }
 
     public function edit(Product $product): View
@@ -183,7 +183,7 @@ class ProductController extends Controller
 
         return redirect()
             ->route('admin.products.index')
-            ->with('success', 'Da cap nhat san pham.');
+            ->with('success', 'Đã cập nhật sản phẩm.');
     }
 
     public function destroy(Product $product): RedirectResponse

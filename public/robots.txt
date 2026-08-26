@@ -1,2 +1,18 @@
 User-agent: *
-Disallow:
+Allow: /
+
+Disallow: /admin
+Disallow: /admin/
+Disallow: /cart
+Disallow: /cart/
+Disallow: /gio-hang
+Disallow: /gio-hang/
+Disallow: /checkout
+Disallow: /checkout/
+Disallow: /thanh-toan
+Disallow: /thanh-toan/
+Disallow: /login
+Disallow: /register
+Disallow: /account
+Disallow: /don-hang
+Disallow: /api/

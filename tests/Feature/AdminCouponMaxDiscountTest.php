@@ -15,12 +15,17 @@ class AdminCouponMaxDiscountTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin', 'status' => true]);
 
-        $this->actingAs($admin)
+        $response = $this->actingAs($admin)
             ->get(route('admin.coupons.create'))
             ->assertOk()
             ->assertSee('Số tiền giảm tối đa (VNĐ)')
             ->assertSee('id="max_discount_amount_container"', false)
             ->assertSee("discountTypeSelect.value === 'percent'", false);
+
+        $this->assertMatchesRegularExpression(
+            '/id="max_discount_amount"[^>]*min="1000"[^>]*step="1000"/',
+            $response->getContent(),
+        );
     }
 
     public function test_percentage_voucher_requires_and_saves_maximum_discount_amount(): void
@@ -31,7 +36,6 @@ class AdminCouponMaxDiscountTest extends TestCase
             'description' => 'Giảm 50% tối đa 100.000đ',
             'discount_type' => 'percent',
             'discount_value' => 50,
-            'min_order_value' => 0,
             'usage_limit' => 100,
             'status' => 1,
         ];
@@ -64,7 +68,6 @@ class AdminCouponMaxDiscountTest extends TestCase
             'discount_type' => 'percent',
             'discount_value' => 50,
             'max_discount_amount' => 100000,
-            'min_order_value' => 0,
             'usage_limit' => 10,
             'used_count' => 0,
             'status' => true,
@@ -77,12 +80,46 @@ class AdminCouponMaxDiscountTest extends TestCase
                 'description' => $coupon->description,
                 'discount_type' => 'fixed',
                 'discount_value' => 50000,
-                'min_order_value' => 0,
                 'usage_limit' => 10,
                 'status' => 1,
             ])
             ->assertSessionHasNoErrors();
 
         $this->assertNull($coupon->refresh()->max_discount_amount);
+    }
+
+    public function test_vnd_amounts_must_be_whole_thousands_and_at_least_one_thousand(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'status' => true]);
+        $payload = [
+            'code' => 'GIAM15',
+            'description' => 'Giảm 15% cho đơn hàng',
+            'discount_type' => 'percent',
+            'discount_value' => 15,
+            'usage_limit' => 100,
+            'status' => 1,
+        ];
+
+        foreach ([500.5, 500, 50500] as $invalidAmount) {
+            $this->actingAs($admin)
+                ->post(route('admin.coupons.store'), $payload + [
+                    'max_discount_amount' => $invalidAmount,
+                ])
+                ->assertSessionHasErrors('max_discount_amount');
+        }
+
+        $this->actingAs($admin)
+            ->post(route('admin.coupons.store'), $payload + [
+                'max_discount_amount' => 50000,
+                'min_order_value' => 100000,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('admin.coupons.index'));
+
+        $this->assertDatabaseHas('coupons', [
+            'code' => 'GIAM15',
+            'max_discount_amount' => 50000,
+            'min_order_value' => 100000,
+        ]);
     }
 }

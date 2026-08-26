@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Category;
+use App\Models\PromotionAnnouncement;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -45,6 +46,17 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('categories', $categories);
         });
+
+        View::composer('client.layouts.app', function ($view) {
+            $view->with(
+                'promotionAnnouncements',
+                PromotionAnnouncement::query()
+                    ->where('is_active', true)
+                    ->latest('id')
+                    ->get(),
+            );
+        });
+
         Paginator::useBootstrapFive();
     }
 }

@@ -48,22 +48,22 @@
                 <!-- Giá trị giảm -->
                 <div id="discount_value_container">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Giá trị giảm <span class="text-red-500">*</span></label>
-                    <input type="number" name="discount_value" id="discount_value" value="{{ old('discount_value', $coupon->discount_value) }}" min="0" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <input type="number" name="discount_value" id="discount_value" value="{{ old('discount_value', $coupon->discount_value) }}" min="1000" step="1000" inputmode="numeric" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                     @error('discount_value') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- Mức giảm tối đa cho voucher phần trăm -->
                 <div id="max_discount_amount_container" style="display: none;">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Số tiền giảm tối đa (VNĐ) <span class="text-red-500">*</span></label>
-                    <input type="number" name="max_discount_amount" id="max_discount_amount" value="{{ old('max_discount_amount', $coupon->max_discount_amount) }}" min="1" step="1000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="VD: 100000">
-                    <p class="text-xs text-gray-500 mt-1">Khách sẽ không được giảm quá số tiền này, dù giá trị phần trăm lớn hơn.</p>
+                    <input type="number" name="max_discount_amount" id="max_discount_amount" value="{{ old('max_discount_amount', $coupon->max_discount_amount) }}" min="1000" step="1000" inputmode="numeric" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="VD: 100000">
+                    <p class="text-xs text-gray-500 mt-1">Nhập số nguyên theo bội số 1.000đ. Khách sẽ không được giảm quá số tiền này.</p>
                     @error('max_discount_amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- Đơn tối thiểu -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Giá trị đơn tối thiểu (VNĐ)</label>
-                    <input type="number" name="min_order_value" value="{{ old('min_order_value', $coupon->min_order_value) }}" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <input type="number" name="min_order_value" value="{{ old('min_order_value', $coupon->min_order_value > 0 ? $coupon->min_order_value : '') }}" min="1000" step="1000" inputmode="numeric" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="Để trống nếu không yêu cầu">
                     @error('min_order_value') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
@@ -122,12 +122,22 @@
             if (discountTypeSelect.value === 'freeship') {
                 discountValueContainer.style.display = 'none';
                 discountValueInput.removeAttribute('required');
+                discountValueInput.value = '0';
             } else {
                 discountValueContainer.style.display = 'block';
                 discountValueInput.setAttribute('required', 'required');
+                if (Number(discountValueInput.value) === 0) discountValueInput.value = '';
             }
 
             const isPercent = discountTypeSelect.value === 'percent';
+            discountValueInput.min = isPercent ? '1' : '1000';
+            discountValueInput.step = isPercent ? '1' : '1000';
+            if (isPercent) {
+                discountValueInput.max = '100';
+            } else {
+                discountValueInput.removeAttribute('max');
+            }
+
             maxDiscountAmountContainer.style.display = isPercent ? 'block' : 'none';
 
             if (isPercent) {

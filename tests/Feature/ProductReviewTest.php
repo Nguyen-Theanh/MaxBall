@@ -146,7 +146,10 @@ class ProductReviewTest extends TestCase
 
         $this->getJson(route('vouchers.active'))
             ->assertOk()
-            ->assertJsonMissing(['code' => $coupon->code]);
+            ->assertJsonPath('vouchers.0.code', $coupon->code)
+            ->assertJsonPath('vouchers.0.is_used', true)
+            ->assertJsonPath('vouchers.0.is_exhausted', true)
+            ->assertJsonPath('vouchers.0.is_available', false);
 
         $this->postJson(route('vouchers.validate'), ['code' => $coupon->code])
             ->assertOk()

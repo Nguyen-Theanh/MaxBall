@@ -65,7 +65,7 @@
         right: 22px;
         bottom: 22px;
         z-index: 9990;
-        font-family: 'DM Sans', sans-serif;
+        font-family: 'Be Vietnam Pro', sans-serif;
     }
 
     .maxball-chatbot[hidden],

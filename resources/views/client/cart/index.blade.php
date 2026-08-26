@@ -60,7 +60,7 @@
                                         <input type="checkbox" class="item-checkbox w-4 h-4 text-[#d92525] bg-white border-gray-300 rounded focus:ring-0 cursor-pointer transition-colors accent-[#d92525]" value="{{ $item->id }}" data-price="{{ $price }}" data-quantity="{{ $item->quantity }}" checked>
                                     </div>
                                     <a href="{{ route('client.products.show', $product->slug) }}" class="shrink-0 overflow-hidden rounded-2xl border border-gray-100 bg-white">
-                                        <img src="{{ $thumbnail }}" alt="{{ $product->name }}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover object-center group-hover:scale-105 transition-transform duration-500">
+                                        <img src="{{ $thumbnail }}" alt="{{ trim((string) $product->name) ?: 'Sản phẩm MaxBall' }}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover object-center group-hover:scale-105 transition-transform duration-500">
                                     </a>
                                     <div class="flex-1 pt-1">
                                         <a href="{{ route('client.products.show', $product->slug) }}" class="font-bold text-lg text-[#10271d] hover:text-[#d92525] transition-colors line-clamp-2 leading-tight mb-2">
