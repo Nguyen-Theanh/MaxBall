@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Mail\OrderCancelledMail;
 use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Models\UserVoucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -23,6 +25,8 @@ class OrderCancellationTest extends TestCase
         Mail::fake();
 
         [$customer, , $order, $variant] = $this->orderFixture('processing');
+        [$discountCoupon, $discountVoucher] = $this->attachUsedVoucher($order, 'fixed');
+        [$freeshipCoupon, $freeshipVoucher] = $this->attachUsedVoucher($order, 'freeship');
 
         $this->actingAs($customer)
             ->put(route('client.orders.cancel', $order), [
@@ -40,6 +44,12 @@ class OrderCancellationTest extends TestCase
         $this->assertNull($order->cancellation_note);
         $this->assertNotNull($order->cancelled_at);
         $this->assertSame(10, $variant->refresh()->stock);
+        $this->assertFalse($discountVoucher->refresh()->is_used);
+        $this->assertNull($discountVoucher->used_at);
+        $this->assertSame(0, $discountCoupon->refresh()->used_count);
+        $this->assertFalse($freeshipVoucher->refresh()->is_used);
+        $this->assertNull($freeshipVoucher->used_at);
+        $this->assertSame(0, $freeshipCoupon->refresh()->used_count);
 
         Mail::assertSent(
             OrderCancelledMail::class,
@@ -68,6 +78,7 @@ class OrderCancellationTest extends TestCase
         $this->assertStringContainsString('Tổng giá trị đơn đã hủy:', $renderedMail);
         $this->assertStringContainsString('430.000đ', $renderedMail);
         $this->assertStringContainsString('không phát sinh yêu cầu hoàn tiền', $renderedMail);
+        $this->assertStringContainsString('Lượt dùng voucher của đơn này đã được hoàn lại', $renderedMail);
     }
 
     public function test_customer_must_enter_a_note_for_other_reason(): void
@@ -100,11 +111,72 @@ class OrderCancellationTest extends TestCase
         Mail::assertSent(OrderCancelledMail::class);
     }
 
+    public function test_expired_voucher_remains_unavailable_when_order_is_cancelled_later(): void
+    {
+        Mail::fake();
+        $this->travelTo('2026-08-25 20:00:00');
+
+        [$customer, , $order] = $this->orderFixture('processing');
+        [$coupon, $userVoucher] = $this->attachUsedVoucher($order, 'fixed');
+        $coupon->update(['expires_at' => '2026-08-25 23:59:00']);
+
+        $this->travelTo('2026-08-26 09:00:00');
+
+        $this->actingAs($customer)
+            ->put(route('client.orders.cancel', $order), [
+                'cancellation_reason' => 'change_variant_or_quantity',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas(
+                'success',
+                'Đã hủy đơn hàng thành công! Lượt dùng voucher (nếu có) đã được hoàn lại; thời hạn voucher không thay đổi.'
+            );
+
+        $coupon->refresh();
+        $userVoucher->refresh();
+
+        $this->assertSame(0, $coupon->used_count);
+        $this->assertSame('2026-08-25 23:59:00', $coupon->expires_at->format('Y-m-d H:i:s'));
+        $this->assertFalse($userVoucher->is_used);
+        $this->assertNull($userVoucher->used_at);
+        $this->assertFalse($userVoucher->is_available);
+        $this->assertSame('Đã hết hạn', $userVoucher->status_label);
+
+        $renderedMail = (new OrderCancelledMail($order->refresh()))->render();
+        $this->assertStringContainsString('voucher đã hết hạn sẽ không thể sử dụng lại', $renderedMail);
+    }
+
+    public function test_limited_voucher_gets_one_use_back_when_cancelled_before_expiry(): void
+    {
+        Mail::fake();
+
+        [$customer, , $order] = $this->orderFixture('processing');
+        [$coupon, $userVoucher] = $this->attachUsedVoucher($order, 'fixed');
+        $coupon->update(['expires_at' => now()->addDay()]);
+
+        $this->actingAs($customer)
+            ->put(route('client.orders.cancel', $order), [
+                'cancellation_reason' => 'change_variant_or_quantity',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $coupon->refresh();
+        $userVoucher->refresh();
+
+        $this->assertSame(1, $coupon->usage_limit);
+        $this->assertSame(0, $coupon->used_count);
+        $this->assertFalse($userVoucher->is_used);
+        $this->assertNull($userVoucher->used_at);
+        $this->assertTrue($userVoucher->is_available);
+        $this->assertSame('Có thể sử dụng', $userVoucher->status_label);
+    }
+
     public function test_admin_can_cancel_with_an_admin_reason(): void
     {
         Mail::fake();
 
         [, $admin, $order, $variant] = $this->orderFixture('processing');
+        [$coupon, $userVoucher] = $this->attachUsedVoucher($order, 'freeship');
         $order->update(['payment_status' => 'paid']);
 
         $this->actingAs($admin)
@@ -123,6 +195,8 @@ class OrderCancellationTest extends TestCase
         $this->assertSame('Sản phẩm đã hết hàng.', $order->cancellation_reason_label);
         $this->assertNotNull($order->cancelled_at);
         $this->assertSame(10, $variant->refresh()->stock);
+        $this->assertFalse($userVoucher->refresh()->is_used);
+        $this->assertSame(0, $coupon->refresh()->used_count);
 
         Mail::assertSent(
             OrderCancelledMail::class,
@@ -292,5 +366,35 @@ class OrderCancellationTest extends TestCase
         ]);
 
         return [$customer, $admin, $order, $variant];
+    }
+
+    /** @return array{Coupon, UserVoucher} */
+    private function attachUsedVoucher(Order $order, string $discountType): array
+    {
+        $coupon = Coupon::create([
+            'code' => 'CANCEL-'.Str::upper(Str::random(10)),
+            'description' => 'Voucher kiểm thử hoàn khi hủy đơn',
+            'discount_type' => $discountType,
+            'discount_value' => $discountType === 'freeship' ? 0 : 50000,
+            'min_order_value' => 0,
+            'usage_limit' => 1,
+            'used_count' => 1,
+            'start_date' => null,
+            'expires_at' => null,
+            'status' => true,
+            'is_public' => false,
+        ]);
+        $userVoucher = UserVoucher::create([
+            'user_id' => $order->user_id,
+            'coupon_id' => $coupon->id,
+            'is_used' => true,
+            'used_at' => now(),
+        ]);
+
+        $order->update([
+            $discountType === 'freeship' ? 'freeship_coupon_id' : 'coupon_id' => $coupon->id,
+        ]);
+
+        return [$coupon, $userVoucher];
     }
 }

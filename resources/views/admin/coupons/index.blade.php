@@ -45,7 +45,10 @@
                                 @elseif($coupon->discount_type == 'fixed')
                                     Giảm {{ number_format($coupon->discount_value, 0, ',', '.') }}đ
                                 @else
-                                    Giảm {{ $coupon->discount_value }}%
+                                    <div>Giảm {{ $coupon->discount_value }}%</div>
+                                    <div class="mt-1 text-xs font-normal text-gray-500">
+                                        {{ $coupon->max_discount_amount ? 'Tối đa '.number_format($coupon->max_discount_amount, 0, ',', '.').'đ' : 'Chưa đặt mức tối đa' }}
+                                    </div>
                                 @endif
                             </td>
                             <td class="py-3 px-4 text-gray-600 text-sm">

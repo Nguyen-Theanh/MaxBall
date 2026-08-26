@@ -6,8 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Attribute as ProductAttributeOption;
 use App\Models\Category;
 use App\Models\Product;
+<<<<<<< Updated upstream
 use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
+=======
+use App\Models\ProductAttribute;
+
+>>>>>>> Stashed changes
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -62,7 +67,11 @@ class ProductController extends Controller
         return view('admin.products.create', [
             'product' => new Product(['status' => true]),
             'categories' => $this->categories(),
+<<<<<<< Updated upstream
             'attributes' => $this->variantAttributes(),
+=======
+            'attributeLibrary' => $this->attributeLibrary(),
+>>>>>>> Stashed changes
         ]);
     }
 
@@ -83,6 +92,7 @@ class ProductController extends Controller
         $product = Product::create($data);
         $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
+<<<<<<< Updated upstream
 
         $variantsInput = $request->input('variants', []);
         if (empty($variantsInput)) {
@@ -100,6 +110,10 @@ class ProductController extends Controller
         $this->storeVariants($product, $variantsInput, $request);
 
         $this->syncProductAverages($product);
+=======
+        $attributeValueMap = $this->storeProductAttributes($product, $request->input('attributes', []));
+        $this->storeVariants($product, $request->input('variants', []), $attributeValueMap);
+>>>>>>> Stashed changes
 
         return redirect()
             ->route('admin.products.index')
@@ -108,10 +122,20 @@ class ProductController extends Controller
 
     public function edit(Product $product): View
     {
+        $product->load([
+            'productImages',
+            'productAttributes.values',
+            'variants.attributeValues.attribute',
+        ]);
+
         return view('admin.products.edit', [
             'product' => $product,
             'categories' => $this->categories(),
+<<<<<<< Updated upstream
             'attributes' => $this->variantAttributes(),
+=======
+            'attributeLibrary' => $this->attributeLibrary(),
+>>>>>>> Stashed changes
         ]);
     }
 
@@ -135,6 +159,7 @@ class ProductController extends Controller
         $product->update($data);
         $this->storeInlineAttributes($request->input('new_attributes', []));
         $this->storeGalleryImages($product, $request);
+<<<<<<< Updated upstream
 
         $variantsInput = $request->input('variants', []);
         if (empty($variantsInput)) {
@@ -152,6 +177,10 @@ class ProductController extends Controller
         $this->storeVariants($product, $variantsInput, $request);
 
         $this->syncProductAverages($product);
+=======
+        $attributeValueMap = $this->storeProductAttributes($product, $request->input('attributes', []));
+        $this->storeVariants($product, $request->input('variants', []), $attributeValueMap);
+>>>>>>> Stashed changes
 
         return redirect()
             ->route('admin.products.index')
@@ -212,10 +241,16 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'base_price' => ['required', 'numeric', 'min:0'],
             'discount_price' => ['nullable', 'numeric', 'min:0', 'lte:base_price'],
+<<<<<<< Updated upstream
             'stock' => ['nullable', 'integer', 'min:0'],
             'new_attributes' => ['nullable', 'array'],
             'new_attributes.*.name' => ['nullable', 'string', 'max:255'],
             'new_attributes.*.values_text' => ['nullable', 'string', 'max:2000'],
+=======
+            'attributes' => ['nullable', 'array'],
+            'attributes.*.name' => ['nullable', 'string', 'max:255'],
+            'attributes.*.values_text' => ['nullable', 'string', 'max:2000'],
+>>>>>>> Stashed changes
             'variants' => ['nullable', 'array'],
             'variants.*.id' => ['nullable', 'integer', 'distinct', 'exists:product_variants,id'],
             'variants.*.name' => ['nullable', 'string', 'max:255'],
@@ -223,9 +258,14 @@ class ProductController extends Controller
             'variants.*.base_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.discount_price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0'],
+<<<<<<< Updated upstream
             'variants.*.image' => ['nullable', 'image', 'max:3072'],
         ], [
             'variants.*.id.distinct' => 'Một biến thể đang bị gửi lặp lại.',
+=======
+            'variants.*.options' => ['nullable', 'array'],
+            'variants.*.options.*' => ['nullable', 'string', 'max:255'],
+>>>>>>> Stashed changes
         ]);
 
         $validator->after(function ($validator) use ($request): void {
@@ -291,6 +331,7 @@ class ProductController extends Controller
         return $validator->validate();
     }
 
+<<<<<<< Updated upstream
     private function variantIdentityKey(?string $value): string
     {
         return Str::of((string) $value)
@@ -303,10 +344,54 @@ class ProductController extends Controller
     }
 
     private function storeVariants(Product $product, array $variants, Request $request): void
+=======
+    private function storeProductAttributes(Product $product, array $attributes): array
+    {
+        $product->productAttributes()->delete();
+
+        $valueMap = [];
+        $preparedAttributes = [];
+
+        foreach ($attributes as $attributeData) {
+            $name = trim($attributeData['name'] ?? '');
+            $values = $this->parseAttributeValues($attributeData['values_text'] ?? '');
+
+            if ($name === '' || empty($values)) {
+                continue;
+            }
+
+            $attributeKey = $this->normalizeOptionKey($name);
+            $preparedAttributes[$attributeKey]['name'] ??= $name;
+
+            foreach ($values as $value) {
+                $preparedAttributes[$attributeKey]['values'][$this->normalizeOptionKey($value)] = $value;
+            }
+        }
+
+        foreach ($preparedAttributes as $preparedAttribute) {
+            $attribute = $product->productAttributes()->create([
+                'name' => $preparedAttribute['name'],
+            ]);
+
+            foreach ($preparedAttribute['values'] as $value) {
+                $attributeValue = $attribute->values()->create([
+                    'value' => $value,
+                ]);
+
+                $valueMap[$this->normalizeOptionKey($preparedAttribute['name'])][$this->normalizeOptionKey($value)] = $attributeValue->id;
+            }
+        }
+
+        return $valueMap;
+    }
+
+    private function storeVariants(Product $product, array $variants, array $attributeValueMap): void
+>>>>>>> Stashed changes
     {
         $existingIds = $product->variants()->pluck('id')->all();
         $receivedIds = [];
 
+<<<<<<< Updated upstream
         foreach ($variants as $variantIndex => $variantData) {
             if (empty($variantData)) {
                 continue;
@@ -323,10 +408,34 @@ class ProductController extends Controller
             $variantImage = $request->file("variants.{$variantIndex}.image");
 
             if (! empty($variantData['id'])) {
+=======
+        foreach ($variants as $variantData) {
+            if ($this->variantIsBlank($variantData)) {
+                continue;
+            }
+
+            $options = $this->cleanVariantOptions($variantData['options'] ?? []);
+            $basePrice = $variantData['base_price'] ?? null;
+            $discountPrice = $variantData['discount_price'] ?? null;
+            $stock = $variantData['stock'] ?? null;
+
+            $data = [
+                'name' => trim($variantData['name'] ?? '') ?: $this->buildVariantName($options),
+                'sku' => trim($variantData['sku'] ?? '') ?: null,
+                'base_price' => $basePrice !== null && $basePrice !== '' ? (int) $basePrice : (int) $product->base_price,
+                'discount_price' => $discountPrice !== null && $discountPrice !== '' ? (int) $discountPrice : null,
+                'stock' => $stock !== null && $stock !== '' ? (int) $stock : null,
+            ];
+
+            $variant = null;
+
+            if (!empty($variantData['id'])) {
+>>>>>>> Stashed changes
                 $id = (int) $variantData['id'];
                 $variant = $product->variants()->where('id', $id)->first();
 
                 if ($variant) {
+<<<<<<< Updated upstream
                     if ($variantImage && $variantImage->isValid()) {
                         $this->deleteVariantImage($variant->image_url);
                         $data['image_url'] = $variantImage->store('products/variants', 'public');
@@ -345,6 +454,19 @@ class ProductController extends Controller
 
             $new = $product->variants()->create($data);
             $receivedIds[] = $new->id;
+=======
+                    $variant->update($data);
+                    $receivedIds[] = $id;
+                }
+            }
+
+            if (!$variant) {
+                $variant = $product->variants()->create($data);
+                $receivedIds[] = $variant->id;
+            }
+
+            $variant->attributeValues()->sync($this->resolveVariantAttributeValueIds($options, $attributeValueMap));
+>>>>>>> Stashed changes
         }
 
         // delete variants removed in the UI
@@ -357,6 +479,7 @@ class ProductController extends Controller
         }
     }
 
+<<<<<<< Updated upstream
     private function deleteVariantImage(?string $path): void
     {
         if (! $path || Str::startsWith($path, ['http://', 'https://'])) {
@@ -388,6 +511,8 @@ class ProductController extends Controller
         }
     }
 
+=======
+>>>>>>> Stashed changes
     private function parseAttributeValues(?string $valuesText): array
     {
         $values = preg_split('/[\r\n,;|]+/u', (string) $valuesText);
@@ -400,18 +525,82 @@ class ProductController extends Controller
                 continue;
             }
 
+<<<<<<< Updated upstream
             $unique[Str::ascii(Str::lower($value))] = $value;
+=======
+            $unique[$this->normalizeOptionKey($value)] = $value;
+>>>>>>> Stashed changes
         }
 
         return array_values($unique);
     }
 
+<<<<<<< Updated upstream
     private function generateVariantSku(Product $product, ?string $variantName, int $index): string
     {
         $base = Str::upper(Str::slug($product->slug ?: $product->name, '-'));
         $variant = Str::upper(Str::slug((string) $variantName, '-'));
 
         return trim($base.'-'.($variant ?: 'VAR-'.($index + 1)), '-');
+=======
+    private function variantIsBlank(array $variantData): bool
+    {
+        foreach (['name', 'sku', 'base_price', 'discount_price', 'stock'] as $field) {
+            if (isset($variantData[$field]) && trim((string) $variantData[$field]) !== '') {
+                return false;
+            }
+        }
+
+        return empty($this->cleanVariantOptions($variantData['options'] ?? []));
+    }
+
+    private function cleanVariantOptions(array $options): array
+    {
+        $cleanOptions = [];
+
+        foreach ($options as $name => $value) {
+            $name = trim((string) $name);
+            $value = trim((string) $value);
+
+            if ($name === '' || $value === '') {
+                continue;
+            }
+
+            $cleanOptions[$name] = $value;
+        }
+
+        return $cleanOptions;
+    }
+
+    private function buildVariantName(array $options): ?string
+    {
+        if (empty($options)) {
+            return null;
+        }
+
+        return implode(' / ', array_values($options));
+    }
+
+    private function resolveVariantAttributeValueIds(array $options, array $attributeValueMap): array
+    {
+        $ids = [];
+
+        foreach ($options as $name => $value) {
+            $attributeKey = $this->normalizeOptionKey($name);
+            $valueKey = $this->normalizeOptionKey($value);
+
+            if (isset($attributeValueMap[$attributeKey][$valueKey])) {
+                $ids[] = $attributeValueMap[$attributeKey][$valueKey];
+            }
+        }
+
+        return $ids;
+    }
+
+    private function normalizeOptionKey(string $value): string
+    {
+        return Str::ascii(Str::lower(trim($value)));
+>>>>>>> Stashed changes
     }
 
     private function storeGalleryImages(Product $product, Request $request): void
@@ -486,5 +675,51 @@ class ProductController extends Controller
     private function variantAttributes()
     {
         return ProductAttributeOption::with('values')->orderBy('name')->get();
+    }
+
+    private function attributeLibrary()
+    {
+        $library = [
+            'Size' => [
+                's' => 'S',
+                'm' => 'M',
+                'l' => 'L',
+                'xl' => 'XL',
+                'xxl' => 'XXL',
+            ],
+            'Màu sắc' => [
+                'den' => 'Đen',
+                'trang' => 'Trắng',
+                'do' => 'Đỏ',
+                'xanh' => 'Xanh',
+            ],
+        ];
+
+        ProductAttribute::with('values')->orderBy('name')->get()->each(function (ProductAttribute $attribute) use (&$library) {
+            $name = trim($attribute->name);
+
+            if ($name === '') {
+                return;
+            }
+
+            $library[$name] ??= [];
+
+            foreach ($attribute->values as $value) {
+                $optionValue = trim($value->value);
+
+                if ($optionValue === '') {
+                    continue;
+                }
+
+                $library[$name][$this->normalizeOptionKey($optionValue)] = $optionValue;
+            }
+        });
+
+        return collect($library)
+            ->map(fn (array $values, string $name) => [
+                'name' => $name,
+                'values' => array_values($values),
+            ])
+            ->values();
     }
 }

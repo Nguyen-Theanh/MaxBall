@@ -779,6 +779,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     let minOrderHtml = v.min_order_value 
                         ? `<div class="text-xs text-gray-500 mt-1">Đơn Tối Thiểu ${new Intl.NumberFormat('vi-VN').format(v.min_order_value)}đ</div>`
                         : '';
+                    let maxDiscountHtml = v.discount_type === 'percent' && v.max_discount_amount
+                        ? `<div class="text-xs text-gray-500 mt-1">Giảm tối đa ${new Intl.NumberFormat('vi-VN').format(v.max_discount_amount)}đ</div>`
+                        : '';
 
                     let isFreeship = v.discount_type === 'freeship';
                     let bgColor = isFreeship ? 'bg-[#10b981]' : 'bg-[#d92525]';
@@ -807,6 +810,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div>
                                     <div class="font-bold text-gray-900 text-base leading-tight">${discountText}</div>
                                     ${minOrderHtml}
+                                    ${maxDiscountHtml}
                                     <div class="text-[10px] text-gray-400 mt-1">HSD: ${v.expires_at}</div>
                                 </div>
                                 <div class="flex justify-end mt-2">

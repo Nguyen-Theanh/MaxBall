@@ -327,6 +327,12 @@
                 </div>
             @endif
 
+            @if($order->coupon_id || $order->freeship_coupon_id)
+                <div class="refund-box">
+                    Lượt dùng voucher của đơn này đã được hoàn lại. Thời hạn voucher không thay đổi; voucher đã hết hạn sẽ không thể sử dụng lại.
+                </div>
+            @endif
+
             <p class="paragraph" style="margin-top: 24px;">Chúng tôi rất tiếc vì sự bất tiện này và hy vọng sẽ có cơ hội được phục vụ bạn trong những lần mua sắm tiếp theo.</p>
 
             <div class="support-box">

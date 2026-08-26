@@ -5,11 +5,13 @@ namespace Tests\Feature;
 use App\Mail\OrderCancelledMail;
 use App\Models\Cart;
 use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 use App\Models\UserAddress;
+use App\Models\UserVoucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
@@ -128,6 +130,26 @@ class CodInventoryReservationTest extends TestCase
         Carbon::setTestNow('2026-08-25 10:00:00');
         [$customer, $address, $variant] = $this->checkoutFixture(10, 3);
         $order = $this->placeCodOrder($customer, $address);
+        $coupon = Coupon::create([
+            'code' => 'EXPIRED-COD-FREESHIP',
+            'description' => 'Voucher kiểm thử COD hết hạn',
+            'discount_type' => 'freeship',
+            'discount_value' => 0,
+            'min_order_value' => 0,
+            'usage_limit' => 1,
+            'used_count' => 1,
+            'start_date' => null,
+            'expires_at' => null,
+            'status' => true,
+            'is_public' => false,
+        ]);
+        $userVoucher = UserVoucher::create([
+            'user_id' => $customer->id,
+            'coupon_id' => $coupon->id,
+            'is_used' => true,
+            'used_at' => now(),
+        ]);
+        $order->update(['freeship_coupon_id' => $coupon->id]);
 
         Carbon::setTestNow('2026-08-26 10:00:01');
 
@@ -141,6 +163,9 @@ class CodInventoryReservationTest extends TestCase
         $this->assertSame('confirmation_timeout', $order->cancellation_reason);
         $this->assertSame(10, $variant->refresh()->stock);
         $this->assertSame(0, $variant->reserved_stock);
+        $this->assertFalse($userVoucher->refresh()->is_used);
+        $this->assertNull($userVoucher->used_at);
+        $this->assertSame(0, $coupon->refresh()->used_count);
         Mail::assertSent(OrderCancelledMail::class);
     }
 

@@ -44,7 +44,7 @@
                 <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
             </button>
         </form>
-        <p class="maxball-chatbot__note">Thông tin sản phẩm được đối chiếu từ kho MaxBall.</p>
+        <p class="maxball-chatbot__note">Thông tin sản phẩm và cửa hàng được đối chiếu từ MaxBall.</p>
     </section>
 
     <button
@@ -458,10 +458,38 @@
             });
         };
 
+        const appendFormattedBotText = (container, text) => {
+            const normalizedText = String(text || '')
+                .replace(/^\s*[-*]\s+/gm, '• ');
+            const boldPattern = /\*\*(.+?)\*\*/gs;
+            let cursor = 0;
+            let match;
+
+            while ((match = boldPattern.exec(normalizedText)) !== null) {
+                const plainText = normalizedText.slice(cursor, match.index).replaceAll('**', '');
+                container.append(document.createTextNode(plainText));
+
+                const strong = document.createElement('strong');
+                strong.textContent = match[1];
+                container.append(strong);
+                cursor = boldPattern.lastIndex;
+            }
+
+            container.append(document.createTextNode(
+                normalizedText.slice(cursor).replaceAll('**', '')
+            ));
+        };
+
         const appendMessage = (text, type = 'bot') => {
             const bubble = document.createElement('div');
             bubble.className = `maxball-chatbot__message maxball-chatbot__message--${type}`;
-            bubble.textContent = String(text || '');
+
+            if (type === 'bot') {
+                appendFormattedBotText(bubble, text);
+            } else {
+                bubble.textContent = String(text || '');
+            }
+
             messages.appendChild(bubble);
             scrollToLatest();
             return bubble;

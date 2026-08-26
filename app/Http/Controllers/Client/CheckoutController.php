@@ -96,9 +96,10 @@ class CheckoutController extends Controller
         $request->validate([
             'user_address_id' => 'required|exists:user_addresses,id',
             'payment_method' => 'required|in:cod,vietqr,wallet',
+            'coupon_code' => 'nullable|string|max:100',
+            'freeship_coupon_code' => 'nullable|string|max:100',
         ], [
-            'user_address_id.required' =>
-                'Vui lòng chọn địa chỉ giao hàng.',
+            'user_address_id.required' => 'Vui lòng chọn địa chỉ giao hàng.',
         ]);
 
         $cart = $this->getCheckoutCart();
@@ -128,10 +129,10 @@ class CheckoutController extends Controller
                 return back()->with(
                     'error',
                     'Sản phẩm "'
-                    . $variant->product->name
-                    . ' - '
-                    . $variant->name
-                    . '" không đủ số lượng tồn kho.'
+                    .$variant->product->name
+                    .' - '
+                    .$variant->name
+                    .'" không đủ số lượng tồn kho.'
                 );
             }
         }
@@ -184,9 +185,21 @@ class CheckoutController extends Controller
                 )
                     ->where('status', true)
                     ->where('discount_type', 'freeship')
+                    ->where(function ($query) {
+                        $query->whereNull('start_date')
+                            ->orWhere('start_date', '<=', now());
+                    })
+                    ->where(function ($query) {
+                        $query->whereNull('expires_at')
+                            ->orWhere('expires_at', '>=', now());
+                    })
+                    ->where(function ($query) {
+                        $query->whereNull('usage_limit')
+                            ->orWhereRaw('used_count < usage_limit');
+                    })
                     ->first();
 
-                if ($coupon) {
+                if ($coupon && $subTotal >= ($coupon->min_order_value ?? 0)) {
                     $userVoucher = UserVoucher::where(
                         'user_id',
                         Auth::id()
@@ -197,7 +210,10 @@ class CheckoutController extends Controller
                         )
                         ->first();
 
-                    if (! $userVoucher || ! $userVoucher->is_used) {
+                    $canUseVoucher = ($coupon->is_public || $userVoucher)
+                        && (! $userVoucher || ! $userVoucher->is_used);
+
+                    if ($canUseVoucher) {
                         $appliedFreeshipCoupon = $coupon;
                         $shippingFee = 0;
                     }
@@ -215,6 +231,11 @@ class CheckoutController extends Controller
                     $request->coupon_code
                 )
                     ->where('status', true)
+                    ->whereIn('discount_type', ['fixed', 'percent'])
+                    ->where(function ($query) {
+                        $query->where('discount_type', '!=', 'percent')
+                            ->orWhere('max_discount_amount', '>', 0);
+                    })
                     ->where(function ($query) {
                         $query
                             ->whereNull('start_date')
@@ -255,10 +276,10 @@ class CheckoutController extends Controller
                             )
                             ->first();
 
-                        if (
-                            ! $userVoucher
-                            || ! $userVoucher->is_used
-                        ) {
+                        $canUseVoucher = ($coupon->is_public || $userVoucher)
+                            && (! $userVoucher || ! $userVoucher->is_used);
+
+                        if ($canUseVoucher) {
                             $appliedDiscountCoupon = $coupon;
 
                             if (
@@ -272,6 +293,11 @@ class CheckoutController extends Controller
                                         $subTotal
                                         * $coupon->discount_value
                                     ) / 100;
+
+                                $discountAmount = min(
+                                    $discountAmount,
+                                    (float) $coupon->max_discount_amount
+                                );
                             }
 
                             if ($discountAmount > $subTotal) {
@@ -330,30 +356,24 @@ class CheckoutController extends Controller
             $order = Order::create([
                 'user_id' => Auth::id(),
 
-                'coupon_id' =>
-                    $appliedDiscountCoupon
+                'coupon_id' => $appliedDiscountCoupon
                         ? $appliedDiscountCoupon->id
                         : null,
 
-                'freeship_coupon_id' =>
-                    $appliedFreeshipCoupon
+                'freeship_coupon_id' => $appliedFreeshipCoupon
                         ? $appliedFreeshipCoupon->id
                         : null,
 
                 'order_code' => $orderCode,
 
-                'customer_name' =>
-                    $selectedAddress->receiver_name,
+                'customer_name' => $selectedAddress->receiver_name,
 
-                'customer_phone' =>
-                    $selectedAddress->receiver_phone,
+                'customer_phone' => $selectedAddress->receiver_phone,
 
-                'customer_email' =>
-                    $selectedAddress->receiver_email
+                'customer_email' => $selectedAddress->receiver_email
                     ?: Auth::user()->email,
 
-                'customer_address' =>
-                    $selectedAddress->address_detail,
+                'customer_address' => $selectedAddress->address_detail,
 
                 'sub_total' => $subTotal,
 
@@ -363,11 +383,9 @@ class CheckoutController extends Controller
 
                 'total_amount' => $totalAmount,
 
-                'payment_method' =>
-                    $request->payment_method,
+                'payment_method' => $request->payment_method,
 
-                'payment_status' =>
-                    $request->payment_method === 'wallet'
+                'payment_status' => $request->payment_method === 'wallet'
                         ? 'paid'
                         : 'pending',
 
@@ -391,14 +409,11 @@ class CheckoutController extends Controller
                 OrderDetail::create([
                     'order_id' => $order->id,
 
-                    'product_variant_id' =>
-                        $variant->id,
+                    'product_variant_id' => $variant->id,
 
-                    'quantity' =>
-                        $item->quantity,
+                    'quantity' => $item->quantity,
 
-                    'price' =>
-                        $price,
+                    'price' => $price,
                 ]);
             }
 
@@ -416,8 +431,7 @@ class CheckoutController extends Controller
                     UserVoucher::firstOrCreate([
                         'user_id' => Auth::id(),
 
-                        'coupon_id' =>
-                            $appliedFreeshipCoupon->id,
+                        'coupon_id' => $appliedFreeshipCoupon->id,
                     ]);
 
                 $userVoucherFreeship->update([
@@ -440,8 +454,7 @@ class CheckoutController extends Controller
                     UserVoucher::firstOrCreate([
                         'user_id' => Auth::id(),
 
-                        'coupon_id' =>
-                            $appliedDiscountCoupon->id,
+                        'coupon_id' => $appliedDiscountCoupon->id,
                     ]);
 
                 $userVoucherDiscount->update([
@@ -470,9 +483,8 @@ class CheckoutController extends Controller
 
                     'amount' => $totalAmount,
 
-                    'description' =>
-                        'Thanh toán đơn hàng #'
-                        . $orderCode,
+                    'description' => 'Thanh toán đơn hàng #'
+                        .$orderCode,
                 ]);
             }
 
@@ -553,7 +565,7 @@ class CheckoutController extends Controller
             } catch (\Exception $e) {
                 Log::error(
                     'Lỗi gửi email: '
-                    . $e->getMessage()
+                    .$e->getMessage()
                 );
             }
 
@@ -566,8 +578,7 @@ class CheckoutController extends Controller
                 return redirect()->route(
                     'client.checkout.payment_qr',
                     [
-                        'order_code' =>
-                            $orderCode,
+                        'order_code' => $orderCode,
                     ]
                 );
             }
@@ -576,8 +587,7 @@ class CheckoutController extends Controller
                 return redirect()->route(
                     'client.checkout.success',
                     [
-                        'order_code' =>
-                            $orderCode,
+                        'order_code' => $orderCode,
                     ]
                 );
             }
@@ -600,13 +610,13 @@ class CheckoutController extends Controller
 
             Log::error(
                 'Checkout error: '
-                . $e->getMessage()
+                .$e->getMessage()
             );
 
             return back()->with(
                 'error',
                 'Đã xảy ra lỗi trong quá trình đặt hàng: '
-                . $e->getMessage()
+                .$e->getMessage()
             );
         }
     }
@@ -640,11 +650,9 @@ class CheckoutController extends Controller
             }
 
             $fakeItem = new CartItem([
-                'product_variant_id' =>
-                    $variant->id,
+                'product_variant_id' => $variant->id,
 
-                'quantity' =>
-                    $buyNowData['quantity'],
+                'quantity' => $buyNowData['quantity'],
             ]);
 
             $fakeItem->setRelation(

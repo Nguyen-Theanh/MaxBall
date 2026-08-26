@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\UserVoucher;
 use App\Models\WalletTransaction;
 use App\Services\OrderCancellationNotifier;
 use App\Services\OrderInventoryService;
@@ -89,11 +88,9 @@ class OrderController extends Controller
                 ),
             ],
         ], [
-            'cancellation_reason.required' =>
-                'Vui lòng chọn lý do hủy đơn hàng.',
+            'cancellation_reason.required' => 'Vui lòng chọn lý do hủy đơn hàng.',
 
-            'cancellation_note.required' =>
-                'Vui lòng nhập lý do hủy đơn hàng.',
+            'cancellation_note.required' => 'Vui lòng nhập lý do hủy đơn hàng.',
         ]);
 
         $order = Order::with([
@@ -157,16 +154,13 @@ class OrderController extends Controller
             $order = $inventoryService->cancel(
                 $order,
                 [
-                    'cancelled_by' =>
-                        'customer',
+                    'cancelled_by' => 'customer',
 
-                    'cancellation_reason' =>
-                        $validated[
+                    'cancellation_reason' => $validated[
                             'cancellation_reason'
                         ],
 
-                    'cancellation_note' =>
-                        $validated[
+                    'cancellation_note' => $validated[
                             'cancellation_reason'
                         ] === 'other'
                             ? trim(
@@ -176,8 +170,7 @@ class OrderController extends Controller
                             )
                             : null,
 
-                    'cancelled_at' =>
-                        now(),
+                    'cancelled_at' => now(),
                 ]
             );
         } catch (DomainException $e) {
@@ -215,97 +208,15 @@ class OrderController extends Controller
             );
 
             WalletTransaction::create([
-                'user_id' =>
-                    $user->id,
+                'user_id' => $user->id,
 
-                'type' =>
-                    'refund',
+                'type' => 'refund',
 
-                'amount' =>
-                    $order->total_amount,
+                'amount' => $order->total_amount,
 
-                'description' =>
-                    'Hoàn tiền do khách hàng tự hủy đơn hàng #'
-                    . $order->order_code,
+                'description' => 'Hoàn tiền do khách hàng tự hủy đơn hàng #'
+                    .$order->order_code,
             ]);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Hoàn voucher giảm giá
-        |--------------------------------------------------------------------------
-        */
-        if ($order->coupon_id) {
-            $userVoucher =
-                UserVoucher::where(
-                    'user_id',
-                    $order->user_id
-                )
-                    ->where(
-                        'coupon_id',
-                        $order->coupon_id
-                    )
-                    ->first();
-
-            if ($userVoucher) {
-                $userVoucher->update([
-                    'is_used' => false,
-                    'used_at' => null,
-                ]);
-
-                if ($order->coupon) {
-                    /*
-                    | Tránh used_count bị âm.
-                    */
-                    if ($order->coupon->used_count > 0) {
-                        $order
-                            ->coupon
-                            ->decrement('used_count');
-                    }
-                }
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Hoàn voucher freeship
-        |--------------------------------------------------------------------------
-        */
-        if ($order->freeship_coupon_id) {
-            $userVoucherFreeship =
-                UserVoucher::where(
-                    'user_id',
-                    $order->user_id
-                )
-                    ->where(
-                        'coupon_id',
-                        $order->freeship_coupon_id
-                    )
-                    ->first();
-
-            if ($userVoucherFreeship) {
-                $userVoucherFreeship->update([
-                    'is_used' => false,
-                    'used_at' => null,
-                ]);
-
-                if ($order->freeshipCoupon) {
-                    /*
-                    | Tránh used_count bị âm.
-                    */
-                    if (
-                        $order
-                            ->freeshipCoupon
-                            ->used_count > 0
-                    ) {
-                        $order
-                            ->freeshipCoupon
-                            ->decrement(
-                                'used_count'
-                            );
-                    }
-                }
-            }
         }
 
         /*
@@ -317,7 +228,7 @@ class OrderController extends Controller
 
         return back()->with(
             'success',
-            'Đã hủy đơn hàng thành công!'
+            'Đã hủy đơn hàng thành công! Lượt dùng voucher (nếu có) đã được hoàn lại; thời hạn voucher không thay đổi.'
         );
     }
 
@@ -351,11 +262,9 @@ class OrderController extends Controller
         |
         */
         $order->update([
-            'order_status' =>
-                'completed',
+            'order_status' => 'completed',
 
-            'payment_status' =>
-                'paid',
+            'payment_status' => 'paid',
         ]);
 
         return back()->with(

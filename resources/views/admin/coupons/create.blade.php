@@ -51,6 +51,14 @@
                     @error('discount_value') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
 
+                <!-- Mức giảm tối đa cho voucher phần trăm -->
+                <div id="max_discount_amount_container" style="display: none;">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Số tiền giảm tối đa (VNĐ) <span class="text-red-500">*</span></label>
+                    <input type="number" name="max_discount_amount" id="max_discount_amount" value="{{ old('max_discount_amount') }}" min="1" step="1000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" placeholder="VD: 100000">
+                    <p class="text-xs text-gray-500 mt-1">Khách sẽ không được giảm quá số tiền này, dù giá trị phần trăm lớn hơn.</p>
+                    @error('max_discount_amount') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                </div>
+
                 <!-- Đơn tối thiểu -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Giá trị đơn tối thiểu (VNĐ)</label>
@@ -108,6 +116,8 @@
         const discountTypeSelect = document.getElementById('discount_type');
         const discountValueContainer = document.getElementById('discount_value_container');
         const discountValueInput = document.getElementById('discount_value');
+        const maxDiscountAmountContainer = document.getElementById('max_discount_amount_container');
+        const maxDiscountAmountInput = document.getElementById('max_discount_amount');
 
         function toggleDiscountValue() {
             if (discountTypeSelect.value === 'freeship') {
@@ -117,6 +127,15 @@
             } else {
                 discountValueContainer.style.display = 'block';
                 discountValueInput.setAttribute('required', 'required');
+            }
+
+            const isPercent = discountTypeSelect.value === 'percent';
+            maxDiscountAmountContainer.style.display = isPercent ? 'block' : 'none';
+
+            if (isPercent) {
+                maxDiscountAmountInput.setAttribute('required', 'required');
+            } else {
+                maxDiscountAmountInput.removeAttribute('required');
             }
         }
 
