@@ -16,6 +16,8 @@ class DeleteExpiredCoupons extends Command
         $deletedCount = Coupon::query()
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now())
+            ->whereDoesntHave('orders')
+            ->whereDoesntHave('freeshipOrders')
             ->delete();
 
         $this->info("Đã xóa {$deletedCount} voucher hết hạn.");

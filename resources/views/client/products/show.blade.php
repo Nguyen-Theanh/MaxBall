@@ -831,6 +831,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </button>
         </div>
 
+        <div id="voucherModalMessage" class="mx-6 mt-4 hidden rounded-lg px-4 py-3 text-sm font-semibold"></div>
+
         <!-- Body -->
         <div class="p-6 overflow-y-auto" id="voucherModalBody">
             <div class="flex justify-center py-8">
@@ -846,6 +848,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function openVoucherModal() {
         document.getElementById('voucherModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        document.getElementById('voucherModalMessage').classList.add('hidden');
         fetchVouchers();
     }
 
@@ -912,6 +915,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="flex-1 p-3 flex flex-col justify-between">
                                 <div>
                                     <div class="font-bold text-gray-900 text-base leading-tight">${discountText}</div>
+                                    <div class="mt-1 font-mono text-xs font-bold text-[#d92525]">${v.code}</div>
                                     ${minOrderHtml}
                                     ${maxDiscountHtml}
                                     <div class="text-[10px] text-gray-400 mt-1">HSD: ${v.expires_at}</div>
@@ -931,6 +935,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    function showProductVoucherNotice(message, success) {
+        const messageElement = document.getElementById('voucherModalMessage');
+        messageElement.textContent = message;
+        messageElement.className = `mx-6 mt-4 rounded-lg px-4 py-3 text-sm font-semibold ${success ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`;
+    }
+
     function saveVoucher(id, btn) {
         btn.innerHTML = '<svg class="animate-spin h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
         btn.disabled = true;
@@ -947,32 +957,21 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 btn.outerHTML = `<button class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Đã lưu</button>`;
-                Toastify({
-                    text: data.message,
-                    duration: 3000,
-                    gravity: "bottom",
-                    position: "right",
-                    style: { background: "#10b981" }
-                }).showToast();
+                showProductVoucherNotice(data.message, true);
             } else {
                 btn.innerHTML = 'Lưu';
                 btn.disabled = false;
                 if(data.message.includes('đăng nhập')) {
                     window.location.href = '{{ route('login') }}';
                 } else {
-                    Toastify({
-                        text: data.message,
-                        duration: 3000,
-                        gravity: "bottom",
-                        position: "right",
-                        style: { background: "#ef4444" }
-                    }).showToast();
+                    showProductVoucherNotice(data.message, false);
                 }
             }
         })
         .catch(err => {
             btn.innerHTML = 'Lưu';
             btn.disabled = false;
+            showProductVoucherNotice('Có lỗi xảy ra khi lưu voucher.', false);
         });
     }
 </script>

@@ -471,11 +471,13 @@
     
     <div class="absolute inset-x-0 bottom-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 bg-[#f6f6f6] sm:rounded-2xl shadow-2xl w-full sm:max-w-lg transition-all transform flex flex-col max-h-[85vh]">
         <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white sm:rounded-t-2xl shrink-0">
-            <h3 class="text-xl font-bold text-gray-900">Voucher của bạn</h3>
+            <h3 class="text-xl font-bold text-gray-900">Voucher của Shop</h3>
             <button onclick="closeCheckoutVoucherModal()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
+
+        <div id="checkoutVoucherModalMessage" class="mx-6 mt-4 hidden rounded-lg px-4 py-3 text-sm font-semibold"></div>
 
         <div class="p-6 overflow-y-auto" id="checkoutVoucherModalBody">
             <div class="flex justify-center py-8">
@@ -498,7 +500,8 @@
     function openCheckoutVoucherModal() {
         document.getElementById('checkoutVoucherModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        fetchSavedVouchers();
+        document.getElementById('checkoutVoucherModalMessage').classList.add('hidden');
+        fetchCheckoutVouchers();
     }
 
     function closeCheckoutVoucherModal() {
@@ -506,21 +509,19 @@
         document.body.style.overflow = '';
     }
 
-    function fetchSavedVouchers() {
+    function fetchCheckoutVouchers() {
         fetch('{{ route('vouchers.active') }}')
             .then(res => res.json())
             .then(data => {
                 const body = document.getElementById('checkoutVoucherModalBody');
-                // Chỉ hiển thị voucher khách đã lưu; voucher hết lượt vẫn hiển thị nhưng không thể chọn.
-                let myVouchers = data.vouchers.filter(v => v.is_saved);
 
-                if (myVouchers.length === 0) {
-                    body.innerHTML = '<div class="text-center text-gray-500 py-8">Bạn chưa lưu voucher nào hoặc không có voucher khả dụng.</div>';
+                if (data.vouchers.length === 0) {
+                    body.innerHTML = '<div class="text-center text-gray-500 py-8">Hiện tại không có voucher nào khả dụng.</div>';
                     return;
                 }
 
                 let html = '<div class="space-y-4">';
-                myVouchers.forEach(v => {
+                data.vouchers.forEach(v => {
                     let isFreeship = v.discount_type === 'freeship';
                     let bgColor = isFreeship ? 'bg-[#10b981]' : 'bg-[#d92525]';
                     let textIconColor = isFreeship ? 'text-[#10b981]' : 'text-[#d92525]';
@@ -549,7 +550,9 @@
                     } else if (v.is_used) {
                         actionBtn = `<button disabled class="px-4 py-1.5 text-sm font-bold text-gray-400 border border-gray-300 rounded cursor-not-allowed">Đã dùng</button>`;
                     } else if (isApplied) {
-                        actionBtn = `<button onclick="removeVoucher('${isFreeship ? 'freeship' : 'discount'}'); fetchSavedVouchers();" class="px-4 py-1.5 text-sm font-bold text-gray-500 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Bỏ chọn</button>`;
+                        actionBtn = `<button onclick="removeVoucher('${isFreeship ? 'freeship' : 'discount'}'); fetchCheckoutVouchers();" class="px-4 py-1.5 text-sm font-bold text-gray-500 border border-gray-300 hover:bg-gray-50 rounded transition-colors">Bỏ chọn</button>`;
+                    } else if (!v.is_saved) {
+                        actionBtn = `<button onclick="saveCheckoutVoucher(${v.id}, this)" class="px-4 py-1.5 text-sm font-bold text-white ${btnColor} rounded transition-colors">Lưu</button>`;
                     } else if (isValid) {
                         actionBtn = `<button onclick="applyVoucherCode('${v.code}')" class="px-4 py-1.5 text-sm font-bold text-white ${btnColor} rounded transition-colors">Dùng ngay</button>`;
                     } else {
@@ -557,7 +560,7 @@
                     }
 
                     html += `
-                        <div class="bg-white rounded border ${isApplied ? (isFreeship ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500' : 'border-red-500 shadow-md ring-1 ring-red-500') : 'border-gray-200 shadow-sm'} overflow-hidden flex ${(!v.is_available || !meetsMinimum) && !isApplied ? 'opacity-50 grayscale' : ''}">
+                        <div class="bg-white rounded border ${isApplied ? (isFreeship ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500' : 'border-red-500 shadow-md ring-1 ring-red-500') : 'border-gray-200 shadow-sm'} overflow-hidden flex ${(!v.is_available || (v.is_saved && !meetsMinimum)) && !isApplied ? 'opacity-50 grayscale' : ''}">
                             <div class="w-28 ${bgColor} flex flex-col justify-center items-center text-white p-2 shrink-0 border-r border-dashed border-gray-300 relative">
                                 <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-1">
                                     <span class="${textIconColor} font-black text-xl">M</span>
@@ -570,6 +573,7 @@
                             <div class="flex-1 p-3 flex flex-col justify-between">
                                 <div>
                                     <div class="font-bold text-gray-900 text-base leading-tight">${discountText}</div>
+                                    <div class="mt-1 font-mono text-xs font-bold text-[#d92525]">${v.code}</div>
                                     ${minOrderHtml}
                                     ${maxDiscountHtml}
                                     <div class="text-[10px] text-gray-400 mt-1">HSD: ${v.expires_at}</div>
@@ -587,6 +591,44 @@
             .catch(err => {
                 document.getElementById('checkoutVoucherModalBody').innerHTML = '<div class="text-center text-red-500 py-8">Lỗi tải dữ liệu.</div>';
             });
+    }
+
+    function showCheckoutVoucherNotice(message, success) {
+        const messageElement = document.getElementById('checkoutVoucherModalMessage');
+        messageElement.textContent = message;
+        messageElement.className = `mx-6 mt-4 rounded-lg px-4 py-3 text-sm font-semibold ${success ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`;
+    }
+
+    function saveCheckoutVoucher(id, button) {
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        fetch('{{ route('vouchers.save') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ coupon_id: id })
+        })
+        .then(res => res.json())
+        .then(data => {
+            showCheckoutVoucherNotice(data.message, data.success);
+
+            if (data.success) {
+                fetchCheckoutVouchers();
+                return;
+            }
+
+            button.disabled = false;
+            button.textContent = originalText;
+        })
+        .catch(() => {
+            button.disabled = false;
+            button.textContent = originalText;
+            showCheckoutVoucherNotice('Có lỗi xảy ra khi lưu voucher.', false);
+        });
     }
 
     function applyVoucherCode(code) {

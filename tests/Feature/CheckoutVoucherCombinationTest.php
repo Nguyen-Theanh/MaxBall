@@ -128,6 +128,54 @@ class CheckoutVoucherCombinationTest extends TestCase
         $this->assertTrue($userVoucher->refresh()->is_used);
     }
 
+    public function test_checkout_stops_when_applied_voucher_was_deleted_before_order_creation(): void
+    {
+        Mail::fake();
+        [$user, $addressId, $variant] = $this->checkoutFixture();
+        [$coupon] = $this->voucherFixture($user, 'fixed');
+        $couponCode = $coupon->code;
+
+        $coupon->delete();
+
+        $this->actingAs($user)
+            ->from(route('client.checkout.index'))
+            ->post(route('client.checkout.store'), [
+                'user_address_id' => $addressId,
+                'payment_method' => 'cod',
+                'coupon_code' => $couponCode,
+            ])
+            ->assertRedirect(route('client.checkout.index'))
+            ->assertSessionHas('error', function (string $message) use ($couponCode) {
+                return str_contains($message, $couponCode)
+                    && str_contains($message, 'đã không còn hiệu lực');
+            });
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame(0, $variant->refresh()->reserved_stock);
+        $this->assertDatabaseHas('cart_items', [
+            'product_variant_id' => $variant->id,
+            'quantity' => 1,
+        ]);
+    }
+
+    public function test_product_and_checkout_pages_show_the_shop_voucher_list_with_save_actions(): void
+    {
+        [$user, , $variant] = $this->checkoutFixture();
+
+        $this->actingAs($user)
+            ->get(route('client.checkout.index'))
+            ->assertOk()
+            ->assertSee('Voucher của Shop')
+            ->assertSee('saveCheckoutVoucher', false)
+            ->assertDontSee('filter(v => v.is_saved)', false);
+
+        $this->actingAs($user)
+            ->get(route('client.products.show', $variant->product->slug))
+            ->assertOk()
+            ->assertSee('Voucher của Shop')
+            ->assertSee('saveVoucher', false);
+    }
+
     /** @return array{User, int, ProductVariant} */
     private function checkoutFixture(): array
     {

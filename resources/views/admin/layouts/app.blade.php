@@ -33,6 +33,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --maxball-desktop-scale: 0.9;
+        }
+
+        @media (min-width: 1024px) {
+            html {
+                zoom: var(--maxball-desktop-scale);
+            }
+
+            .h-screen {
+                height: 111.111111vh !important;
+            }
+
+            .min-h-screen {
+                min-height: 111.111111vh !important;
+            }
+        }
+
         /* Prevent Tailwind's preflight from breaking Bootstrap components entirely */
         a { text-decoration: none; }
 
