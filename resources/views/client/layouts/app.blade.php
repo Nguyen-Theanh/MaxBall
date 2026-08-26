@@ -64,6 +64,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --maxball-desktop-scale: 0.9;
+        }
+
+        @media (min-width: 1024px) {
+            html {
+                zoom: var(--maxball-desktop-scale);
+            }
+
+            .h-screen {
+                height: 111.111111vh !important;
+            }
+
+            .min-h-screen {
+                min-height: 111.111111vh !important;
+            }
+        }
+
         body,
         button,
         input,

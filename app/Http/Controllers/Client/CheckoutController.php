@@ -179,45 +179,12 @@ class CheckoutController extends Controller
             |--------------------------------------------------------------------------
             */
             if ($request->filled('freeship_coupon_code')) {
-                $coupon = Coupon::where(
-                    'code',
-                    $request->freeship_coupon_code
-                )
-                    ->where('status', true)
-                    ->where('discount_type', 'freeship')
-                    ->where(function ($query) {
-                        $query->whereNull('start_date')
-                            ->orWhere('start_date', '<=', now());
-                    })
-                    ->where(function ($query) {
-                        $query->whereNull('expires_at')
-                            ->orWhere('expires_at', '>=', now());
-                    })
-                    ->where(function ($query) {
-                        $query->whereNull('usage_limit')
-                            ->orWhereRaw('used_count < usage_limit');
-                    })
-                    ->first();
-
-                if ($coupon && $subTotal >= ($coupon->min_order_value ?? 0)) {
-                    $userVoucher = UserVoucher::where(
-                        'user_id',
-                        Auth::id()
-                    )
-                        ->where(
-                            'coupon_id',
-                            $coupon->id
-                        )
-                        ->first();
-
-                    $canUseVoucher = ($coupon->is_public || $userVoucher)
-                        && (! $userVoucher || ! $userVoucher->is_used);
-
-                    if ($canUseVoucher) {
-                        $appliedFreeshipCoupon = $coupon;
-                        $shippingFee = 0;
-                    }
-                }
+                $appliedFreeshipCoupon = $this->resolveCheckoutCoupon(
+                    $request->string('freeship_coupon_code')->trim()->toString(),
+                    ['freeship'],
+                    $subTotal
+                );
+                $shippingFee = 0;
             }
 
             /*
@@ -226,85 +193,24 @@ class CheckoutController extends Controller
             |--------------------------------------------------------------------------
             */
             if ($request->filled('coupon_code')) {
-                $coupon = Coupon::where(
-                    'code',
-                    $request->coupon_code
-                )
-                    ->where('status', true)
-                    ->whereIn('discount_type', ['fixed', 'percent'])
-                    ->where(function ($query) {
-                        $query->where('discount_type', '!=', 'percent')
-                            ->orWhere('max_discount_amount', '>', 0);
-                    })
-                    ->where(function ($query) {
-                        $query
-                            ->whereNull('start_date')
-                            ->orWhere(
-                                'start_date',
-                                '<=',
-                                now()
-                            );
-                    })
-                    ->where(function ($query) {
-                        $query
-                            ->whereNull('expires_at')
-                            ->orWhere(
-                                'expires_at',
-                                '>=',
-                                now()
-                            );
-                    })
-                    ->first();
+                $appliedDiscountCoupon = $this->resolveCheckoutCoupon(
+                    $request->string('coupon_code')->trim()->toString(),
+                    ['fixed', 'percent'],
+                    $subTotal
+                );
 
-                if (
-                    $coupon
-                    && $subTotal >= ($coupon->min_order_value ?? 0)
-                ) {
-                    $withinUsageLimit =
-                        ! $coupon->usage_limit
-                        || $coupon->used_count
-                            < $coupon->usage_limit;
+                if ($appliedDiscountCoupon->discount_type === 'fixed') {
+                    $discountAmount = (float) $appliedDiscountCoupon->discount_value;
+                } else {
+                    $discountAmount = ($subTotal * $appliedDiscountCoupon->discount_value) / 100;
+                    $discountAmount = min(
+                        $discountAmount,
+                        (float) $appliedDiscountCoupon->max_discount_amount
+                    );
+                }
 
-                    if ($withinUsageLimit) {
-                        $userVoucher = UserVoucher::where(
-                            'user_id',
-                            Auth::id()
-                        )
-                            ->where(
-                                'coupon_id',
-                                $coupon->id
-                            )
-                            ->first();
-
-                        $canUseVoucher = ($coupon->is_public || $userVoucher)
-                            && (! $userVoucher || ! $userVoucher->is_used);
-
-                        if ($canUseVoucher) {
-                            $appliedDiscountCoupon = $coupon;
-
-                            if (
-                                $coupon->discount_type === 'fixed'
-                            ) {
-                                $discountAmount =
-                                    $coupon->discount_value;
-                            } else {
-                                $discountAmount =
-                                    (
-                                        $subTotal
-                                        * $coupon->discount_value
-                                    ) / 100;
-
-                                $discountAmount = min(
-                                    $discountAmount,
-                                    (float) $coupon->max_discount_amount
-                                );
-                            }
-
-                            if ($discountAmount > $subTotal) {
-                                $discountAmount = $subTotal;
-                            }
-                        }
-                    }
+                if ($discountAmount > $subTotal) {
+                    $discountAmount = $subTotal;
                 }
             }
 
@@ -619,6 +525,60 @@ class CheckoutController extends Controller
                 .$e->getMessage()
             );
         }
+    }
+
+    /**
+     * Lấy và khóa voucher ngay trước khi tạo đơn để tránh voucher bị xóa,
+     * tắt hoặc hết lượt giữa lúc khách áp mã và lúc hoàn tất thanh toán.
+     *
+     * @param  array<int, string>  $discountTypes
+     */
+    private function resolveCheckoutCoupon(
+        string $code,
+        array $discountTypes,
+        float $subTotal
+    ): Coupon {
+        $coupon = Coupon::query()
+            ->where('code', $code)
+            ->lockForUpdate()
+            ->first();
+
+        if (
+            ! $coupon
+            || ! in_array($coupon->discount_type, $discountTypes, true)
+            || ! $coupon->is_currently_available
+        ) {
+            throw new DomainException(
+                "Voucher “{$code}” đã không còn hiệu lực. Vui lòng chọn voucher khác trước khi đặt hàng."
+            );
+        }
+
+        if ($subTotal < (float) ($coupon->min_order_value ?? 0)) {
+            $minimumOrderValue = number_format(
+                (float) $coupon->min_order_value,
+                0,
+                ',',
+                '.'
+            );
+
+            throw new DomainException(
+                "Đơn hàng chưa đạt giá trị tối thiểu {$minimumOrderValue}đ để dùng voucher “{$coupon->code}”."
+            );
+        }
+
+        $userVoucher = UserVoucher::query()
+            ->where('user_id', Auth::id())
+            ->where('coupon_id', $coupon->id)
+            ->lockForUpdate()
+            ->first();
+
+        if ((! $coupon->is_public && ! $userVoucher) || $userVoucher?->is_used) {
+            throw new DomainException(
+                "Voucher “{$coupon->code}” không còn khả dụng cho tài khoản của bạn. Vui lòng chọn voucher khác trước khi đặt hàng."
+            );
+        }
+
+        return $coupon;
     }
 
     /**

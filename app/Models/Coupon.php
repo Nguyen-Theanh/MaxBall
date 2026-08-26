@@ -49,10 +49,66 @@ class Coupon extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function freeshipOrders()
+    {
+        return $this->hasMany(Order::class, 'freeship_coupon_id');
+    }
+
+    public function hasOrders(): bool
+    {
+        return $this->orders()->exists() || $this->freeshipOrders()->exists();
+    }
+
+    public function getHasOrdersAttribute(): bool
+    {
+        $ordersCount = array_key_exists('orders_count', $this->attributes)
+            ? (int) $this->attributes['orders_count']
+            : $this->orders()->count();
+        $freeshipOrdersCount = array_key_exists('freeship_orders_count', $this->attributes)
+            ? (int) $this->attributes['freeship_orders_count']
+            : $this->freeshipOrders()->count();
+
+        return $ordersCount > 0 || $freeshipOrdersCount > 0;
+    }
+
     public function getIsExhaustedAttribute(): bool
     {
         return $this->usage_limit !== null
             && $this->used_count >= $this->usage_limit;
+    }
+
+    public function getIsCurrentlyAvailableAttribute(): bool
+    {
+        return $this->status
+            && (! $this->start_date || $this->start_date->lte(now()))
+            && (! $this->expires_at || $this->expires_at->gte(now()))
+            && ! $this->is_exhausted
+            && ($this->discount_type !== 'percent' || $this->max_discount_amount > 0);
+    }
+
+    public function getAvailabilityLabelAttribute(): string
+    {
+        if (! $this->status) {
+            return 'Đã tắt';
+        }
+
+        if ($this->start_date?->isFuture()) {
+            return 'Chưa bắt đầu';
+        }
+
+        if ($this->expires_at?->isPast()) {
+            return 'Đã hết hạn';
+        }
+
+        if ($this->is_exhausted) {
+            return 'Đã hết lượt';
+        }
+
+        if ($this->discount_type === 'percent' && ! $this->max_discount_amount) {
+            return 'Chưa cấu hình đủ';
+        }
+
+        return 'Đang hoạt động';
     }
 
     public function scopeCurrentlyAvailable(Builder $query): Builder
@@ -75,5 +131,26 @@ class Coupon extends Model
                 $query->where('discount_type', '!=', 'percent')
                     ->orWhere('max_discount_amount', '>', 0);
             });
+    }
+
+    public function scopeNotCurrentlyAvailable(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->where('status', false)
+                ->orWhereNull('status')
+                ->orWhere('start_date', '>', now())
+                ->orWhere('expires_at', '<', now())
+                ->orWhere(function (Builder $query) {
+                    $query->whereNotNull('usage_limit')
+                        ->whereColumn('used_count', '>=', 'usage_limit');
+                })
+                ->orWhere(function (Builder $query) {
+                    $query->where('discount_type', 'percent')
+                        ->where(function (Builder $query) {
+                            $query->whereNull('max_discount_amount')
+                                ->orWhere('max_discount_amount', '<=', 0);
+                        });
+                });
+        });
     }
 }

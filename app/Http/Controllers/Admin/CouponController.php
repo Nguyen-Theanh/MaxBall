@@ -10,9 +10,17 @@ class CouponController extends Controller
 {
     public function index(Request $request)
     {
+        $availability = $request->input('availability', 'active');
+
         $coupons = Coupon::query()
+            ->withCount(['orders', 'freeshipOrders'])
             ->when($request->input('source') === 'admin', fn ($query) => $query->where('is_public', true))
             ->when($request->input('source') === 'customer', fn ($query) => $query->where('is_public', false))
+            ->when(
+                $availability === 'inactive',
+                fn ($query) => $query->notCurrentlyAvailable(),
+                fn ($query) => $query->currentlyAvailable()
+            )
             ->orderByDesc('id')
             ->paginate(10)
             ->withQueryString();
@@ -39,12 +47,25 @@ class CouponController extends Controller
     {
         $coupon = Coupon::findOrFail($id);
 
+        if ($coupon->hasOrders()) {
+            return redirect()
+                ->route('admin.coupons.index')
+                ->with('error', 'Voucher đã phát sinh đơn hàng nên không thể sửa.');
+        }
+
         return view('admin.coupons.edit', compact('coupon'));
     }
 
     public function update(Request $request, string $id)
     {
         $coupon = Coupon::findOrFail($id);
+
+        if ($coupon->hasOrders()) {
+            return redirect()
+                ->route('admin.coupons.index')
+                ->with('error', 'Voucher đã phát sinh đơn hàng nên không thể sửa.');
+        }
+
         $validated = $this->validatedData($request, $coupon);
 
         $coupon->update($validated);
@@ -54,6 +75,12 @@ class CouponController extends Controller
 
     public function destroy(Coupon $coupon)
     {
+        if ($coupon->hasOrders()) {
+            return redirect()
+                ->route('admin.coupons.index')
+                ->with('error', 'Voucher đã phát sinh đơn hàng nên không thể xóa.');
+        }
+
         $coupon->delete();
 
         return redirect()->route('admin.coupons.index')->with('success', 'Voucher đã được xóa thành công.');
