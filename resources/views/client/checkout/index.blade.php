@@ -146,6 +146,7 @@
                             <input type="text" id="voucherCodeInput" placeholder="Nhập mã giảm giá" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none uppercase">
                             <button type="button" onclick="applyVoucher()" id="applyVoucherBtn" class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-900 transition-colors shrink-0">Áp dụng</button>
                         </div>
+                        <p class="mt-2 text-xs text-gray-500">Có thể dùng đồng thời một mã freeship và một mã giảm giá sản phẩm.</p>
                         <div id="voucherMessage" class="mt-2 text-sm hidden"></div>
                         
                         <!-- Hidden inputs for form submission -->
@@ -534,6 +535,9 @@
                     let minOrderHtml = v.min_order_value 
                         ? `<div class="text-xs ${subTotal < v.min_order_value ? 'text-red-500' : 'text-gray-500'} mt-1">Đơn Tối Thiểu ${new Intl.NumberFormat('vi-VN').format(v.min_order_value)}đ</div>`
                         : '';
+                    let maxDiscountHtml = v.discount_type === 'percent' && v.max_discount_amount
+                        ? `<div class="text-xs text-gray-500 mt-1">Giảm tối đa ${new Intl.NumberFormat('vi-VN').format(v.max_discount_amount)}đ</div>`
+                        : '';
 
                     let isValid = subTotal >= (v.min_order_value || 0);
                     let isApplied = (isFreeship && appliedVouchers.freeship?.code === v.code) || (!isFreeship && appliedVouchers.discount?.code === v.code);
@@ -562,6 +566,7 @@
                                 <div>
                                     <div class="font-bold text-gray-900 text-base leading-tight">${discountText}</div>
                                     ${minOrderHtml}
+                                    ${maxDiscountHtml}
                                     <div class="text-[10px] text-gray-400 mt-1">HSD: ${v.expires_at}</div>
                                 </div>
                                 <div class="flex justify-end mt-2">
@@ -631,6 +636,7 @@
                     amount = parseFloat(coupon.discount_value);
                 } else {
                     amount = (subTotal * parseFloat(coupon.discount_value)) / 100;
+                    amount = Math.min(amount, parseFloat(coupon.max_discount_amount));
                 }
 
                 let voucherObj = {

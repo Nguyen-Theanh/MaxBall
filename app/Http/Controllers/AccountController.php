@@ -27,9 +27,9 @@ class AccountController extends Controller
             $search = $request->input('search');
             $ordersQuery->where(function ($q) use ($search) {
                 $q->where('order_code', 'like', "%{$search}%")
-                  ->orWhereHas('details.variant.product', function ($q2) use ($search) {
-                      $q2->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('details.variant.product', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -57,6 +57,22 @@ class AccountController extends Controller
             ->paginate(10, ['*'], 'wallet_page')
             ->fragment('wallet');
 
+        $userVouchers = $request->user()
+            ->userVouchers()
+            ->with('coupon')
+            ->whereHas('coupon')
+            ->orderBy('is_used')
+            ->orderByDesc('created_at')
+            ->paginate(8, ['*'], 'vouchers_page')
+            ->withQueryString()
+            ->fragment('vouchers');
+
+        $activeVoucherCount = $request->user()
+            ->userVouchers()
+            ->where('is_used', false)
+            ->whereHas('coupon', fn ($query) => $query->currentlyAvailable())
+            ->count();
+
         return view('client.account.show', [
             'user' => $request->user(),
             'orders' => $orders,
@@ -64,6 +80,8 @@ class AccountController extends Controller
             'defaultAddress' => $defaultAddress,
             'customerCancellationReasons' => $customerCancellationReasons,
             'walletTransactions' => $walletTransactions,
+            'userVouchers' => $userVouchers,
+            'activeVoucherCount' => $activeVoucherCount,
         ]);
     }
 

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Review;
 use App\Services\ReviewMediaUploader;
+use App\Services\ReviewRewardService;
 use App\Support\ReviewMediaRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,8 @@ class ReviewController extends Controller
         Request $request,
         Order $order,
         OrderDetail $orderDetail,
-        ReviewMediaUploader $mediaUploader
+        ReviewMediaUploader $mediaUploader,
+        ReviewRewardService $rewardService
     ) {
         abort_unless($order->user_id === $request->user()->id, 404);
         abort_unless($orderDetail->order_id === $order->id, 404);
@@ -56,6 +58,7 @@ class ReviewController extends Controller
         }
 
         $storedPaths = [];
+        $rewardCoupon = null;
 
         try {
             DB::transaction(function () use (
@@ -65,7 +68,9 @@ class ReviewController extends Controller
                 $product,
                 $validated,
                 $mediaUploader,
-                &$storedPaths
+                $rewardService,
+                &$storedPaths,
+                &$rewardCoupon
             ): void {
                 $review = Review::create([
                     'user_id' => $request->user()->id,
@@ -79,6 +84,7 @@ class ReviewController extends Controller
                 ]);
 
                 $storedPaths = $mediaUploader->store($review, $request->file('media', []));
+                $rewardCoupon = $rewardService->awardFreeshipVoucher($request->user(), $review);
             });
         } catch (Throwable $exception) {
             $mediaUploader->delete($storedPaths);
@@ -93,7 +99,10 @@ class ReviewController extends Controller
         }
 
         return $this->redirectAfterReview($request, $order)
-            ->with('success', 'Cảm ơn bạn đã đánh giá sản phẩm!');
+            ->with(
+                'success',
+                "Cảm ơn bạn đã đánh giá sản phẩm! Bạn được tặng voucher freeship dùng 1 lần, không thời hạn: {$rewardCoupon->code}."
+            );
     }
 
     private function redirectAfterReview(Request $request, Order $order): RedirectResponse

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\UserVoucher;
 use App\Models\WalletTransaction;
 use App\Services\OrderCancellationNotifier;
 use App\Services\OrderInventoryService;
@@ -47,9 +46,9 @@ class OrderController extends Controller
             $search = trim($validated['search']);
 
             $query->where(function ($query) use ($search): void {
-                $query->where('order_code', 'like', '%' . $search . '%')
-                    ->orWhere('customer_name', 'like', '%' . $search . '%')
-                    ->orWhere('customer_phone', 'like', '%' . $search . '%');
+                $query->where('order_code', 'like', '%'.$search.'%')
+                    ->orWhere('customer_name', 'like', '%'.$search.'%')
+                    ->orWhere('customer_phone', 'like', '%'.$search.'%');
             });
         }
 
@@ -119,11 +118,9 @@ class OrderController extends Controller
         $validated = $request->validate(
             $rules,
             [
-                'cancellation_reason.required' =>
-                    'Vui lòng chọn lý do hủy đơn hàng.',
+                'cancellation_reason.required' => 'Vui lòng chọn lý do hủy đơn hàng.',
 
-                'cancellation_note.required' =>
-                    'Vui lòng nhập ghi chú cho lý do hủy đơn hàng.',
+                'cancellation_note.required' => 'Vui lòng nhập ghi chú cho lý do hủy đơn hàng.',
             ]
         );
 
@@ -279,11 +276,9 @@ class OrderController extends Controller
             $updateData += [
                 'cancelled_by' => 'admin',
 
-                'cancellation_reason' =>
-                    $validated['cancellation_reason'],
+                'cancellation_reason' => $validated['cancellation_reason'],
 
-                'cancellation_note' =>
-                    $validated['cancellation_reason'] === 'other'
+                'cancellation_note' => $validated['cancellation_reason'] === 'other'
                         ? trim($validated['cancellation_note'])
                         : null,
 
@@ -319,73 +314,12 @@ class OrderController extends Controller
                         'user_id' => $user->id,
                         'type' => 'refund',
                         'amount' => $order->total_amount,
-                        'description' =>
-                            'Hoàn tiền do Admin hủy đơn hàng #'
-                            . $order->order_code,
+                        'description' => 'Hoàn tiền do Admin hủy đơn hàng #'
+                            .$order->order_code,
                     ]);
                 }
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Hoàn voucher giảm giá
-            |--------------------------------------------------------------------------
-            */
-            if ($order->coupon_id) {
-                $userVoucher = UserVoucher::where(
-                    'user_id',
-                    $order->user_id
-                )
-                    ->where(
-                        'coupon_id',
-                        $order->coupon_id
-                    )
-                    ->first();
-
-                if ($userVoucher) {
-                    $userVoucher->update([
-                        'is_used' => false,
-                        'used_at' => null,
-                    ]);
-
-                    if ($order->coupon) {
-                        $order->coupon->decrement(
-                            'used_count'
-                        );
-                    }
-                }
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Hoàn voucher freeship
-            |--------------------------------------------------------------------------
-            */
-            if ($order->freeship_coupon_id) {
-                $userVoucherFreeship =
-                    UserVoucher::where(
-                        'user_id',
-                        $order->user_id
-                    )
-                        ->where(
-                            'coupon_id',
-                            $order->freeship_coupon_id
-                        )
-                        ->first();
-
-                if ($userVoucherFreeship) {
-                    $userVoucherFreeship->update([
-                        'is_used' => false,
-                        'used_at' => null,
-                    ]);
-
-                    if ($order->freeshipCoupon) {
-                        $order
-                            ->freeshipCoupon
-                            ->decrement('used_count');
-                    }
-                }
-            }
         }
 
         /*
@@ -454,8 +388,7 @@ class OrderController extends Controller
         }
 
         $order->update([
-            'payment_status' =>
-                $validated['payment_status'],
+            'payment_status' => $validated['payment_status'],
         ]);
 
         return back()->with(

@@ -68,6 +68,7 @@
                             <th>Sản phẩm</th>
                             <th>Danh mục</th>
                             <th>Giá</th>
+                            <th class="text-center">Tồn kho</th>
                             <th>Trạng thái</th>
                             <th class="text-end">Thao tác</th>
                         </tr>
@@ -91,6 +92,11 @@
                                     @if ($product->discount_price)
                                         <small class="text-muted text-decoration-line-through">{{ number_format($product->base_price, 0, ',', '.') }}d</small>
                                     @endif
+                                </td>
+                                <td class="text-center">
+                                    <span class="fw-bold text-dark">
+                                        {{ number_format((int) $product->variants_sum_stock, 0, ',', '.') }}
+                                    </span>
                                 </td>
                                 <td>
                                     @if ($product->status)
@@ -131,7 +137,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-5 text-center text-muted">Chưa có sản phẩm nào.</td>
+                                <td colspan="7" class="py-5 text-center text-muted">Chưa có sản phẩm nào.</td>
                             </tr>
                         @endforelse
                     </tbody>

@@ -47,6 +47,16 @@
                     <span class="font-bold text-gray-700 group-hover:text-[#d92525]">Đơn Mua</span>
                 </button>
 
+                <button onclick="switchTab('vouchers')" id="nav-vouchers" class="w-full text-left flex items-center gap-3 px-2 py-2 rounded transition-colors group">
+                    <i class="fa-solid fa-ticket w-5 text-center text-amber-500"></i>
+                    <span class="font-bold text-gray-700 group-hover:text-[#d92525]">Voucher Của Tôi</span>
+                    @if($activeVoucherCount > 0)
+                        <span class="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            {{ $activeVoucherCount }}
+                        </span>
+                    @endif
+                </button>
+
                 <button onclick="switchTab('wallet')" id="nav-wallet" class="w-full text-left flex items-center gap-3 px-2 py-2 rounded transition-colors group">
                     <i class="fa-solid fa-wallet w-5 text-center text-green-500"></i>
                     <span class="font-bold text-gray-700 group-hover:text-[#d92525]">Ví MaxBall</span>
@@ -56,6 +66,8 @@
 
         <!-- Main Content -->
         <div class="flex-1 bg-white rounded-sm shadow-sm border border-gray-100 min-h-[500px]">
+
+            @include('client.account._vouchers')
 
             <!-- TAB: WALLET -->
             <div id="tab-wallet" class="tab-content p-6 md:p-8 hidden">
@@ -526,6 +538,9 @@
         document.getElementById('nav-orders').querySelector('span').classList.remove('text-[#d92525]');
         document.getElementById('nav-orders').querySelector('span').classList.add('text-gray-700');
 
+        document.getElementById('nav-vouchers').querySelector('span').classList.remove('text-[#d92525]');
+        document.getElementById('nav-vouchers').querySelector('span').classList.add('text-gray-700');
+
         document.getElementById('nav-wallet').querySelector('span').classList.remove('text-[#d92525]');
         document.getElementById('nav-wallet').querySelector('span').classList.add('text-gray-700');
 
@@ -547,6 +562,9 @@
         } else if (tabId === 'orders') {
             document.getElementById('nav-orders').querySelector('span').classList.remove('text-gray-700');
             document.getElementById('nav-orders').querySelector('span').classList.add('text-[#d92525]');
+        } else if (tabId === 'vouchers') {
+            document.getElementById('nav-vouchers').querySelector('span').classList.remove('text-gray-700');
+            document.getElementById('nav-vouchers').querySelector('span').classList.add('text-[#d92525]');
         } else if (tabId === 'wallet') {
             document.getElementById('nav-wallet').querySelector('span').classList.remove('text-gray-700');
             document.getElementById('nav-wallet').querySelector('span').classList.add('text-[#d92525]');
@@ -564,7 +582,7 @@
             switchTab('address');
         } else if (formContext === 'profile') {
             switchTab('profile');
-        } else if (['profile', 'password', 'address', 'orders'].includes(hash)) {
+        } else if (['profile', 'password', 'address', 'orders', 'vouchers', 'wallet'].includes(hash)) {
             switchTab(hash);
         } else {
             switchTab('profile'); // default

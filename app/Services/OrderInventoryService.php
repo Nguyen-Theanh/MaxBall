@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 class OrderInventoryService
 {
+    public function __construct(private readonly OrderVoucherService $voucherService) {}
+
     public function reserveCod(Order $order): Order
     {
         if ($order->payment_method !== 'cod') {
@@ -65,6 +67,7 @@ class OrderInventoryService
             if ($lockedOrder->reservation_expires_at?->isPast()) {
                 $this->releaseActiveReservation($lockedOrder);
                 $lockedOrder->update($this->timeoutCancellationData());
+                $this->voucherService->restoreForCancelledOrder($lockedOrder);
 
                 return $lockedOrder->refresh();
             }
@@ -123,6 +126,7 @@ class OrderInventoryService
                 'order_status' => 'cancelled',
                 'cancelled_at' => now(),
             ]);
+            $this->voucherService->restoreForCancelledOrder($lockedOrder);
 
             return $lockedOrder->refresh();
         });
@@ -144,6 +148,7 @@ class OrderInventoryService
 
             $this->releaseActiveReservation($lockedOrder);
             $lockedOrder->update($this->timeoutCancellationData());
+            $this->voucherService->restoreForCancelledOrder($lockedOrder);
 
             return $lockedOrder->refresh();
         });

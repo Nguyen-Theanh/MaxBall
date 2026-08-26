@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Product;
@@ -56,6 +57,102 @@ class ProductReviewTest extends TestCase
         ]);
     }
 
+    public function test_customer_receives_a_private_lifetime_freeship_voucher_after_review(): void
+    {
+        [$customer, $order, $details] = $this->completedOrderWithTwoProducts();
+
+        $this->actingAs($customer)
+            ->post(route('client.orders.reviews.store', [$order, $details[0]]), [
+                'rating' => 5,
+                'content' => 'Sản phẩm tốt, tôi rất hài lòng.',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success', function (string $message): bool {
+                return str_contains($message, 'voucher freeship dùng 1 lần, không thời hạn');
+            });
+
+        $coupon = Coupon::sole();
+
+        $this->assertStringStartsWith('REVIEW-', $coupon->code);
+        $this->assertSame('freeship', $coupon->discount_type);
+        $this->assertSame(1, $coupon->usage_limit);
+        $this->assertSame(0, $coupon->used_count);
+        $this->assertNull($coupon->start_date);
+        $this->assertNull($coupon->expires_at);
+        $this->assertTrue($coupon->status);
+        $this->assertFalse($coupon->is_public);
+        $this->assertDatabaseHas('user_vouchers', [
+            'user_id' => $customer->id,
+            'coupon_id' => $coupon->id,
+            'is_used' => false,
+        ]);
+
+        $this->getJson(route('vouchers.active'))
+            ->assertOk()
+            ->assertJsonPath('vouchers.0.code', $coupon->code)
+            ->assertJsonPath('vouchers.0.discount_type', 'freeship')
+            ->assertJsonPath('vouchers.0.expires_at', 'Không giới hạn');
+    }
+
+    public function test_review_reward_voucher_cannot_be_seen_or_used_by_another_customer(): void
+    {
+        [$customer, $order, $details] = $this->completedOrderWithTwoProducts();
+
+        $this->actingAs($customer)
+            ->post(route('client.orders.reviews.store', [$order, $details[0]]), [
+                'rating' => 5,
+            ])
+            ->assertSessionHas('success');
+
+        $coupon = Coupon::sole();
+        $otherCustomer = User::factory()->create();
+
+        $this->actingAs($otherCustomer)
+            ->getJson(route('vouchers.active'))
+            ->assertOk()
+            ->assertJsonMissing(['code' => $coupon->code]);
+
+        $this->postJson(route('vouchers.validate'), ['code' => $coupon->code])
+            ->assertOk()
+            ->assertJson([
+                'success' => false,
+                'message' => 'Mã giảm giá không khả dụng.',
+            ]);
+    }
+
+    public function test_review_reward_voucher_can_only_be_used_once(): void
+    {
+        [$customer, $order, $details] = $this->completedOrderWithTwoProducts();
+
+        $this->actingAs($customer)
+            ->post(route('client.orders.reviews.store', [$order, $details[0]]), [
+                'rating' => 5,
+            ])
+            ->assertSessionHas('success');
+
+        $coupon = Coupon::sole();
+        $userVoucher = $customer->userVouchers()->where('coupon_id', $coupon->id)->sole();
+
+        $this->postJson(route('vouchers.validate'), ['code' => $coupon->code])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('coupon.discount_type', 'freeship');
+
+        $userVoucher->update([
+            'is_used' => true,
+            'used_at' => now(),
+        ]);
+        $coupon->update(['used_count' => 1]);
+
+        $this->getJson(route('vouchers.active'))
+            ->assertOk()
+            ->assertJsonMissing(['code' => $coupon->code]);
+
+        $this->postJson(route('vouchers.validate'), ['code' => $coupon->code])
+            ->assertOk()
+            ->assertJsonPath('success', false);
+    }
+
     public function test_customer_cannot_review_before_order_is_completed(): void
     {
         [$customer, $order, $details] = $this->completedOrderWithTwoProducts();
@@ -101,6 +198,8 @@ class ProductReviewTest extends TestCase
             ->assertSessionHas('error');
 
         $this->assertDatabaseCount('reviews', 1);
+        $this->assertDatabaseCount('coupons', 1);
+        $this->assertDatabaseCount('user_vouchers', 1);
         $this->assertDatabaseHas('reviews', [
             'order_detail_id' => $details[0]->id,
             'rating' => 5,
