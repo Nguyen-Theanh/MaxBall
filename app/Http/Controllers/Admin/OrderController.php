@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attribute as ProductAttribute;
 use App\Models\Order;
 use App\Models\WalletTransaction;
 use App\Services\OrderCancellationNotifier;
@@ -10,6 +11,7 @@ use App\Services\OrderInventoryService;
 use App\Support\OrderCancellationReasons;
 use DomainException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
@@ -34,13 +36,18 @@ class OrderController extends Controller
 
         $perPage = (int) ($validated['per_page'] ?? 10);
 
-        $query = Order::with('user')
-            ->orderByDesc('created_at')
-            ->orderByDesc('id');
+        $query = Order::with('user');
 
         if (! empty($validated['status'])) {
             $query->where('order_status', $validated['status']);
         }
+
+        if (($validated['status'] ?? null) === 'confirmed') {
+            $query->orderByRaw('packing_slip_printed_at IS NULL DESC');
+        }
+
+        $query->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         if (! empty($validated['search'])) {
             $search = trim($validated['search']);
@@ -76,6 +83,84 @@ class OrderController extends Controller
         return view(
             'admin.orders.show',
             compact('order', 'adminCancellationReasons')
+        );
+    }
+
+    public function packingSlips(Request $request)
+    {
+        $validated = $request->validate(
+            [
+                'order_ids' => ['required', 'array', 'min:1', 'max:100'],
+                'order_ids.*' => [
+                    'required',
+                    'integer',
+                    'distinct',
+                    'exists:orders,id',
+                ],
+            ],
+            [
+                'order_ids.required' => 'Vui lòng chọn ít nhất một đơn hàng để in phiếu.',
+                'order_ids.min' => 'Vui lòng chọn ít nhất một đơn hàng để in phiếu.',
+                'order_ids.max' => 'Mỗi lần chỉ có thể in tối đa 100 phiếu đóng hàng.',
+                'order_ids.*.distinct' => 'Danh sách đơn hàng được chọn đang bị trùng.',
+                'order_ids.*.exists' => 'Có đơn hàng được chọn không còn tồn tại.',
+            ]
+        );
+
+        $orderIds = collect($validated['order_ids'])
+            ->map(fn ($orderId): int => (int) $orderId)
+            ->values();
+
+        $ordersById = Order::with('details.variant.product')
+            ->whereIn('id', $orderIds)
+            ->get()
+            ->keyBy('id');
+
+        if (
+            $ordersById->count() !== $orderIds->count()
+            || $ordersById->contains(
+                fn (Order $order): bool => $order->order_status !== 'confirmed'
+            )
+        ) {
+            return back()->with(
+                'error',
+                'Chỉ có thể in phiếu đóng hàng cho đơn đang ở trạng thái Đã xác nhận.'
+            );
+        }
+
+        Order::whereIn('id', $orderIds)
+            ->whereNull('packing_slip_printed_at')
+            ->update(['packing_slip_printed_at' => now()]);
+
+        $attributeValueLookup = $this->packingAttributeValueLookup();
+
+        $packingOrders = $orderIds->map(function (int $orderId) use (
+            $ordersById,
+            $attributeValueLookup
+        ): array {
+            $order = $ordersById->get($orderId);
+
+            return [
+                'code' => $order->order_code,
+                'items' => $order->details->map(function ($detail) use (
+                    $attributeValueLookup
+                ): array {
+                    return [
+                        'name' => $detail->variant?->product?->name
+                            ?: 'Sản phẩm',
+                        'options' => $this->packingVariantOptions(
+                            $detail->variant?->name,
+                            $attributeValueLookup
+                        ),
+                        'quantity' => (int) $detail->quantity,
+                    ];
+                }),
+            ];
+        });
+
+        return view(
+            'admin.orders.packing-slips',
+            compact('packingOrders')
         );
     }
 
@@ -395,5 +480,97 @@ class OrderController extends Controller
             'success',
             'Đã cập nhật trạng thái thanh toán thành công.'
         );
+    }
+
+    /**
+     * @return array<string, array{attribute: string, value: string}>
+     */
+    private function packingAttributeValueLookup(): array
+    {
+        $lookup = [];
+
+        ProductAttribute::with('values')
+            ->orderBy('id')
+            ->get()
+            ->each(function (ProductAttribute $attribute) use (&$lookup): void {
+                foreach ($attribute->values as $value) {
+                    $key = Str::lower(trim((string) $value->value));
+
+                    if ($key === '' || isset($lookup[$key])) {
+                        continue;
+                    }
+
+                    $lookup[$key] = [
+                        'attribute' => $this->packingAttributeLabel(
+                            (string) $attribute->name
+                        ),
+                        'value' => (string) $value->value,
+                    ];
+                }
+            });
+
+        return $lookup;
+    }
+
+    /**
+     * @param  array<string, array{attribute: string, value: string}>  $lookup
+     * @return array<string, string>
+     */
+    private function packingVariantOptions(
+        ?string $variantName,
+        array $lookup
+    ): array {
+        $variantName = trim((string) $variantName);
+
+        if ($variantName === '' || Str::lower($variantName) === 'mặc định') {
+            return [];
+        }
+
+        $options = [];
+        $unmatchedParts = [];
+        $parts = preg_split('/\s+-\s+/u', $variantName) ?: [];
+
+        foreach ($parts as $part) {
+            $part = trim($part);
+
+            if ($part === '') {
+                continue;
+            }
+
+            $matchedValue = $lookup[Str::lower($part)] ?? null;
+
+            if ($matchedValue) {
+                $options[$matchedValue['attribute']] = $matchedValue['value'];
+            } else {
+                $unmatchedParts[] = $part;
+            }
+        }
+
+        if ($unmatchedParts !== []) {
+            $options['Phân loại'] = implode(' - ', $unmatchedParts);
+        }
+
+        return $options;
+    }
+
+    private function packingAttributeLabel(string $attributeName): string
+    {
+        $normalizedName = Str::lower(Str::ascii(trim($attributeName)));
+
+        if (
+            $normalizedName === 'size'
+            || Str::contains($normalizedName, 'kich co')
+        ) {
+            return 'Size';
+        }
+
+        if (
+            $normalizedName === 'color'
+            || Str::contains($normalizedName, 'mau')
+        ) {
+            return 'Màu';
+        }
+
+        return trim($attributeName) ?: 'Phân loại';
     }
 }

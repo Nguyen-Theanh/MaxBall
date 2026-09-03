@@ -3,6 +3,8 @@
 @section('title', 'Quản lý Đơn hàng')
 
 @section('content')
+@php($showPackingSlipActions = request('status') === 'confirmed')
+
 <div class="container-fluid">
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -106,6 +108,35 @@
         </div>
 
         <div class="card-body">
+            @if($showPackingSlipActions)
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <button
+                        type="button"
+                        class="btn btn-dark btn-sm"
+                        id="print-selected-orders"
+                        disabled
+                    >
+                        <i class="bi bi-printer me-1"></i>
+                        In phiếu đã chọn
+                    </button>
+
+                    <span class="small text-muted" id="selected-orders-count">
+                        Đã chọn 0 đơn
+                    </span>
+                </div>
+
+                <form
+                    action="{{ route('admin.orders.packing-slips') }}"
+                    method="POST"
+                    target="_blank"
+                    id="print-selected-orders-form"
+                    class="d-none"
+                >
+                    @csrf
+                    <div id="selected-order-inputs"></div>
+                </form>
+            @endif
+
             <div class="table-responsive">
                 <table
                     class="table table-bordered table-hover align-middle"
@@ -114,6 +145,16 @@
                 >
                     <thead class="table-light">
                         <tr>
+                            @if($showPackingSlipActions)
+                                <th class="text-center" width="44">
+                                    <input
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        id="select-all-orders"
+                                        aria-label="Chọn tất cả đơn trên trang"
+                                    >
+                                </th>
+                            @endif
                             <th>Mã ĐH</th>
                             <th>Khách hàng</th>
                             <th>Tổng tiền</th>
@@ -131,9 +172,39 @@
 
                     <tbody>
                         @forelse($orders as $order)
-                            <tr>
+                            <tr
+                                @if($showPackingSlipActions)
+                                    data-packing-order-row
+                                    data-packing-slip-printed="{{ $order->packing_slip_printed_at ? '1' : '0' }}"
+                                @endif
+                            >
+                                @if($showPackingSlipActions)
+                                    <td class="text-center">
+                                        <input
+                                            type="checkbox"
+                                            class="form-check-input packing-order-checkbox"
+                                            value="{{ $order->id }}"
+                                            aria-label="Chọn đơn #{{ $order->order_code }}"
+                                        >
+                                    </td>
+                                @endif
                                 <td class="font-weight-bold">
                                     #{{ $order->order_code }}
+
+                                    @if(
+                                        $showPackingSlipActions
+                                        && $order->packing_slip_printed_at
+                                    )
+                                        <div class="mt-1" data-packing-status>
+                                            <span
+                                                class="badge bg-secondary"
+                                                title="Đã in lúc {{ $order->packing_slip_printed_at->format('H:i d/m/Y') }}"
+                                            >
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                Đã in
+                                            </span>
+                                        </div>
+                                    @endif
                                 </td>
 
                                 <td>
@@ -317,19 +388,47 @@
                                 </td>
 
                                 <td class="text-center">
-                                    <a
-                                        href="{{ route('admin.orders.show', $order->id) }}"
-                                        class="btn btn-primary btn-sm"
-                                        title="Chi tiết"
-                                    >
-                                        Chi tiết
-                                    </a>
+                                    <div class="d-flex flex-wrap justify-content-center gap-1">
+                                        <a
+                                            href="{{ route('admin.orders.show', $order->id) }}"
+                                            class="btn btn-primary btn-sm"
+                                            title="Chi tiết"
+                                        >
+                                            Chi tiết
+                                        </a>
+
+                                        @if($showPackingSlipActions)
+                                            <form
+                                                action="{{ route('admin.orders.packing-slips') }}"
+                                                method="POST"
+                                                target="_blank"
+                                                class="m-0 packing-slip-form"
+                                            >
+                                                @csrf
+                                                <input
+                                                    type="hidden"
+                                                    name="order_ids[]"
+                                                    value="{{ $order->id }}"
+                                                >
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-outline-dark btn-sm"
+                                                    title="In phiếu đóng hàng"
+                                                >
+                                                    <i class="bi bi-printer me-1"></i>
+                                                    <span data-packing-button-label>
+                                                        {{ $order->packing_slip_printed_at ? 'In lại' : 'In phiếu' }}
+                                                    </span>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
                                 <td
-                                    colspan="7"
+                                    colspan="{{ $showPackingSlipActions ? 8 : 7 }}"
                                     class="text-center py-4"
                                 >
                                     Chưa có đơn hàng nào!
@@ -345,11 +444,7 @@
             >
                 <div class="small text-muted">
                     @if($orders->total() > 0)
-                        Hiển thị
-                        {{ $orders->firstItem() }}–{{ $orders->lastItem() }}
-                        trên tổng
-                        {{ number_format($orders->total()) }}
-                        đơn hàng
+                        Hiển thị {{ $orders->firstItem() }}–{{ $orders->lastItem() }} trên tổng {{ number_format($orders->total()) }} đơn hàng
                     @else
                         Không có đơn hàng phù hợp
                     @endif
@@ -422,6 +517,120 @@ async function confirmAndSubmit(selectElement) {
         form.reset();
     }
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const orderCheckboxes = Array.from(
+        document.querySelectorAll('.packing-order-checkbox')
+    );
+    const selectAll = document.getElementById('select-all-orders');
+    const printButton = document.getElementById('print-selected-orders');
+    const selectedCount = document.getElementById('selected-orders-count');
+    const printForm = document.getElementById('print-selected-orders-form');
+    const selectedInputs = document.getElementById('selected-order-inputs');
+
+    if (!selectAll || !printButton || !selectedCount || !printForm || !selectedInputs) {
+        return;
+    }
+
+    function selectedOrders() {
+        return orderCheckboxes.filter((checkbox) => checkbox.checked);
+    }
+
+    function updatePackingSelection() {
+        const selected = selectedOrders();
+
+        printButton.disabled = selected.length === 0;
+        selectedCount.textContent = `Đã chọn ${selected.length} đơn`;
+        selectAll.checked = orderCheckboxes.length > 0
+            && selected.length === orderCheckboxes.length;
+        selectAll.indeterminate = selected.length > 0
+            && selected.length < orderCheckboxes.length;
+    }
+
+    function markOrdersAsPrinted(checkboxes) {
+        const rows = checkboxes
+            .map((checkbox) => checkbox.closest('[data-packing-order-row]'))
+            .filter((row) => row && row.dataset.packingSlipPrinted === '0');
+        const tableBody = rows[0]?.parentElement;
+        const firstPrintedRow = tableBody?.querySelector(
+            '[data-packing-order-row][data-packing-slip-printed="1"]'
+        );
+
+        rows.forEach((row) => {
+            row.dataset.packingSlipPrinted = '1';
+
+            const orderCodeCell = row.querySelector('td:nth-child(2)');
+            const statusWrapper = document.createElement('div');
+            const statusBadge = document.createElement('span');
+
+            statusWrapper.className = 'mt-1';
+            statusWrapper.dataset.packingStatus = '';
+            statusBadge.className = 'badge bg-secondary';
+            statusBadge.textContent = 'Đã in';
+            statusWrapper.appendChild(statusBadge);
+            orderCodeCell?.appendChild(statusWrapper);
+
+            const buttonLabel = row.querySelector('[data-packing-button-label]');
+
+            if (buttonLabel) {
+                buttonLabel.textContent = 'In lại';
+            }
+
+            if (firstPrintedRow) {
+                tableBody.insertBefore(row, firstPrintedRow);
+            } else {
+                tableBody?.appendChild(row);
+            }
+        });
+
+        checkboxes.forEach((checkbox) => {
+            checkbox.checked = false;
+        });
+
+        updatePackingSelection();
+    }
+
+    selectAll.addEventListener('change', function () {
+        orderCheckboxes.forEach((checkbox) => {
+            checkbox.checked = selectAll.checked;
+        });
+
+        updatePackingSelection();
+    });
+
+    orderCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener('change', updatePackingSelection);
+    });
+
+    printButton.addEventListener('click', function () {
+        const selected = selectedOrders();
+
+        selectedInputs.replaceChildren();
+
+        selected.forEach((checkbox) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'order_ids[]';
+            input.value = checkbox.value;
+            selectedInputs.appendChild(input);
+        });
+
+        printForm.submit();
+        markOrdersAsPrinted(selected);
+    });
+
+    document.querySelectorAll('.packing-slip-form').forEach((form) => {
+        form.addEventListener('submit', function () {
+            const checkbox = form
+                .closest('[data-packing-order-row]')
+                ?.querySelector('.packing-order-checkbox');
+
+            if (checkbox) {
+                window.setTimeout(() => markOrdersAsPrinted([checkbox]), 0);
+            }
+        });
+    });
+});
 </script>
 
 @include('admin.orders._cancel_modal')
