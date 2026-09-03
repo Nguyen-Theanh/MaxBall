@@ -459,6 +459,21 @@ class ProductController extends Controller
         }
     }
 
+    public function destroyImage(\Illuminate\Http\Request $request, $id)
+    {
+        $image = \App\Models\ProductImage::findOrFail($id);
+        if ($image->image_url) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($image->image_url);
+        }
+        $image->delete();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Đã xóa ảnh thư viện thành công.']);
+        }
+
+        return back()->with('success', 'Đã xóa ảnh thư viện thành công.');
+    }
+
     public function checkName(Request $request): JsonResponse
     {
         $name = $request->query('name');

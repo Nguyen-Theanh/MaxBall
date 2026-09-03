@@ -234,8 +234,11 @@
                         <label class="form-label">Ảnh chi tiết hiện có</label>
                         <div class="row g-2">
                             @foreach ($product->productImages as $galleryImage)
-                                <div class="col-6 col-md-4">
+                                <div class="col-6 col-md-4 position-relative" id="gallery-image-{{ $galleryImage->id }}">
                                     <img src="{{ $galleryImage->url }}" alt="Ảnh chi tiết" class="img-fluid rounded border">
+                                    <button type="button" class="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 m-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; padding: 0; z-index: 10;" onclick="deleteGalleryImage({{ $galleryImage->id }})">
+                                        <i class="fas fa-times" style="font-size: 12px;"></i>
+                                    </button>
                                 </div>
                             @endforeach
                         </div>
@@ -1240,4 +1243,35 @@ document.addEventListener('input', function(e) {
         }
     }
 });
+</script>
+
+<script>
+function deleteGalleryImage(imageId) {
+    if(!confirm('Bạn có chắc chắn muốn xóa ảnh này không?')) return;
+    
+    const token = document.querySelector('meta[name="csrf-token"]');
+    if (!token) {
+        alert('Lỗi: Không tìm thấy CSRF token.');
+        return;
+    }
+
+    fetch(`/admin/product-images/${imageId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': token.getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success) {
+            document.getElementById(`gallery-image-${imageId}`).remove();
+        } else {
+            alert(data.message || 'Có lỗi xảy ra khi xóa ảnh.');
+        }
+    })
+    .catch(err => {
+        alert('Có lỗi xảy ra khi xóa ảnh.');
+    });
+}
 </script>

@@ -254,6 +254,14 @@ class CheckoutController extends Controller
                 }
             }
 
+            if ($request->payment_method === 'vietqr' && $totalAmount < 2000) {
+                DB::rollBack();
+                return back()->with(
+                    'error',
+                    'Thanh toán trực tuyến chỉ áp dụng cho đơn hàng từ 2.000đ trở lên. Vui lòng chọn thanh toán khi nhận hàng (COD).'
+                )->withInput();
+            }
+
             /*
             |--------------------------------------------------------------------------
             | Tạo đơn hàng

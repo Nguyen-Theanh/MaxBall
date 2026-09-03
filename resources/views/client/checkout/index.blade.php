@@ -67,23 +67,23 @@
                     @endphp
 
                     <div class="space-y-4">
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                            <input type="radio" name="payment_method" value="cod" class="w-5 h-5 text-red-600 focus:ring-red-600" checked>
+                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" id="label_payment_cod">
+                            <input type="radio" name="payment_method" id="payment_cod" value="cod" class="w-5 h-5 text-red-600 focus:ring-red-600" checked>
                             <div class="ml-3">
                                 <span class="block text-sm font-bold text-gray-900">Thanh toán khi nhận hàng (COD)</span>
                                 <span class="block text-xs text-gray-500 mt-1">Hàng được giữ tối đa 24 giờ để cửa hàng xác nhận; nếu bị từ chối hoặc quá hạn, đơn sẽ tự hủy và hàng được trả lại.</span>
                             </div>
                         </label>
                         
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                            <input type="radio" name="payment_method" value="vietqr" class="w-5 h-5 text-red-600 focus:ring-red-600">
+                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" id="label_payment_vietqr">
+                            <input type="radio" name="payment_method" id="payment_vietqr" value="vietqr" class="w-5 h-5 text-red-600 focus:ring-red-600">
                             <div class="ml-3 flex items-center gap-2">
                                 <span class="block text-sm font-bold text-gray-900">Chuyển khoản (VietQR / App Ngân Hàng / MoMo)</span>
                             </div>
                         </label>
 
-                        <label class="flex items-center p-4 border rounded-lg {{ $canPayWithWallet ? 'cursor-pointer hover:bg-gray-50' : 'opacity-60 cursor-not-allowed bg-gray-50' }} transition-colors">
-                            <input type="radio" name="payment_method" value="wallet" class="w-5 h-5 text-red-600 focus:ring-red-600" {{ !$canPayWithWallet ? 'disabled' : '' }}>
+                        <label class="flex items-center p-4 border rounded-lg {{ $canPayWithWallet ? 'cursor-pointer hover:bg-gray-50' : 'opacity-60 cursor-not-allowed bg-gray-50' }} transition-colors" id="label_payment_wallet">
+                            <input type="radio" name="payment_method" id="payment_wallet" value="wallet" class="w-5 h-5 text-red-600 focus:ring-red-600" {{ !$canPayWithWallet ? 'disabled' : '' }}>
                             <div class="ml-3">
                                 <span class="block text-sm font-bold text-gray-900">Thanh toán bằng Ví MaxBall</span>
                                 <span class="block text-xs text-gray-500 mt-1">Số dư hiện tại: <strong class="{{ $canPayWithWallet ? 'text-green-600' : 'text-red-500' }}">{{ number_format($walletBalance, 0, ',', '.') }}đ</strong></span>
@@ -442,24 +442,42 @@
     // Calculate base wallet sufficient check
     function updateWalletSufficientCheck(finalTotal) {
         let walletRadio = document.getElementById('payment_wallet');
+        let walletLabel = document.getElementById('label_payment_wallet');
         if(walletRadio) {
-            let userBalance = {{ Auth::user()->wallet_balance }};
+            let userBalance = {{ Auth::user()->wallet_balance ?? 0 }};
             if(userBalance < finalTotal) {
                 walletRadio.disabled = true;
                 if(walletRadio.checked) {
                     document.getElementById('payment_cod').checked = true;
                 }
+                walletLabel.classList.add('opacity-60', 'cursor-not-allowed', 'bg-gray-50');
+                walletLabel.classList.remove('cursor-pointer', 'hover:bg-gray-50');
                 let span = walletRadio.parentElement.querySelector('span.text-xs.text-red-500');
                 if(!span) {
-                    let container = walletRadio.parentElement.querySelector('.flex-col');
+                    let container = walletRadio.parentElement.querySelector('.ml-3');
                     if(container) {
                         container.innerHTML += `<span class="text-xs text-red-500 block mt-1">(Số dư không đủ)</span>`;
                     }
                 }
             } else {
                 walletRadio.disabled = false;
+                walletLabel.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-50');
+                walletLabel.classList.add('cursor-pointer', 'hover:bg-gray-50');
                 let span = walletRadio.parentElement.querySelector('span.text-xs.text-red-500');
                 if(span) span.remove();
+            }
+        }
+
+        let vietqrRadio = document.getElementById('payment_vietqr');
+        let vietqrLabel = document.getElementById('label_payment_vietqr');
+        if(vietqrRadio && vietqrLabel) {
+            if(finalTotal < 2000) {
+                vietqrLabel.style.display = 'none';
+                if(vietqrRadio.checked) {
+                    document.getElementById('payment_cod').checked = true;
+                }
+            } else {
+                vietqrLabel.style.display = 'flex';
             }
         }
     }
