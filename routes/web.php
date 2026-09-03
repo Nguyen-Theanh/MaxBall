@@ -117,6 +117,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::get('/products/check-name', [AdminProductController::class, 'checkName'])->name('products.check-name');
     Route::resource('products', AdminProductController::class);
+    Route::delete('product-images/{id}', [AdminProductController::class, 'destroyImage'])->name('product-images.destroy');
     Route::get('/coupons/check-code', [CouponController::class, 'checkCode'])->name('coupons.check-code');
     Route::resource('coupons', CouponController::class);
     Route::post('coupons/{coupon}/toggle-status', [CouponController::class, 'toggleStatus'])->name('coupons.toggle-status');

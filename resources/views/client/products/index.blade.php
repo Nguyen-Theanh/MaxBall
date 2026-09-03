@@ -206,11 +206,11 @@
         </div>
 
         @if($topCustomers->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-end max-w-5xl mx-auto">
+            <div id="leaderboard-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8 items-end max-w-5xl mx-auto">
                 {{-- TOP 2 --}}
                 @if($topCustomers->count() > 1)
                     @php $user2 = $topCustomers[1]; @endphp
-                    <div class="order-2 md:order-1 flex flex-col items-center group" data-aos="fade-up" data-aos-delay="100">
+                    <div class="order-2 md:order-1 flex flex-col items-center group" data-aos="fade-up" data-aos-delay="100" data-aos-anchor="#leaderboard-grid">
                         <div class="relative mb-6">
                             <div class="w-24 h-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 p-1 shadow-lg shadow-gray-400/50 transform group-hover:-translate-y-2 transition-all duration-300">
                                 <div class="w-full h-full rounded-full bg-white flex items-center justify-center text-3xl font-black text-gray-400">
@@ -231,7 +231,7 @@
 
                 {{-- TOP 1 --}}
                 @php $user1 = $topCustomers[0]; @endphp
-                <div class="order-1 md:order-2 flex flex-col items-center group z-10" data-aos="fade-up" data-aos-delay="0">
+                <div class="order-1 md:order-2 flex flex-col items-center group z-10" data-aos="fade-up" data-aos-delay="0" data-aos-anchor="#leaderboard-grid">
                     <div class="relative mb-8">
                         <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 text-5xl text-yellow-400 drop-shadow-md z-20 animate-bounce">
                             <i class="fa-solid fa-crown"></i>
@@ -255,7 +255,7 @@
                 {{-- TOP 3 --}}
                 @if($topCustomers->count() > 2)
                     @php $user3 = $topCustomers[2]; @endphp
-                    <div class="order-3 md:order-3 flex flex-col items-center group" data-aos="fade-up" data-aos-delay="200">
+                    <div class="order-3 md:order-3 flex flex-col items-center group" data-aos="fade-up" data-aos-delay="200" data-aos-anchor="#leaderboard-grid">
                         <div class="relative mb-6">
                             <div class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-300 to-orange-500 p-1 shadow-lg shadow-orange-500/50 transform group-hover:-translate-y-2 transition-all duration-300">
                                 <div class="w-full h-full rounded-full bg-white flex items-center justify-center text-3xl font-black text-orange-500">

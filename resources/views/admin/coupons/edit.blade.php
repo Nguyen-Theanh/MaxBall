@@ -130,8 +130,16 @@
             }
 
             const isPercent = discountTypeSelect.value === 'percent';
-            discountValueInput.min = isPercent ? '1' : '1000';
-            discountValueInput.step = isPercent ? '1' : '1000';
+            const isFreeship = discountTypeSelect.value === 'freeship';
+
+            if (isFreeship) {
+                discountValueInput.removeAttribute('min');
+                discountValueInput.removeAttribute('step');
+            } else {
+                discountValueInput.min = isPercent ? '1' : '1000';
+                discountValueInput.step = isPercent ? '1' : '1000';
+            }
+
             if (isPercent) {
                 discountValueInput.max = '100';
             } else {
