@@ -184,7 +184,7 @@ PROMPT;
         $variantTerm = $this->extractVariantTerm($message);
 
         $availableVariant = fn (Builder $query) => $query
-            ->whereRaw('COALESCE(stock, 0) > COALESCE(reserved_stock, 0)');
+            ->whereRaw('COALESCE(stock, 0) > 0');
 
         $query = Product::query()
             ->select(['id', 'category_id', 'name', 'slug', 'description', 'thumbnail', 'base_price', 'discount_price'])
@@ -194,7 +194,7 @@ PROMPT;
                 'category:id,name',
                 'variants' => fn ($query) => $query
                     ->select(['id', 'product_id', 'name', 'base_price', 'discount_price', 'stock', 'reserved_stock'])
-                    ->whereRaw('COALESCE(stock, 0) > COALESCE(reserved_stock, 0)')
+                    ->whereRaw('COALESCE(stock, 0) > 0')
                     ->orderBy('id'),
             ]);
 
@@ -214,7 +214,7 @@ PROMPT;
 
         if ($maxPrice !== null || $minPrice !== null) {
             $query->whereHas('variants', function (Builder $variantQuery) use ($maxPrice, $minPrice): void {
-                $variantQuery->whereRaw('COALESCE(stock, 0) > COALESCE(reserved_stock, 0)');
+                $variantQuery->whereRaw('COALESCE(stock, 0) > 0');
 
                 if ($maxPrice !== null) {
                     $variantQuery->whereRaw('COALESCE(NULLIF(discount_price, 0), base_price) <= ?', [$maxPrice]);

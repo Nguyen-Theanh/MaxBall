@@ -401,36 +401,6 @@ class CheckoutController extends Controller
                         .$orderCode,
                 ]);
 
-                foreach ($cart->items as $item) {
-                    $variant = $item->productVariant;
-                    if ($variant) {
-                        $variant->decrement('stock', $item->quantity);
-                    }
-                }
-                
-                $order->update([
-                    'inventory_committed_at' => now()
-                ]);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | Reserve hàng cho COD
-            |--------------------------------------------------------------------------
-            |
-            | COD:
-            |
-            | Đặt hàng
-            | → giữ tồn kho
-            | → admin có 24h xác nhận
-            | → xác nhận thì chốt tồn
-            | → hết hạn/hủy thì nhả tồn
-            |
-            */
-            if ($request->payment_method === 'cod') {
-                $order = $inventoryService->reserveCod(
-                    $order
-                );
             }
 
             /*

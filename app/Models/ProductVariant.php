@@ -40,7 +40,7 @@ class ProductVariant extends Model
 
     public function getAvailableStockAttribute(): int
     {
-        return max(0, (int) $this->stock - (int) $this->reserved_stock);
+        return max(0, (int) $this->stock);
     }
 
     public function getVariantImageUrlAttribute(): ?string

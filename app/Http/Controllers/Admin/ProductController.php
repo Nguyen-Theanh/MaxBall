@@ -21,10 +21,9 @@ class ProductController extends Controller
     {
         $products = Product::with('category')
             ->withSum('variants', 'stock')
-            ->withSum('variants', 'reserved_stock')
             ->withCount([
                 'variants as out_of_stock_variants_count' => function ($variantQuery) {
-                    $variantQuery->whereRaw('COALESCE(stock, 0) <= COALESCE(reserved_stock, 0)');
+                    $variantQuery->whereRaw('COALESCE(stock, 0) <= 0');
                 },
             ])
             ->when($request->filled('q'), function ($query) use ($request) {
@@ -46,7 +45,7 @@ class ProductController extends Controller
                 $query
                     ->whereHas('variants')
                     ->whereDoesntHave('variants', function ($variantQuery) {
-                        $variantQuery->whereRaw('COALESCE(stock, 0) <= COALESCE(reserved_stock, 0)');
+                        $variantQuery->whereRaw('COALESCE(stock, 0) <= 0');
                     });
             })
             ->when($request->input('stock_status') === 'out_of_stock', function ($query) {
@@ -54,7 +53,7 @@ class ProductController extends Controller
                     $stockQuery
                         ->whereDoesntHave('variants')
                         ->orWhereHas('variants', function ($variantQuery) {
-                            $variantQuery->whereRaw('COALESCE(stock, 0) <= COALESCE(reserved_stock, 0)');
+                            $variantQuery->whereRaw('COALESCE(stock, 0) <= 0');
                         });
                 });
             })
@@ -62,7 +61,7 @@ class ProductController extends Controller
                 $query->with([
                     'variants' => function ($variantQuery) {
                         $variantQuery
-                            ->whereRaw('COALESCE(stock, 0) <= COALESCE(reserved_stock, 0)')
+                            ->whereRaw('COALESCE(stock, 0) <= 0')
                             ->orderBy('name')
                             ->orderBy('id');
                     },
@@ -290,29 +289,6 @@ class ProductController extends Controller
                     }
                 }
 
-                if ($product instanceof Product && ! empty($variant['id']) && array_key_exists('stock', $variant)) {
-                    $reservedStock = (int) $product->variants()
-                        ->whereKey((int) $variant['id'])
-                        ->value('reserved_stock');
-
-                    if ((int) $variant['stock'] < $reservedStock) {
-                        $validator->errors()->add(
-                            "variants.{$index}.stock",
-                            "Tồn kho không được thấp hơn {$reservedStock} sản phẩm đang giữ cho đơn COD."
-                        );
-                    }
-                }
-            }
-
-            if ($product instanceof Product && empty($request->input('variants', [])) && $request->filled('stock')) {
-                $reservedStock = (int) $product->variants()->value('reserved_stock');
-
-                if ($request->integer('stock') < $reservedStock) {
-                    $validator->errors()->add(
-                        'stock',
-                        "Tồn kho không được thấp hơn {$reservedStock} sản phẩm đang giữ cho đơn COD."
-                    );
-                }
             }
         });
 

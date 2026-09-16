@@ -78,7 +78,7 @@
                     <tbody>
                         @forelse ($products as $product)
                             @php
-                                $availableStock = max(0, (int) $product->variants_sum_stock - (int) $product->variants_sum_reserved_stock);
+                                $availableStock = max(0, (int) $product->variants_sum_stock);
                             @endphp
                             <tr>
                                 <td>
@@ -117,12 +117,6 @@
                                         <span class="badge text-bg-success">Đang hiện</span>
                                     @else
                                         <span class="badge text-bg-secondary">Đang ẩn</span>
-                                    @endif
-
-                                    @if ((int) $product->variants_sum_reserved_stock > 0)
-                                        <div class="text-primary fw-bold mt-2" style="font-size: 0.8rem;">
-                                            Đang giữ: {{ (int) $product->variants_sum_reserved_stock }}
-                                        </div>
                                     @endif
 
                                     @if ((int) $product->out_of_stock_variants_count > 0)

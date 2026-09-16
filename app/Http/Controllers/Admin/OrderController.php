@@ -167,8 +167,7 @@ class OrderController extends Controller
     public function updateStatus(
         Request $request,
         Order $order,
-        OrderCancellationNotifier $notifier,
-        OrderInventoryService $inventoryService
+        OrderCancellationNotifier $notifier
     ) {
         $rules = [
             'order_status' => [
@@ -301,57 +300,13 @@ class OrderController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Xác nhận đơn COD
+        | Xác nhận đơn hàng (Trừ tồn kho)
         |--------------------------------------------------------------------------
-        |
-        | Khi admin xác nhận đơn COD:
-        |
-        | - OrderInventoryService xử lý tồn kho.
-        | - Kiểm tra timeout 24 giờ.
-        | - Nếu đơn đã quá hạn thì service có thể tự hủy và nhả hàng.
-        |
+        | Tất cả các đơn hàng đều chỉ được trừ kho khi admin xác nhận.
+        | Kiểm tra tồn kho trước khi xác nhận.
         */
         if (
             $newStatus === 'confirmed'
-            && $order->payment_method === 'cod'
-        ) {
-            try {
-                $order = $inventoryService->confirmCod($order);
-            } catch (DomainException $e) {
-                return back()->with(
-                    'error',
-                    $e->getMessage()
-                );
-            }
-
-            /*
-            | Nếu service phát hiện đơn COD quá hạn
-            | và tự chuyển sang cancelled.
-            */
-            if ($order->order_status === 'cancelled') {
-                $notifier->send($order);
-
-                return back()->with(
-                    'error',
-                    'Đơn COD đã quá hạn 24 giờ nên hệ thống đã tự hủy và nhả hàng.'
-                );
-            }
-
-            return back()->with(
-                'success',
-                'Đã xác nhận đơn COD và trừ số lượng khỏi kho.'
-            );
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Xác nhận đơn không phải COD (Ví, VietQR)
-        |--------------------------------------------------------------------------
-        | Kiểm tra và trừ tồn kho nếu đơn hàng chưa được trừ kho
-        */
-        if (
-            $newStatus === 'confirmed'
-            && $order->payment_method !== 'cod'
             && ! $order->inventory_committed_at
         ) {
             // Kiểm tra số lượng tồn kho trước khi xác nhận
@@ -447,17 +402,19 @@ class OrderController extends Controller
         */
         try {
             if ($newStatus === 'cancelled') {
-                /*
-                | Service chịu trách nhiệm:
-                |
-                | - cập nhật trạng thái
-                | - hoàn / nhả tồn kho
-                | - tránh cộng kho hai lần
-                */
-                $order = $inventoryService->cancel(
-                    $order,
-                    $updateData
-                );
+                if ($order->inventory_committed_at && ! $order->inventory_released_at) {
+                    foreach ($order->details as $detail) {
+                        if ($detail->variant) {
+                            $detail->variant->increment('stock', $detail->quantity);
+                        }
+                    }
+                    $updateData['inventory_released_at'] = now();
+                }
+
+                $order->update($updateData);
+
+                // Khôi phục mã giảm giá
+                app(\App\Services\VoucherService::class)->restoreForCancelledOrder($order);
             } else {
                 $order->update($updateData);
             }
