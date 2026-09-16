@@ -309,7 +309,7 @@
             window.clearTimeout(closeTimer);
             previouslyFocused = document.activeElement;
             titleElement.textContent = options.title || 'Xác nhận thao tác';
-            messageElement.textContent = options.message || 'Bạn có chắc chắn muốn tiếp tục?';
+            messageElement.innerHTML = options.message || 'Bạn có chắc chắn muốn tiếp tục?';
             cancelButton.textContent = options.cancelLabel || 'Hủy';
             confirmButton.textContent = options.confirmLabel || 'Xác nhận';
             const showCancel = options.showCancel !== false;

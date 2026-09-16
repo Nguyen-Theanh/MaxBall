@@ -81,6 +81,10 @@
                         <p class="text-sm text-gray-500 mb-1">Số dư hiện tại</p>
                         <p class="text-3xl font-black text-red-600">{{ number_format($user->wallet_balance ?? 0, 0, ',', '.') }}đ</p>
                     </div>
+                    <div class="flex gap-2">
+                        <button onclick="openDepositModal()" class="px-4 py-2 bg-[#d92525] text-white rounded font-medium shadow hover:bg-red-700 transition">Nạp tiền</button>
+                        <button onclick="openWithdrawModal()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded font-medium shadow hover:bg-gray-50 transition">Rút tiền</button>
+                    </div>
                 </div>
 
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Lịch sử giao dịch</h3>
@@ -106,6 +110,8 @@
                                                 <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">Hoàn tiền</span>
                                             @elseif($transaction->type === 'payment')
                                                 <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-bold">Thanh toán</span>
+                                            @elseif($transaction->type === 'withdraw')
+                                                <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-bold">Rút tiền {{ $transaction->status == 'pending' ? '(Chờ)' : '' }}</span>
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 font-bold {{ in_array($transaction->type, ['deposit', 'refund']) ? 'text-green-600' : 'text-red-600' }}">
@@ -125,6 +131,70 @@
                         Chưa có giao dịch nào.
                     </div>
                 @endif
+
+                <!-- Deposit Modal -->
+                <div id="deposit-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4">
+                    <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl relative">
+                        <button onclick="closeDepositModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Nạp tiền vào ví</h3>
+                        <form action="{{ route('client.wallet.deposit') }}" method="POST" id="deposit-form">
+                            @csrf
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Số tiền cần nạp (VNĐ)</label>
+                                <input type="number" name="amount" id="deposit-amount" class="w-full rounded border border-gray-300 px-3 py-2 outline-none focus:border-[#d92525]" placeholder="Nhập số tiền..." min="10000" step="1" required>
+                                <p class="text-xs text-red-500 mt-1 hidden" id="deposit-error">Vui lòng nhập số tiền hợp lệ (tối thiểu 10.000đ).</p>
+                            </div>
+                            <div class="mb-4 grid grid-cols-3 gap-2">
+                                <button type="button" class="btn-preset py-1 border border-gray-200 rounded text-sm hover:bg-red-50 hover:border-red-200" data-amount="50000">50.000đ</button>
+                                <button type="button" class="btn-preset py-1 border border-gray-200 rounded text-sm hover:bg-red-50 hover:border-red-200" data-amount="100000">100.000đ</button>
+                                <button type="button" class="btn-preset py-1 border border-gray-200 rounded text-sm hover:bg-red-50 hover:border-red-200" data-amount="200000">200.000đ</button>
+                                <button type="button" class="btn-preset py-1 border border-gray-200 rounded text-sm hover:bg-red-50 hover:border-red-200" data-amount="500000">500.000đ</button>
+                                <button type="button" class="btn-preset py-1 border border-gray-200 rounded text-sm hover:bg-red-50 hover:border-red-200" data-amount="1000000">1.000.000đ</button>
+                                <button type="button" class="btn-preset py-1 border border-gray-200 rounded text-sm hover:bg-red-50 hover:border-red-200" data-amount="2000000">2.000.000đ</button>
+                                <button type="button" class="btn-preset py-1 border border-gray-200 rounded text-sm hover:bg-red-50 hover:border-red-200" data-amount="5000000">5.000.000đ</button>
+                            </div>
+                            <button type="submit" class="w-full bg-[#d92525] text-white rounded py-2 font-bold hover:bg-red-700 transition">Tạo mã nạp tiền</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Withdraw Modal -->
+                <div id="withdraw-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4">
+                    <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl relative">
+                        <button onclick="closeWithdrawModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Rút tiền về ngân hàng</h3>
+                        <form action="{{ route('client.wallet.withdraw') }}" method="POST" id="withdraw-form">
+                            @csrf
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Số tiền cần rút (VNĐ)</label>
+                                <input type="text" id="withdraw-amount-display" class="w-full rounded border border-gray-300 px-3 py-2 outline-none focus:border-[#d92525]" placeholder="Nhập số tiền..." required>
+                                <input type="hidden" name="amount" id="withdraw-amount" min="50000" max="{{ $user->wallet_balance ?? 0 }}" required>
+                                <p class="text-xs text-red-500 mt-1 hidden" id="withdraw-error">Số dư không đủ hoặc số tiền không hợp lệ (tối thiểu 50.000đ).</p>
+                                <p class="text-xs text-gray-500 mt-1">Số dư khả dụng: <span class="font-bold text-gray-800">{{ number_format($user->wallet_balance ?? 0, 0, ',', '.') }}đ</span></p>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tên ngân hàng</label>
+                                <select name="bank_name" id="bank-select" class="w-full rounded border border-gray-300 px-3 py-2 outline-none focus:border-[#d92525]" required>
+                                    <option value="">Đang tải danh sách ngân hàng...</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Số tài khoản</label>
+                                <input type="text" name="account_number" class="w-full rounded border border-gray-300 px-3 py-2 outline-none focus:border-[#d92525]" placeholder="Nhập số tài khoản..." required maxlength="50">
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tên chủ tài khoản</label>
+                                <input type="text" name="account_name" class="w-full rounded border border-gray-300 px-3 py-2 outline-none focus:border-[#d92525] uppercase" placeholder="VD: NGUYEN VAN A" required maxlength="100">
+                            </div>
+                            <button type="submit" class="w-full bg-[#d92525] text-white rounded py-2 font-bold hover:bg-red-700 transition">Tạo yêu cầu rút tiền</button>
+                        </form>
+                    </div>
+                </div>
+
             </div>
 
             <!-- TAB: PROFILE -->
@@ -510,7 +580,143 @@
 
 @push('scripts')
 @include('client.partials.vietnam-address-script')
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<style>
+    /* Custom Tom Select Tailwind styles */
+    .ts-control { border-radius: 0.25rem; border-color: #d1d5db; padding: 0.5rem 0.75rem; }
+    .ts-wrapper.single .ts-control { display: flex; flex-wrap: nowrap; align-items: center; }
+    .ts-wrapper.single .ts-control > .item { flex-shrink: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ts-wrapper.single .ts-control > input { flex-grow: 1; min-width: 0 !important; width: 0 !important; margin: 0 !important; }
+    .ts-control.focus { border-color: #d92525; box-shadow: none; }
+    .ts-dropdown { border-radius: 0.25rem; z-index: 1050; }
+    .bank-option { display: flex; align-items: center; gap: 8px; }
+    .ts-control .bank-option { display: inline-flex; }
+    .bank-logo { width: 24px; height: 24px; object-fit: contain; }
+</style>
 <script>
+    // Fetch banks list from VietQR API
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('https://api.vietqr.io/v2/banks')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('bank-select');
+                select.innerHTML = '<option value="">Chọn ngân hàng...</option>';
+                
+                if (data.code === '00' && data.data) {
+                    data.data.forEach(bank => {
+                        const option = document.createElement('option');
+                        // Save logo in dataset for Tom Select to render
+                        option.value = bank.shortName + ' - ' + bank.name;
+                        option.textContent = bank.shortName + ' (' + bank.name + ')';
+                        option.dataset.logo = bank.logo;
+                        option.dataset.code = bank.code;
+                        select.appendChild(option);
+                    });
+
+                    // Initialize Tom Select
+                    new TomSelect("#bank-select", {
+                        create: false,
+                        sortField: {
+                            field: "text",
+                            direction: "asc"
+                        },
+                        render: {
+                            option: function(data, escape) {
+                                return '<div class="bank-option">' +
+                                    '<img class="bank-logo" src="' + escape(data.logo) + '" />' +
+                                    '<span>' + escape(data.text) + '</span>' +
+                                '</div>';
+                            },
+                            item: function(data, escape) {
+                                return '<div class="bank-option">' +
+                                    '<img class="bank-logo" src="' + escape(data.logo) + '" />' +
+                                    '<span>' + escape(data.text) + '</span>' +
+                                '</div>';
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching banks:', error);
+                document.getElementById('bank-select').innerHTML = '<option value="">Không tải được danh sách, vui lòng nhập tay.</option>';
+                // Fallback to basic text input if API fails
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'bank_name';
+                input.className = 'w-full rounded border border-gray-300 px-3 py-2 outline-none focus:border-[#d92525]';
+                input.placeholder = 'VD: MB Bank, Vietcombank...';
+                input.required = true;
+                const select = document.getElementById('bank-select');
+                select.parentNode.replaceChild(input, select);
+            });
+    });
+    function openDepositModal() {
+        document.getElementById('deposit-modal').classList.remove('hidden');
+        document.getElementById('deposit-modal').classList.add('flex');
+    }
+    function closeDepositModal() {
+        document.getElementById('deposit-modal').classList.add('hidden');
+        document.getElementById('deposit-modal').classList.remove('flex');
+    }
+    function openWithdrawModal() {
+        document.getElementById('withdraw-modal').classList.remove('hidden');
+        document.getElementById('withdraw-modal').classList.add('flex');
+    }
+    function closeWithdrawModal() {
+        document.getElementById('withdraw-modal').classList.add('hidden');
+        document.getElementById('withdraw-modal').classList.remove('flex');
+    }
+
+    const withdrawDisplay = document.getElementById('withdraw-amount-display');
+    const withdrawReal = document.getElementById('withdraw-amount');
+    const maxBalance = {{ $user->wallet_balance ?? 0 }};
+
+    if (withdrawDisplay) {
+        withdrawDisplay.addEventListener('input', function(e) {
+            let val = this.value.replace(/\D/g, '');
+            if (val === '') {
+                withdrawReal.value = '';
+                this.value = '';
+                return;
+            }
+            let num = parseInt(val, 10);
+            if (num > maxBalance) {
+                num = maxBalance;
+            }
+            withdrawReal.value = num;
+            this.value = num.toLocaleString('vi-VN');
+        });
+    }
+
+    document.getElementById('withdraw-form')?.addEventListener('submit', function(e) {
+        const amount = document.getElementById('withdraw-amount').value;
+        const maxBalance = {{ $user->wallet_balance ?? 0 }};
+        if (!amount || isNaN(amount) || amount < 50000 || amount > maxBalance || !Number.isInteger(Number(amount))) {
+            e.preventDefault();
+            document.getElementById('withdraw-error').classList.remove('hidden');
+        } else {
+            document.getElementById('withdraw-error').classList.add('hidden');
+        }
+    });
+    
+    document.querySelectorAll('.btn-preset').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('deposit-amount').value = this.dataset.amount;
+        });
+    });
+
+    document.getElementById('deposit-form')?.addEventListener('submit', function(e) {
+        const amount = document.getElementById('deposit-amount').value;
+        if (!amount || isNaN(amount) || amount < 10000 || !Number.isInteger(Number(amount))) {
+            e.preventDefault();
+            document.getElementById('deposit-error').classList.remove('hidden');
+        } else {
+            document.getElementById('deposit-error').classList.add('hidden');
+        }
+    });
+
     // Tab switching logic
     function switchTab(tabId) {
         // Hide all tabs

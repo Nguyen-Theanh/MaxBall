@@ -400,6 +400,17 @@ class CheckoutController extends Controller
                     'description' => 'Thanh toán đơn hàng #'
                         .$orderCode,
                 ]);
+
+                foreach ($cart->items as $item) {
+                    $variant = $item->productVariant;
+                    if ($variant) {
+                        $variant->decrement('stock', $item->quantity);
+                    }
+                }
+                
+                $order->update([
+                    'inventory_committed_at' => now()
+                ]);
             }
 
             /*

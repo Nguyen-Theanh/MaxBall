@@ -23,6 +23,7 @@ use App\Http\Controllers\Client\ReviewController;
 use App\Http\Controllers\Client\UserAddressController;
 use App\Http\Controllers\Client\VietnamAddressController;
 use App\Http\Controllers\Client\VoucherController;
+use App\Http\Controllers\Client\WalletController;
 use Illuminate\Support\Facades\Route;
 
 // Client
@@ -58,6 +59,12 @@ Route::middleware('auth')->group(function () {
     Route::put('/account/addresses/{address}', [UserAddressController::class, 'update'])->name('account.addresses.update');
     Route::delete('/account/addresses/{address}', [UserAddressController::class, 'destroy'])->name('account.addresses.destroy');
     Route::patch('/account/addresses/{address}/default', [UserAddressController::class, 'setDefault'])->name('account.addresses.setDefault');
+
+    // Ví MaxBall
+    Route::post('/account/wallet/deposit', [WalletController::class, 'deposit'])->name('client.wallet.deposit');
+    Route::get('/account/wallet/deposit-qr/{reference_code}', [WalletController::class, 'depositQr'])->name('client.wallet.deposit_qr');
+    Route::get('/account/wallet/check-status/{reference_code}', [WalletController::class, 'checkDepositStatus'])->name('client.wallet.check_status');
+    Route::post('/account/wallet/withdraw', [WalletController::class, 'withdraw'])->name('client.wallet.withdraw');
 
     // Giỏ hàng
     Route::get('/gio-hang', [CartController::class, 'index'])->name('client.cart.index');
@@ -154,6 +161,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/contacts/{contact}', [App\Http\Controllers\Admin\ContactController::class, 'show'])->name('contacts.show');
     Route::patch('/contacts/{contact}/status', [App\Http\Controllers\Admin\ContactController::class, 'updateStatus'])->name('contacts.updateStatus');
     Route::delete('/contacts/{contact}', [App\Http\Controllers\Admin\ContactController::class, 'destroy'])->name('contacts.destroy');
+
+    // Quản lý rút tiền
+    Route::get('/withdrawals', [App\Http\Controllers\Admin\WithdrawController::class, 'index'])->name('withdrawals.index');
+    Route::post('/withdrawals/{id}/approve', [App\Http\Controllers\Admin\WithdrawController::class, 'approve'])->name('withdrawals.approve');
+    Route::post('/withdrawals/{id}/reject', [App\Http\Controllers\Admin\WithdrawController::class, 'reject'])->name('withdrawals.reject');
 });
 
 // Webhook Route (No CSRF needed, configure in bootstrap/app.php)

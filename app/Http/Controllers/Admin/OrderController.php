@@ -345,6 +345,39 @@ class OrderController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | Xác nhận đơn không phải COD (Ví, VietQR)
+        |--------------------------------------------------------------------------
+        | Kiểm tra và trừ tồn kho nếu đơn hàng chưa được trừ kho
+        */
+        if (
+            $newStatus === 'confirmed'
+            && $order->payment_method !== 'cod'
+            && ! $order->inventory_committed_at
+        ) {
+            // Kiểm tra số lượng tồn kho trước khi xác nhận
+            foreach ($order->details as $detail) {
+                if ($detail->variant && (int) $detail->variant->stock < $detail->quantity) {
+                    return back()->with(
+                        'error',
+                        "Không thể xác nhận đơn hàng. Sản phẩm '{$detail->variant->product->name} - {$detail->variant->name}' hiện chỉ còn {$detail->variant->stock} trong kho (yêu cầu: {$detail->quantity})."
+                    );
+                }
+            }
+
+            // Trừ tồn kho
+            foreach ($order->details as $detail) {
+                if ($detail->variant) {
+                    $detail->variant->decrement('stock', $detail->quantity);
+                }
+            }
+
+            $order->update([
+                'inventory_committed_at' => now(),
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | Dữ liệu cập nhật đơn hàng
         |--------------------------------------------------------------------------
         */

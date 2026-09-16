@@ -53,6 +53,12 @@ class AccountController extends Controller
 
         $walletTransactions = $request->user()
             ->walletTransactions()
+            ->where(function ($query) {
+                $query->where('status', 'completed')
+                      ->orWhere(function ($sub) {
+                          $sub->where('type', 'withdraw')->where('status', 'pending');
+                      });
+            })
             ->orderByDesc('created_at')
             ->paginate(10, ['*'], 'wallet_page')
             ->fragment('wallet');

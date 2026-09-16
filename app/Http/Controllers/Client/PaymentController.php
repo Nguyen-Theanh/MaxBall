@@ -72,6 +72,25 @@ class PaymentController extends Controller
         $content = $data['content'] ?? '';
         $transferAmount = $data['transferAmount'] ?? 0;
         
+        // Cố gắng tìm giao dịch nạp tiền (deposit)
+        $deposits = \App\Models\WalletTransaction::where('type', 'deposit')->where('status', 'pending')->get();
+        foreach ($deposits as $deposit) {
+            if (stripos($content, $deposit->reference_code) !== false) {
+                if ($transferAmount >= $deposit->amount) {
+                    $deposit->update(['status' => 'completed']);
+                    
+                    // Cộng tiền vào ví
+                    $user = $deposit->user;
+                    if ($user) {
+                        $user->increment('wallet_balance', $deposit->amount);
+                    }
+
+                    Log::info("Deposit {$deposit->reference_code} marked as COMPLETED via SePay.");
+                    return response()->json(['success' => true, 'message' => 'Deposit updated']);
+                }
+            }
+        }
+
         // Cố gắng tìm mã đơn hàng trong nội dung chuyển khoản
         $orders = Order::where('payment_status', '!=', 'paid')->get();
         
@@ -85,12 +104,15 @@ class PaymentController extends Controller
                 if ($transferAmount >= $order->total_amount) {
                     $order->update(['payment_status' => 'paid']);
                     
-                    // Deduct stock on successful online payment
-                    $order->load('details.variant');
-                    foreach ($order->details as $detail) {
-                        if ($detail->variant) {
-                            $detail->variant->decrement('stock', $detail->quantity);
+                    // Deduct stock on successful online payment if not already committed
+                    if (!$order->inventory_committed_at) {
+                        $order->load('details.variant');
+                        foreach ($order->details as $detail) {
+                            if ($detail->variant) {
+                                $detail->variant->decrement('stock', $detail->quantity);
+                            }
                         }
+                        $order->update(['inventory_committed_at' => now()]);
                     }
 
                     Log::info("Order {$order->order_code} marked as PAID via SePay.");
@@ -101,6 +123,6 @@ class PaymentController extends Controller
             }
         }
 
-        return response()->json(['success' => true, 'message' => 'Webhook received but no matching order found']);
+        return response()->json(['success' => true, 'message' => 'Webhook received but no matching order/deposit found']);
     }
 }
