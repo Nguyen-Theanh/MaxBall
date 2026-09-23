@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         form.action = trigger.dataset.action;
         orderIdInput.value = trigger.dataset.orderId;
-        orderCode.textContent = #;
+        orderCode.textContent = '#' + trigger.dataset.orderCode;
         
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -109,24 +109,29 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('flex');
     };
 
-    document.querySelectorAll('[data-customer-return]').forEach((trigger) => {
-        trigger.addEventListener('click', () => openModal(trigger));
-    });
+    document.addEventListener('click', (event) => {
+        const returnTrigger = event.target.closest('[data-customer-return]');
+        if (returnTrigger) {
+            openModal(returnTrigger);
+            return;
+        }
 
-    document.querySelectorAll('[data-close-customer-return]').forEach((button) => {
-        button.addEventListener('click', closeModal);
-    });
+        const closeTrigger = event.target.closest('[data-close-customer-return]');
+        if (closeTrigger) {
+            closeModal();
+            return;
+        }
 
-    modal.addEventListener('click', (event) => {
         if (event.target === modal) {
             closeModal();
+            return;
         }
     });
 
     const restoredOrderId = @json(old('return_order_id'));
     if (restoredOrderId) {
         const type = @json(old('type', 'return'));
-        const restoredTrigger = document.querySelector([data-customer-return][data-order-id=""][data-return-type=""]);
+        const restoredTrigger = document.querySelector('[data-customer-return][data-order-id="' + restoredOrderId + '"][data-return-type="' + type + '"]');
         if (restoredTrigger) {
             openModal(restoredTrigger, true);
         }
