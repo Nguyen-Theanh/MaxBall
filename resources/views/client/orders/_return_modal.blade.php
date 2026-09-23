@@ -1,4 +1,4 @@
-﻿<div id="customer-return-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 px-4 py-8">
+<div id="customer-return-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 px-4 py-8">
     <div class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh] flex flex-col">
         <div class="flex items-center justify-between border-b px-6 py-4 shrink-0">
             <div>
@@ -27,7 +27,7 @@
                         <option value="Khác" @selected(old('reason') === 'Khác')>Khác</option>
                     </select>
                     @error('reason')
-                        <p class="mt-1 text-xs text-red-600">{{  }}</p>
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -38,7 +38,7 @@
                     <textarea id="customer-return-description" name="description" rows="4" maxlength="1000" class="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10" placeholder="Vui lòng cung cấp thêm thông tin chi tiết về tình trạng hàng hóa..." required>{{ old('description') }}</textarea>
                     <p class="mt-1 text-xs text-gray-500">Tối đa 1.000 ký tự.</p>
                     @error('description')
-                        <p class="mt-1 text-xs text-red-600">{{  }}</p>
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -49,10 +49,10 @@
                     <input type="file" name="images[]" multiple accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
                     <p class="mt-1 text-xs text-gray-500">Bạn có thể chọn tối đa 5 ảnh.</p>
                     @error('images')
-                        <p class="mt-1 text-xs text-red-600">{{  }}</p>
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                     @error('images.*')
-                        <p class="mt-1 text-xs text-red-600">{{  }}</p>
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
 
