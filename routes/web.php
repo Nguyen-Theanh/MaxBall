@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\OrderReturnController as AdminOrderReturnController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\PromotionAnnouncementController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
@@ -92,6 +93,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/don-hang', [ClientOrderController::class, 'index'])->name('client.orders.index');
     Route::get('/don-hang/{id}', [ClientOrderController::class, 'show'])->name('client.orders.show');
     Route::put('/don-hang/{id}/cancel', [ClientOrderController::class, 'cancel'])->name('client.orders.cancel');
+    Route::post('/don-hang/{id}/return', [ClientOrderController::class, 'return'])->name('client.orders.return');
     Route::put('/don-hang/{id}/confirm-receipt', [ClientOrderController::class, 'confirmReceipt'])->name('client.orders.confirmReceipt');
     Route::post('/don-hang/{order}/san-pham/{orderDetail}/danh-gia', [ReviewController::class, 'store'])
         ->name('client.orders.reviews.store');
@@ -144,6 +146,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::patch('/orders/{order}/payment-status', [AdminOrderController::class, 'updatePaymentStatus'])->name('orders.updatePaymentStatus');
+
+    // Quản lý yêu cầu trả hàng / khiếu nại
+    Route::get('/returns', [AdminOrderReturnController::class, 'index'])->name('returns.index');
+    Route::get('/returns/{id}', [AdminOrderReturnController::class, 'show'])->name('returns.show');
+    Route::patch('/returns/{id}/status', [AdminOrderReturnController::class, 'updateStatus'])->name('returns.updateStatus');
 
     // Quản lý đánh giá
     Route::get('/reviews', [AdminReviewController::class, 'index'])->name('reviews.index');

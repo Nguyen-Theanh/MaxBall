@@ -179,6 +179,33 @@
                         Đã nhận được hàng
                     </button>
                 </form>
+            @elseif($order->order_status == 'completed')
+                @if($order->returnRequest)
+                    <span class="px-4 py-2 bg-orange-100 text-orange-800 font-bold rounded-lg">
+                        {{ $order->returnRequest->type_label }}: {{ $order->returnRequest->status_label }}
+                    </span>
+                @else
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button type="button"
+                                data-customer-return
+                                data-return-type="return"
+                                data-order-id="{{ $order->id }}"
+                                data-order-code="{{ $order->order_code }}"
+                                data-action="{{ route('client.orders.return', $order->id) }}"
+                                class="w-full sm:w-auto px-6 py-2.5 border-2 border-[#d92525] text-[#d92525] font-bold rounded-lg hover:bg-red-50 transition-colors">
+                            Trả hàng / Hoàn tiền
+                        </button>
+                        <button type="button"
+                                data-customer-return
+                                data-return-type="complaint"
+                                data-order-id="{{ $order->id }}"
+                                data-order-code="{{ $order->order_code }}"
+                                data-action="{{ route('client.orders.return', $order->id) }}"
+                                class="w-full sm:w-auto px-6 py-2.5 border-2 border-gray-500 text-gray-500 font-bold rounded-lg hover:bg-gray-50 transition-colors">
+                            Khiếu nại
+                        </button>
+                    </div>
+                @endif
             @endif
         </div>
     </div>
@@ -186,4 +213,5 @@
 
 @include('client.orders._cancel_modal')
 @include('client.orders._review_modal')
+@include('client.orders._return_modal')
 @endsection

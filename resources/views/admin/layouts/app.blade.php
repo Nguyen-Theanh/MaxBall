@@ -174,6 +174,17 @@
                 @endif
             </a>
 
+            <a href="{{ route('admin.returns.index') }}" class="sidebar-link flex items-center justify-between px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.returns.*') ? 'active' : '' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"></path></svg>
+                    Đổi trả / Khiếu nại
+                </div>
+                @php $pendingReturnsCount = \App\Models\OrderReturn::where('status', 'pending')->count(); @endphp
+                @if($pendingReturnsCount > 0)
+                    <span class="inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-orange-500 rounded-full">{{ $pendingReturnsCount }}</span>
+                @endif
+            </a>
+
             <a href="{{ route('admin.reviews.index') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 font-medium {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l2.036 6.264h6.586c.969 0 1.371 1.24.588 1.81l-5.328 3.87 2.035 6.264c.3.921-.755 1.688-1.539 1.118L12 18.382l-5.329 3.871c-.783.57-1.838-.197-1.539-1.118l2.036-6.264-5.329-3.87c-.783-.57-.38-1.81.588-1.81h6.586l2.036-6.264z"></path></svg>
                 Đánh giá

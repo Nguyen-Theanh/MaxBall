@@ -101,7 +101,7 @@
                                 Xem chi tiết
                             </a>
                             
-@if(in_array($order->order_status, ['pending', 'confirmed', 'processing']))
+                            @if(in_array($order->order_status, ['pending', 'confirmed', 'processing']))
                                 <button type="button"
                                         data-customer-cancel
                                         data-order-id="{{ $order->id }}"
@@ -122,6 +122,31 @@
                                         Đã nhận được hàng
                                     </button>
                                 </form>
+                            @elseif($order->order_status == 'completed')
+                                @if($order->returnRequest)
+                                    <span class="px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded">
+                                        {{ $order->returnRequest->type_label }}: {{ $order->returnRequest->status_label }}
+                                    </span>
+                                @else
+                                    <button type="button"
+                                            data-customer-return
+                                            data-return-type="return"
+                                            data-order-id="{{ $order->id }}"
+                                            data-order-code="{{ $order->order_code }}"
+                                            data-action="{{ route('client.orders.return', $order->id) }}"
+                                            class="px-4 py-2 border border-[#d92525] text-[#d92525] text-sm font-bold rounded hover:bg-red-50 transition-colors">
+                                        Trả hàng / Hoàn tiền
+                                    </button>
+                                    <button type="button"
+                                            data-customer-return
+                                            data-return-type="complaint"
+                                            data-order-id="{{ $order->id }}"
+                                            data-order-code="{{ $order->order_code }}"
+                                            data-action="{{ route('client.orders.return', $order->id) }}"
+                                            class="px-4 py-2 border border-gray-500 text-gray-500 text-sm font-bold rounded hover:bg-gray-50 transition-colors">
+                                        Khiếu nại
+                                    </button>
+                                @endif
                             @endif
                         </div>
                     </div>
@@ -150,4 +175,5 @@
 
 @include('client.orders._cancel_modal')
 @include('client.orders._review_modal')
+@include('client.orders._return_modal')
 @endsection

@@ -20,6 +20,7 @@ class OrderController extends Controller
         $orders = Order::with([
             'details.variant.product',
             'details.review',
+            'returnRequest',
         ])
             ->where('user_id', Auth::id())
             ->orderByDesc('created_at')
@@ -45,6 +46,7 @@ class OrderController extends Controller
         $order = Order::with([
             'details.variant.product',
             'details.review',
+            'returnRequest',
         ])
             ->where('user_id', Auth::id())
             ->findOrFail($id);
@@ -271,5 +273,47 @@ class OrderController extends Controller
             'success',
             'Cảm ơn bạn đã xác nhận nhận hàng thành công!'
         );
+    }
+
+    public function return(Request $request, $id)
+    {
+        $order = Order::where('user_id', Auth::id())
+            ->where('order_status', 'completed')
+            ->doesntHave('returnRequest')
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'type' => ['required', Rule::in(['return', 'complaint'])],
+            'reason' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:1000'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg', 'max:2048'],
+        ], [
+            'reason.required' => 'Vui lòng chọn lý do.',
+            'description.required' => 'Vui lòng nhập mô tả chi tiết.',
+            'images.max' => 'Chỉ được tải lên tối đa 5 ảnh.',
+            'images.*.image' => 'File phải là hình ảnh.',
+            'images.*.max' => 'Kích thước ảnh tối đa 2MB.',
+        ]);
+
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $imagePaths[] = $image->store('order_returns', 'public');
+            }
+        }
+
+        $order->returnRequest()->create([
+            'user_id' => Auth::id(),
+            'type' => $validated['type'],
+            'reason' => $validated['reason'],
+            'description' => $validated['description'],
+            'images' => !empty($imagePaths) ? $imagePaths : null,
+            'status' => 'pending',
+        ]);
+
+        $message = $validated['type'] === 'return' ? 'Yêu cầu trả hàng/hoàn tiền đã được gửi. Chúng tôi sẽ sớm xử lý.' : 'Khiếu nại của bạn đã được ghi nhận. Chúng tôi sẽ sớm phản hồi.';
+
+        return back()->with('success', $message);
     }
 }

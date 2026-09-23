@@ -19,7 +19,7 @@ class AccountController extends Controller
     {
         $ordersQuery = $request->user()
             ->orders()
-            ->with(['details.variant.product', 'details.review'])
+            ->with(['details.variant.product', 'details.review', 'returnRequest'])
             ->orderByDesc('created_at')
             ->orderByDesc('id');
 
@@ -30,6 +30,20 @@ class AccountController extends Controller
                     ->orWhereHas('details.variant.product', function ($q2) use ($search) {
                         $q2->where('name', 'like', "%{$search}%");
                     });
+            });
+        }
+
+        $orderTab = $request->input('order_tab', 'all');
+        if ($orderTab === 'pending_payment') {
+            $ordersQuery->where('payment_status', 'pending')->where('order_status', '!=', 'cancelled');
+        } elseif ($orderTab === 'shipping') {
+            $ordersQuery->where('order_status', 'shipping');
+        } elseif ($orderTab === 'completed') {
+            $ordersQuery->where('order_status', 'completed');
+        } elseif ($orderTab === 'cancelled_returned') {
+            $ordersQuery->where(function ($q) {
+                $q->where('order_status', 'cancelled')
+                  ->orWhereHas('returnRequest');
             });
         }
 

@@ -397,15 +397,18 @@
             <!-- TAB: ORDERS -->
             <div id="tab-orders" class="tab-content p-6 md:p-8 hidden bg-gray-50">
                 <div class="flex items-center gap-8 border-b bg-white px-6 py-4 mb-4 rounded shadow-sm">
-                    <button class="text-[#d92525] border-b-2 border-[#d92525] pb-4 -mb-4 font-medium">Tất cả</button>
-                    <button class="text-gray-600 hover:text-[#d92525] pb-4 -mb-4 font-medium">Chờ thanh toán</button>
-                    <button class="text-gray-600 hover:text-[#d92525] pb-4 -mb-4 font-medium">Vận chuyển</button>
-                    <button class="text-gray-600 hover:text-[#d92525] pb-4 -mb-4 font-medium">Hoàn thành</button>
-                    <button class="text-gray-600 hover:text-[#d92525] pb-4 -mb-4 font-medium">Đã hủy</button>
+                    <a href="{{ route('account.show', ['order_tab' => 'all']) }}#orders" class="{{ request('order_tab', 'all') === 'all' ? 'text-[#d92525] border-b-2 border-[#d92525]' : 'text-gray-600 hover:text-[#d92525]' }} pb-4 -mb-4 font-medium">Tất cả</a>
+                    <a href="{{ route('account.show', ['order_tab' => 'pending_payment']) }}#orders" class="{{ request('order_tab') === 'pending_payment' ? 'text-[#d92525] border-b-2 border-[#d92525]' : 'text-gray-600 hover:text-[#d92525]' }} pb-4 -mb-4 font-medium">Chờ thanh toán</a>
+                    <a href="{{ route('account.show', ['order_tab' => 'shipping']) }}#orders" class="{{ request('order_tab') === 'shipping' ? 'text-[#d92525] border-b-2 border-[#d92525]' : 'text-gray-600 hover:text-[#d92525]' }} pb-4 -mb-4 font-medium">Vận chuyển</a>
+                    <a href="{{ route('account.show', ['order_tab' => 'completed']) }}#orders" class="{{ request('order_tab') === 'completed' ? 'text-[#d92525] border-b-2 border-[#d92525]' : 'text-gray-600 hover:text-[#d92525]' }} pb-4 -mb-4 font-medium">Hoàn thành</a>
+                    <a href="{{ route('account.show', ['order_tab' => 'cancelled_returned']) }}#orders" class="{{ request('order_tab') === 'cancelled_returned' ? 'text-[#d92525] border-b-2 border-[#d92525]' : 'text-gray-600 hover:text-[#d92525]' }} pb-4 -mb-4 font-medium">Đã hủy / Khiếu nại</a>
                 </div>
 
                 <div class="mb-4">
                     <form method="GET" action="{{ route('account.show') }}#orders">
+                        @if(request()->has('order_tab'))
+                            <input type="hidden" name="order_tab" value="{{ request('order_tab') }}">
+                        @endif
                         <div class="relative">
                             <input type="text" name="search" value="{{ request('search') }}" placeholder="Bạn có thể tìm kiếm theo ID đơn hàng hoặc Tên Sản phẩm" class="w-full bg-[#eaeaea] border border-transparent text-gray-800 text-sm rounded px-4 py-3 outline-none focus:border-gray-300 transition-colors">
                             <button type="submit" class="absolute right-0 top-0 bottom-0 px-6 text-gray-500 hover:text-[#d92525]">
@@ -497,6 +500,33 @@
                                             Hủy đơn
                                         </button>
                                     @endif
+
+                                    @if($order->order_status === 'completed')
+                                        @if($order->returnRequest)
+                                            <span class="rounded bg-orange-100 px-3 py-1.5 text-xs font-bold text-orange-800">
+                                                {{ $order->returnRequest->type_label }}: {{ $order->returnRequest->status_label }}
+                                            </span>
+                                        @else
+                                            <button type="button"
+                                                    data-customer-return
+                                                    data-return-type="return"
+                                                    data-order-id="{{ $order->id }}"
+                                                    data-order-code="{{ $order->order_code }}"
+                                                    data-action="{{ route('client.orders.return', $order->id) }}"
+                                                    class="rounded border border-[#d92525] px-4 py-2 text-sm font-bold text-[#d92525] transition-colors hover:bg-red-50">
+                                                Trả hàng / Hoàn tiền
+                                            </button>
+                                            <button type="button"
+                                                    data-customer-return
+                                                    data-return-type="complaint"
+                                                    data-order-id="{{ $order->id }}"
+                                                    data-order-code="{{ $order->order_code }}"
+                                                    data-action="{{ route('client.orders.return', $order->id) }}"
+                                                    class="rounded border border-gray-500 px-4 py-2 text-sm font-bold text-gray-500 transition-colors hover:bg-gray-50">
+                                                Khiếu nại
+                                            </button>
+                                        @endif
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -521,6 +551,7 @@
 
 @include('client.orders._cancel_modal')
 @include('client.orders._review_modal')
+@include('client.orders._return_modal')
 
 <!-- Modal thêm/sửa địa chỉ -->
 <div id="addressModal" class="fixed inset-0 z-[100] hidden items-center justify-center">

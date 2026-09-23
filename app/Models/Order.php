@@ -50,6 +50,11 @@ class Order extends Model
         'cancelled_at' => 'datetime',
     ];
 
+    public function returnRequest()
+    {
+        return $this->hasOne(OrderReturn::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
