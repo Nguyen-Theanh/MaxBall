@@ -177,7 +177,6 @@ class OrderController extends Controller
                     'confirmed',
                     'processing',
                     'shipping',
-                    'completed',
                     'cancelled',
                 ]),
             ],
@@ -262,7 +261,6 @@ class OrderController extends Controller
             ],
 
             'shipping' => [
-                'completed',
                 'cancelled',
             ],
         ];
@@ -339,6 +337,10 @@ class OrderController extends Controller
         $updateData = [
             'order_status' => $newStatus,
         ];
+
+        if ($newStatus === 'shipping') {
+            $updateData['shipped_at'] = now();
+        }
 
         /*
         |--------------------------------------------------------------------------

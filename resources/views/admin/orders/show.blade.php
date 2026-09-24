@@ -272,13 +272,7 @@
                                             Đang giao hàng
                                         </option>
 
-                                        @if($order->payment_status == 'paid')
 
-                                            <option value="completed">
-                                                Hoàn thành
-                                            </option>
-
-                                        @endif
 
                                     @endif
 

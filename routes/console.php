@@ -15,3 +15,7 @@ Schedule::command('orders:expire-cod-reservations')
 Schedule::command('coupons:delete-expired')
     ->hourly()
     ->withoutOverlapping();
+
+Schedule::command('orders:auto-complete')
+    ->daily()
+    ->withoutOverlapping();
