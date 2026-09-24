@@ -287,12 +287,13 @@ class OrderController extends Controller
             'reason' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:1000'],
             'images' => ['nullable', 'array', 'max:5'],
-            'images.*' => ['image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ], [
             'reason.required' => 'Vui lòng chọn lý do.',
             'description.required' => 'Vui lòng nhập mô tả chi tiết.',
             'images.max' => 'Chỉ được tải lên tối đa 5 ảnh.',
             'images.*.image' => 'File phải là hình ảnh.',
+            'images.*.mimes' => 'Hình ảnh phải có định dạng jpeg, png, jpg, hoặc webp.',
             'images.*.max' => 'Kích thước ảnh tối đa 2MB.',
         ]);
 

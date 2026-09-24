@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\Admin;
 
@@ -11,65 +11,65 @@ use Illuminate\Validation\Rule;
 
 class OrderReturnController extends Controller
 {
-    public function index(Request )
+    public function index(Request $request)
     {
-         = OrderReturn::with(['order', 'user'])->latest();
+        $query = OrderReturn::with(['order', 'user'])->latest();
 
-        if (->filled('status')) {
-            ->where('status', ->status);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
-        if (->filled('type')) {
-            ->where('type', ->type);
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
         }
 
-         = ->paginate(15)->withQueryString();
+        $returns = $query->paginate(15)->withQueryString();
 
         return view('admin.returns.index', compact('returns'));
     }
 
-    public function show()
+    public function show($id)
     {
-         = OrderReturn::with(['order.details.variant.product', 'user'])->findOrFail();
+        $orderReturn = OrderReturn::with(['order.details.variant.product', 'user'])->findOrFail($id);
         
         return view('admin.returns.show', compact('orderReturn'));
     }
 
-    public function updateStatus(Request , )
+    public function updateStatus(Request $request, $id)
     {
-         = OrderReturn::with('order', 'user')->findOrFail();
+        $orderReturn = OrderReturn::with('order', 'user')->findOrFail($id);
 
-        if (in_array(->status, ['resolved', 'rejected'])) {
+        if (in_array($orderReturn->status, ['resolved', 'rejected'])) {
             return back()->with('error', 'Yêu cầu này đã được xử lý xong.');
         }
 
-         = ->validate([
+        $validated = $request->validate([
             'status' => ['required', Rule::in(['processing', 'resolved', 'rejected'])],
             'admin_note' => ['nullable', 'string', 'max:1000'],
-            'refund_amount' => ['nullable', 'numeric', 'min:0', 'max:' . ->order->total_amount],
+            'refund_amount' => ['nullable', 'numeric', 'min:0', 'max:' . $orderReturn->order->total_amount],
         ]);
 
-        DB::transaction(function () use (, ) {
-            ->status = ['status'];
-            ->admin_note = ['admin_note'] ?? ->admin_note;
+        DB::transaction(function () use ($orderReturn, $validated) {
+            $orderReturn->status = $validated['status'];
+            $orderReturn->admin_note = $validated['admin_note'] ?? $orderReturn->admin_note;
             
-            if (['status'] === 'resolved' && !empty(['refund_amount']) && ['refund_amount'] > 0 && !->refund_amount) {
-                ->refund_amount = ['refund_amount'];
+            if ($validated['status'] === 'resolved' && !empty($validated['refund_amount']) && $validated['refund_amount'] > 0 && !$orderReturn->refund_amount) {
+                $orderReturn->refund_amount = $validated['refund_amount'];
                 
                 // Refund to Wallet
-                 = ->user;
-                ->increment('wallet_balance', ['refund_amount']);
+                $user = $orderReturn->user;
+                $user->increment('wallet_balance', $validated['refund_amount']);
                 
                 WalletTransaction::create([
-                    'user_id' => ->id,
+                    'user_id' => $user->id,
                     'type' => 'refund',
-                    'amount' => ['refund_amount'],
-                    'description' => (->type === 'return' ? 'Hoàn tiền trả hàng' : 'Đền bù khiếu nại') . ' cho đơn hàng #' . ->order->order_code,
+                    'amount' => $validated['refund_amount'],
+                    'description' => ($orderReturn->type === 'return' ? 'Hoàn tiền trả hàng' : 'Đền bù khiếu nại') . ' cho đơn hàng #' . $orderReturn->order->order_code,
                     'status' => 'completed'
                 ]);
             }
             
-            ->save();
+            $orderReturn->save();
         });
 
         return back()->with('success', 'Đã cập nhật trạng thái yêu cầu thành công.');
