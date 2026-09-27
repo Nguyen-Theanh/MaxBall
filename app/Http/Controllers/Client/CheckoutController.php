@@ -96,6 +96,7 @@ class CheckoutController extends Controller
         $request->validate([
             'user_address_id' => 'required|exists:user_addresses,id',
             'payment_method' => 'required|in:cod,vietqr,wallet',
+            'use_wallet' => 'nullable|boolean',
             'coupon_code' => 'nullable|string|max:100',
             'freeship_coupon_code' => 'nullable|string|max:100',
         ], [
@@ -237,29 +238,41 @@ class CheckoutController extends Controller
 
             /*
             |--------------------------------------------------------------------------
-            | Kiểm tra số dư ví
+            | Bù trừ ví và kiểm tra điều kiện thanh toán
             |--------------------------------------------------------------------------
             */
-            if ($request->payment_method === 'wallet') {
-                if (
-                    Auth::user()->wallet_balance
-                    < $totalAmount
-                ) {
-                    DB::rollBack();
+            $walletAmountUsed = 0;
+            $user = Auth::user();
 
+            if ($request->payment_method === 'wallet') {
+                if ($user->wallet_balance < $totalAmount) {
+                    DB::rollBack();
                     return back()->with(
                         'error',
-                        'Số dư trong Ví MaxBall không đủ để thanh toán đơn hàng này.'
+                        'Số dư trong Ví MaxBall không đủ để thanh toán toàn bộ đơn hàng này.'
                     );
                 }
+                $walletAmountUsed = $totalAmount;
+            } elseif ($request->boolean('use_wallet') && $user->wallet_balance > 0) {
+                $walletAmountUsed = min($user->wallet_balance, $totalAmount);
             }
+            
+            $finalTotalAmount = $totalAmount - $walletAmountUsed;
 
-            if ($request->payment_method === 'vietqr' && $totalAmount < 2000) {
-                DB::rollBack();
-                return back()->with(
-                    'error',
-                    'Thanh toán trực tuyến chỉ áp dụng cho đơn hàng từ 2.000đ trở lên. Vui lòng chọn thanh toán khi nhận hàng (COD).'
-                )->withInput();
+            if ($request->payment_method === 'vietqr') {
+                if ($finalTotalAmount < 10000 && $finalTotalAmount > 0) {
+                    DB::rollBack();
+                    return back()->with(
+                        'error',
+                        'Số tiền còn lại sau khi bù trừ ví dưới 10.000đ, không thể thanh toán chuyển khoản. Vui lòng chọn thanh toán khi nhận hàng (COD).'
+                    )->withInput();
+                } else if ($finalTotalAmount < 2000 && $walletAmountUsed == 0) {
+                    DB::rollBack();
+                    return back()->with(
+                        'error',
+                        'Thanh toán trực tuyến chỉ áp dụng cho đơn hàng từ 2.000đ trở lên. Vui lòng chọn thanh toán khi nhận hàng (COD).'
+                    )->withInput();
+                }
             }
 
             /*
@@ -294,12 +307,14 @@ class CheckoutController extends Controller
                 'shipping_fee' => $shippingFee,
 
                 'discount_amount' => $discountAmount,
+                
+                'wallet_amount_used' => $walletAmountUsed,
 
-                'total_amount' => $totalAmount,
+                'total_amount' => $finalTotalAmount,
 
                 'payment_method' => $request->payment_method,
 
-                'payment_status' => $request->payment_method === 'wallet'
+                'payment_status' => $finalTotalAmount == 0
                         ? 'paid'
                         : 'pending',
 
@@ -382,12 +397,12 @@ class CheckoutController extends Controller
             | Thanh toán bằng ví
             |--------------------------------------------------------------------------
             */
-            if ($request->payment_method === 'wallet') {
+            if ($walletAmountUsed > 0) {
                 $user = Auth::user();
 
                 $user->decrement(
                     'wallet_balance',
-                    $totalAmount
+                    $walletAmountUsed
                 );
 
                 WalletTransaction::create([
@@ -395,10 +410,12 @@ class CheckoutController extends Controller
 
                     'type' => 'payment',
 
-                    'amount' => $totalAmount,
+                    'amount' => $walletAmountUsed,
 
-                    'description' => 'Thanh toán đơn hàng #'
+                    'description' => 'Thanh toán bù trừ đơn hàng #'
                         .$orderCode,
+                        
+                    'status' => 'completed',
                 ]);
 
             }
@@ -469,7 +486,7 @@ class CheckoutController extends Controller
             | Redirect theo phương thức thanh toán
             |--------------------------------------------------------------------------
             */
-            if ($request->payment_method === 'vietqr') {
+            if ($request->payment_method === 'vietqr' && $finalTotalAmount > 0) {
                 return redirect()->route(
                     'client.checkout.payment_qr',
                     [
@@ -478,7 +495,7 @@ class CheckoutController extends Controller
                 );
             }
 
-            if ($request->payment_method === 'wallet') {
+            if ($finalTotalAmount == 0) {
                 return redirect()->route(
                     'client.checkout.success',
                     [

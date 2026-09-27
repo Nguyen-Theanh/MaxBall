@@ -435,6 +435,8 @@
                                             ĐÃ XÁC NHẬN
                                         @elseif($order->order_status == 'shipping')
                                             ĐANG GIAO HÀNG
+                                        @elseif($order->order_status == 'delivered')
+                                            ĐÃ GIAO
                                         @elseif($order->order_status == 'completed')
                                             HOÀN THÀNH
                                         @elseif($order->order_status == 'cancelled')
@@ -499,6 +501,31 @@
                                                 class="rounded border border-red-600 px-4 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-50">
                                             Hủy đơn
                                         </button>
+                                    @endif
+
+                                    @if($order->order_status === 'delivered')
+                                        @if($order->returnRequest)
+                                            <span class="rounded bg-orange-100 px-3 py-1.5 text-xs font-bold text-orange-800">
+                                                {{ $order->returnRequest->type_label }}: {{ $order->returnRequest->status_label }}
+                                            </span>
+                                        @else
+                                            <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST" class="inline-block m-0">
+                                                @csrf
+                                                @method('PUT')
+                                                <button type="submit" class="rounded border border-green-600 bg-green-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-green-700">
+                                                    Đã nhận được hàng
+                                                </button>
+                                            </form>
+                                            <button type="button" 
+                                                    data-customer-return
+                                                    data-return-type="not_received"
+                                                    data-order-id="{{ $order->id }}"
+                                                    data-order-code="{{ $order->order_code }}"
+                                                    data-action="{{ route('client.orders.return', $order->id) }}"
+                                                    class="rounded border border-gray-400 px-4 py-2 text-sm font-bold text-gray-500 transition-colors hover:bg-gray-50">
+                                                Chưa nhận được hàng
+                                            </button>
+                                        @endif
                                     @endif
 
                                     @if($order->order_status === 'completed')

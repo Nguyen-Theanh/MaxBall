@@ -56,46 +56,10 @@
 
                             @else
 
-                                @if(
-                                    $order->payment_method == 'cod'
-                                    && $order->order_status == 'shipping'
-                                )
-
-                                    <form
-                                        action="{{ route('admin.orders.updatePaymentStatus', $order->id) }}"
-                                        method="POST"
-                                        class="m-0"
-                                    >
-                                        @csrf
-                                        @method('PATCH')
-
-                                        <select
-                                            name="payment_status"
-                                            class="form-select form-select-sm d-inline-block w-auto"
-                                            onchange="confirmPaymentAndSubmit(this)"
-                                        >
-                                            <option
-                                                value="pending"
-                                                selected
-                                            >
-                                                Chưa thanh toán (COD)
-                                            </option>
-
-                                            <option value="paid">
-                                                Đã thanh toán (COD)
-                                            </option>
-                                        </select>
-
-                                    </form>
-
-                                @else
-
-                                    <span class="badge bg-warning text-dark px-3 py-2">
-                                        Chưa thanh toán
-                                        ({{ strtoupper($order->payment_method) }})
-                                    </span>
-
-                                @endif
+                                <span class="badge bg-warning text-dark px-3 py-2">
+                                    Chưa thanh toán
+                                    ({{ strtoupper($order->payment_method) }})
+                                </span>
 
                             @endif
 
@@ -265,14 +229,22 @@
                                     ================================ --}}
                                     @elseif($order->order_status == 'shipping')
 
-                                        <option
-                                            value="shipping"
-                                            selected
-                                        >
+                                        <option value="shipping" selected>
                                             Đang giao hàng
                                         </option>
 
+                                        <option value="delivered">
+                                            Đã giao
+                                        </option>
 
+                                    {{-- ===============================
+                                        DELIVERED
+                                    ================================ --}}
+                                    @elseif($order->order_status == 'delivered')
+
+                                        <option value="delivered" selected>
+                                            Đã giao
+                                        </option>
 
                                     @endif
 
@@ -594,6 +566,30 @@
 
                                     @endif
 
+                                    @if($order->wallet_amount_used > 0)
+
+                                        <tr>
+                                            <td>
+                                                Bù trừ từ ví:
+                                            </td>
+
+                                            <td
+                                                class="text-end fw-bold text-info"
+                                            >
+                                                -
+                                                {{
+                                                    number_format(
+                                                        $order->wallet_amount_used,
+                                                        0,
+                                                        ',',
+                                                        '.'
+                                                    )
+                                                }}đ
+                                            </td>
+                                        </tr>
+
+                                    @endif
+
 
                                     <tr class="border-top">
 
@@ -636,26 +632,7 @@
 
 
 <script>
-async function confirmPaymentAndSubmit(selectElement) {
-    const confirmed = await window.AppConfirm.open({
-        title: 'Xác nhận thanh toán COD',
 
-        message:
-            'Xác nhận đã thu đủ tiền COD cho đơn hàng này?',
-
-        confirmLabel: 'Đã thu tiền',
-
-        variant: 'primary',
-    });
-
-    if (confirmed) {
-        HTMLFormElement.prototype.submit.call(
-            selectElement.closest('form')
-        );
-    } else {
-        selectElement.value = 'pending';
-    }
-}
 
 
 document
@@ -695,19 +672,19 @@ document
                 };
 
             /*
-            | Hoàn thành
+            | Đã giao
             */
-            } else if (status === 'completed') {
+            } else if (status === 'delivered') {
 
                 options = {
                     title:
-                        'Hoàn thành đơn hàng',
+                        'Đã giao đơn hàng',
 
                     message:
-                        'Xác nhận đơn hàng đã được giao thành công và chuyển sang trạng thái hoàn thành?',
+                        'Xác nhận đơn hàng đã được giao thành công?',
 
                     confirmLabel:
-                        'Hoàn thành',
+                        'Xác nhận đã giao',
 
                     variant:
                         'primary',

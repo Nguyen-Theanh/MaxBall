@@ -86,12 +86,22 @@
                             <input type="radio" name="payment_method" id="payment_wallet" value="wallet" class="w-5 h-5 text-red-600 focus:ring-red-600" {{ !$canPayWithWallet ? 'disabled' : '' }}>
                             <div class="ml-3">
                                 <span class="block text-sm font-bold text-gray-900">Thanh toán bằng Ví MaxBall</span>
-                                <span class="block text-xs text-gray-500 mt-1">Số dư hiện tại: <strong class="{{ $canPayWithWallet ? 'text-green-600' : 'text-red-500' }}">{{ number_format($walletBalance, 0, ',', '.') }}đ</strong></span>
+                                <span class="block text-xs text-gray-500 mt-1">Thanh toán toàn bộ đơn hàng bằng số dư hiện tại: <strong class="{{ $canPayWithWallet ? 'text-green-600' : 'text-red-500' }}">{{ number_format($walletBalance, 0, ',', '.') }}đ</strong></span>
                                 @if(!$canPayWithWallet)
-                                    <span class="block text-xs text-red-500 mt-1">Số dư không đủ để thanh toán đơn hàng này.</span>
+                                    <span class="block text-xs text-red-500 mt-1">Số dư không đủ để thanh toán toàn bộ đơn hàng này. Hãy dùng chức năng Bù trừ ví bên dưới.</span>
                                 @endif
                             </div>
                         </label>
+
+                        @if($walletBalance > 0)
+                        <label class="flex items-center p-4 border border-blue-200 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors mb-4" id="label_use_wallet">
+                            <input type="checkbox" name="use_wallet" id="use_wallet" value="1" class="w-5 h-5 text-blue-600 focus:ring-blue-600 rounded">
+                            <div class="ml-3">
+                                <span class="block text-sm font-bold text-gray-900">Bù trừ tiền trong ví (Số dư: <span class="text-blue-600">{{ number_format($walletBalance, 0, ',', '.') }}đ</span>)</span>
+                                <span class="block text-xs text-gray-500 mt-1">Hệ thống sẽ tự động trừ tối đa số tiền trong ví vào tổng đơn hàng.</span>
+                            </div>
+                        </label>
+                        @endif
                         @error('payment_method')
                             <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                         @enderror
@@ -162,6 +172,11 @@
                     <div id="discountRow" class="flex justify-between mb-3 text-sm hidden">
                         <span class="text-gray-600">Giảm giá voucher</span>
                         <span class="font-bold text-red-600" id="discountAmountDisplay">-0đ</span>
+                    </div>
+
+                    <div id="walletDeductionRow" class="flex justify-between mb-3 text-sm hidden">
+                        <span class="text-gray-600">Bù trừ từ ví</span>
+                        <span class="font-bold text-blue-600" id="walletDeductionDisplay">-0đ</span>
                     </div>
                     
                     <div class="flex justify-between mb-6 text-gray-600 text-sm pb-4 border-b">
@@ -431,56 +446,21 @@
         if (checkoutForm) {
             checkoutForm.addEventListener('submit', function(e) {
                 const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+                const useWalletCheckbox = document.getElementById('use_wallet');
+                
                 if (selectedPayment && selectedPayment.value === 'wallet') {
-                    if (!confirm('Bạn có chắc chắn muốn thanh toán đơn hàng này bằng số dư trong Ví MaxBall không?')) {
+                    if (!confirm('Bạn có chắc chắn muốn thanh toán toàn bộ đơn hàng này bằng số dư trong Ví MaxBall không?')) {
+                        e.preventDefault();
+                    }
+                } else if (useWalletCheckbox && useWalletCheckbox.checked) {
+                    if (!confirm('Bạn có chắc chắn muốn sử dụng số dư trong Ví MaxBall để bù trừ thanh toán không?')) {
                         e.preventDefault();
                     }
                 }
             });
         }
     });
-    // Calculate base wallet sufficient check
-    function updateWalletSufficientCheck(finalTotal) {
-        let walletRadio = document.getElementById('payment_wallet');
-        let walletLabel = document.getElementById('label_payment_wallet');
-        if(walletRadio) {
-            let userBalance = {{ Auth::user()->wallet_balance ?? 0 }};
-            if(userBalance < finalTotal) {
-                walletRadio.disabled = true;
-                if(walletRadio.checked) {
-                    document.getElementById('payment_cod').checked = true;
-                }
-                walletLabel.classList.add('opacity-60', 'cursor-not-allowed', 'bg-gray-50');
-                walletLabel.classList.remove('cursor-pointer', 'hover:bg-gray-50');
-                let span = walletRadio.parentElement.querySelector('span.text-xs.text-red-500');
-                if(!span) {
-                    let container = walletRadio.parentElement.querySelector('.ml-3');
-                    if(container) {
-                        container.innerHTML += `<span class="text-xs text-red-500 block mt-1">(Số dư không đủ)</span>`;
-                    }
-                }
-            } else {
-                walletRadio.disabled = false;
-                walletLabel.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-50');
-                walletLabel.classList.add('cursor-pointer', 'hover:bg-gray-50');
-                let span = walletRadio.parentElement.querySelector('span.text-xs.text-red-500');
-                if(span) span.remove();
-            }
-        }
 
-        let vietqrRadio = document.getElementById('payment_vietqr');
-        let vietqrLabel = document.getElementById('label_payment_vietqr');
-        if(vietqrRadio && vietqrLabel) {
-            if(finalTotal < 2000) {
-                vietqrLabel.style.display = 'none';
-                if(vietqrRadio.checked) {
-                    document.getElementById('payment_cod').checked = true;
-                }
-            } else {
-                vietqrLabel.style.display = 'flex';
-            }
-        }
-    }
 </script>
 
 <!-- Checkout Voucher Modal -->
@@ -801,7 +781,21 @@
             }
         }
 
-        let finalTotal = subTotal + shippingFee - discount;
+        let tempTotal = subTotal + shippingFee - discount;
+        let finalTotal = tempTotal;
+        let walletUsed = 0;
+        let userBalance = {{ Auth::user()->wallet_balance ?? 0 }};
+        let useWalletCheckbox = document.getElementById('use_wallet');
+
+        if (useWalletCheckbox && useWalletCheckbox.checked) {
+            walletUsed = Math.min(tempTotal, userBalance);
+            finalTotal = tempTotal - walletUsed;
+            
+            document.getElementById('walletDeductionDisplay').textContent = '-' + new Intl.NumberFormat('vi-VN').format(walletUsed) + 'đ';
+            document.getElementById('walletDeductionRow').classList.remove('hidden');
+        } else {
+            document.getElementById('walletDeductionRow').classList.add('hidden');
+        }
 
         document.getElementById('shippingFeeDisplay').textContent = shippingFee === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN').format(shippingFee) + 'đ';
         document.getElementById('shippingFeeDisplay').className = shippingFee === 0 ? 'font-bold text-green-600' : 'font-bold text-gray-900';
@@ -814,7 +808,62 @@
         }
 
         document.getElementById('totalAmountDisplay').textContent = new Intl.NumberFormat('vi-VN').format(finalTotal) + 'đ';
-        updateWalletSufficientCheck(finalTotal);
+        updateWalletSufficientCheck(tempTotal, finalTotal);
     }
+    
+    // Check if vietqr and wallet are disabled
+    function updateWalletSufficientCheck(tempTotal, finalTotal) {
+        let walletRadio = document.getElementById('payment_wallet');
+        let walletLabel = document.getElementById('label_payment_wallet');
+        
+        if (walletRadio && walletLabel) {
+            let userBalance = {{ Auth::user()->wallet_balance ?? 0 }};
+            if(userBalance < tempTotal) {
+                walletRadio.disabled = true;
+                if(walletRadio.checked) {
+                    document.getElementById('payment_cod').checked = true;
+                }
+                walletLabel.classList.add('opacity-60', 'cursor-not-allowed', 'bg-gray-50');
+                walletLabel.classList.remove('cursor-pointer', 'hover:bg-gray-50');
+            } else {
+                walletRadio.disabled = false;
+                walletLabel.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-50');
+                walletLabel.classList.add('cursor-pointer', 'hover:bg-gray-50');
+            }
+        }
+
+        let vietqrRadio = document.getElementById('payment_vietqr');
+        let vietqrLabel = document.getElementById('label_payment_vietqr');
+        let useWalletCheckbox = document.getElementById('use_wallet');
+        
+        if (vietqrRadio && vietqrLabel) {
+            if (finalTotal < 10000 && finalTotal > 0 && useWalletCheckbox && useWalletCheckbox.checked) {
+                // If they use wallet and the remaining is between 1 and 9999, they cannot use VietQR
+                vietqrLabel.classList.add('opacity-50', 'cursor-not-allowed');
+                vietqrRadio.disabled = true;
+                if(vietqrRadio.checked) {
+                    document.getElementById('payment_cod').checked = true;
+                    alert('Số tiền còn lại sau khi bù trừ ví dưới 10.000đ, không thể thanh toán chuyển khoản. Hệ thống tự động chuyển sang COD.');
+                }
+            } else if (finalTotal < 2000 && (!useWalletCheckbox || !useWalletCheckbox.checked)) {
+                // original vietqr min limit
+                vietqrLabel.style.display = 'none';
+                if(vietqrRadio.checked) {
+                    document.getElementById('payment_cod').checked = true;
+                }
+            } else {
+                vietqrRadio.disabled = false;
+                vietqrLabel.classList.remove('opacity-50', 'cursor-not-allowed');
+                vietqrLabel.style.display = 'flex';
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        let useWalletCheckbox = document.getElementById('use_wallet');
+        if (useWalletCheckbox) {
+            useWalletCheckbox.addEventListener('change', calculateTotal);
+        }
+    });
 </script>
 @endpush

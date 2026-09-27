@@ -247,7 +247,7 @@ class OrderController extends Controller
         | Chỉ xác nhận nhận hàng khi đang giao
         |--------------------------------------------------------------------------
         */
-        if ($order->order_status !== 'shipping') {
+        if ($order->order_status !== 'delivered') {
             return back()->with(
                 'error',
                 'Không thể xác nhận đơn hàng này.'
@@ -278,7 +278,7 @@ class OrderController extends Controller
     public function return(Request $request, $id)
     {
         $order = Order::where('user_id', Auth::id())
-            ->where('order_status', 'completed')
+            ->whereIn('order_status', ['completed', 'delivered'])
             ->doesntHave('returnRequest')
             ->findOrFail($id);
 

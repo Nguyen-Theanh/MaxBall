@@ -6,48 +6,60 @@
 @section('content')
     @php
         $showOutOfStockVariants = request('stock_status') === 'out_of_stock';
+        $showLowStockVariants = request('stock_status') === 'low_stock';
     @endphp
 
     <div class="card border-0 shadow-sm">
         <div class="card-body">
             <div class="d-flex flex-column flex-xl-row justify-content-between gap-3 mb-4">
-                <form id="admin-product-filters" class="row g-2 flex-grow-1" method="GET" action="{{ route('admin.products.index') }}">
-                    <div class="col-12 col-md-6 col-xl-3">
-                        <input type="search" name="q" value="{{ request('q') }}" class="form-control" placeholder="Tìm theo tên, mô tả...">
-                    </div>
-                    <div class="col-12 col-md-3 col-xl-2">
-                        <select name="category_id" class="form-select">
-                            <option value="">Tất cả danh mục</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}" @selected(request('category_id') == $cat->id)>
-                                    {{ $cat->display_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-3 col-xl-2">
-                        <select name="status" class="form-select">
-                            <option value="">Tất cả trạng thái</option>
-                            <option value="1" @selected(request('status') === '1')>Đang hiện</option>
-                            <option value="0" @selected(request('status') === '0')>Đang ẩn</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-3 col-xl-2">
-                        <select name="stock_status" class="form-select">
-                            <option value="">Tất cả tồn kho</option>
-                            <option value="in_stock" @selected(request('stock_status') === 'in_stock')>Còn hàng</option>
-                            <option value="out_of_stock" @selected(request('stock_status') === 'out_of_stock')>Hết hàng</option>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-2 col-xl-2">
-                        <select name="per_page" class="form-select" onchange="this.form.submit()">
-                            <option value="10" @selected(request('per_page', 10) == 10)>10 dòng</option>
-                            <option value="25" @selected(request('per_page') == 25)>25 dòng</option>
-                            <option value="50" @selected(request('per_page') == 50)>50 dòng</option>
-                            <option value="100" @selected(request('per_page') == 100)>100 dòng</option>
-                        </select>
-                    </div>
-                </form>
+                <div class="d-flex flex-column flex-grow-1 gap-3">
+                    <form id="admin-product-filters" class="row g-2" method="GET" action="{{ route('admin.products.index') }}">
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <input type="search" name="q" value="{{ request('q') }}" class="form-control" placeholder="Tìm theo tên, mô tả...">
+                        </div>
+                        <div class="col-12 col-md-3 col-xl-2">
+                            <select name="category_id" class="form-select">
+                                <option value="">Tất cả danh mục</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}" @selected(request('category_id') == $cat->id)>
+                                        {{ $cat->display_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3 col-xl-2">
+                            <select name="status" class="form-select">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="1" @selected(request('status') === '1')>Đang hiện</option>
+                                <option value="0" @selected(request('status') === '0')>Đang ẩn</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3 col-xl-2">
+                            <select name="stock_status" class="form-select">
+                                <option value="">Tất cả tồn kho</option>
+                                <option value="in_stock" @selected(request('stock_status') === 'in_stock')>Còn hàng</option>
+                                <option value="low_stock" @selected(request('stock_status') === 'low_stock')>Sắp hết hàng</option>
+                                <option value="out_of_stock" @selected(request('stock_status') === 'out_of_stock')>Hết hàng</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2 col-xl-2">
+                            <select name="per_page" class="form-select" onchange="this.form.submit()">
+                                <option value="10" @selected(request('per_page', 10) == 10)>10 dòng</option>
+                                <option value="25" @selected(request('per_page') == 25)>25 dòng</option>
+                                <option value="50" @selected(request('per_page') == 50)>50 dòng</option>
+                                <option value="100" @selected(request('per_page') == 100)>100 dòng</option>
+                            </select>
+                        </div>
+                        
+                        @if(isset($lowStockCount) && $lowStockCount > 0)
+                            <div class="col-12 col-xl-11">
+                                <div class="py-2 text-center fw-bold text-dark rounded" style="background-color: #ffefbe; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" onclick="document.querySelector('select[name=\'stock_status\']').value = 'low_stock'; document.getElementById('admin-product-filters').submit();" title="Nhấn để xem danh sách sắp hết hàng">
+                                    Có {{ $lowStockCount }} sản phẩm sắp hết hàng
+                                </div>
+                            </div>
+                        @endif
+                    </form>
+                </div>
 
                 <div class="d-flex flex-column gap-2 align-self-start mt-2 mt-xl-0">
                     <div class="d-flex align-items-center gap-2">
@@ -68,6 +80,8 @@
                             <th>Giá</th>
                             @if ($showOutOfStockVariants)
                                 <th>Biến thể hết hàng</th>
+                            @elseif ($showLowStockVariants)
+                                <th>Biến thể sắp hết hàng</th>
                             @else
                                 <th class="text-center">Tồn kho</th>
                             @endif
@@ -95,11 +109,11 @@
                                         <small class="text-muted text-decoration-line-through">{{ number_format($product->base_price, 0, ',', '.') }}d</small>
                                     @endif
                                 </td>
-                                @if ($showOutOfStockVariants)
+                                @if ($showOutOfStockVariants || $showLowStockVariants)
                                     <td>
                                         @forelse ($product->variants as $variant)
-                                            <span class="badge text-bg-danger me-1 mb-1">
-                                                {{ trim((string) $variant->name) ?: 'Mặc định' }}
+                                            <span class="badge {{ $showLowStockVariants ? 'text-bg-warning' : 'text-bg-danger' }} me-1 mb-1">
+                                                {{ trim((string) $variant->name) ?: 'Mặc định' }} ({{ $variant->stock }})
                                             </span>
                                         @empty
                                             <span class="text-muted fst-italic">Chưa có biến thể</span>

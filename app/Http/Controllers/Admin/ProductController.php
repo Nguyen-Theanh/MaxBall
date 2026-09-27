@@ -57,11 +57,27 @@ class ProductController extends Controller
                         });
                 });
             })
+            ->when($request->input('stock_status') === 'low_stock', function ($query) {
+                $query->whereHas('variants', function ($variantQuery) {
+                    $variantQuery->whereRaw('COALESCE(stock, 0) > 0')->whereRaw('COALESCE(stock, 0) < 15');
+                });
+            })
             ->when($request->input('stock_status') === 'out_of_stock', function ($query) {
                 $query->with([
                     'variants' => function ($variantQuery) {
                         $variantQuery
                             ->whereRaw('COALESCE(stock, 0) <= 0')
+                            ->orderBy('name')
+                            ->orderBy('id');
+                    },
+                ]);
+            })
+            ->when($request->input('stock_status') === 'low_stock', function ($query) {
+                $query->with([
+                    'variants' => function ($variantQuery) {
+                        $variantQuery
+                            ->whereRaw('COALESCE(stock, 0) > 0')
+                            ->whereRaw('COALESCE(stock, 0) < 15')
                             ->orderBy('name')
                             ->orderBy('id');
                     },
@@ -73,8 +89,12 @@ class ProductController extends Controller
             ->withQueryString();
 
         $categories = $this->categories();
+        
+        $lowStockCount = Product::whereHas('variants', function ($q) {
+            $q->whereRaw('COALESCE(stock, 0) > 0')->whereRaw('COALESCE(stock, 0) < 15');
+        })->count();
 
-        return view('admin.products.index', compact('products', 'categories'));
+        return view('admin.products.index', compact('products', 'categories', 'lowStockCount'));
     }
 
     public function show(Product $product): View

@@ -24,8 +24,8 @@
                 <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Từ chối</option>
             </select>
 
-            <button type="submit" class="btn bg-gradient-dark mb-0">Lọc</button>
-            <a href="{{ route('admin.returns.index') }}" class="btn btn-outline-dark mb-0">Xóa lọc</a>
+            <button type="submit" class="btn btn-primary mb-0">Lọc</button>
+            <a href="{{ route('admin.returns.index') }}" class="btn btn-outline-secondary mb-0">Xóa lọc</a>
         </form>
 
         <div class="table-responsive p-0">
@@ -76,7 +76,7 @@
                                 <span class="text-secondary text-xs font-weight-bold">{{ $req->created_at->format('d/m/Y H:i') }}</span>
                             </td>
                             <td class="align-middle text-center">
-                                <a href="{{ route('admin.returns.show', $req->id) }}" class="text-primary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Xem chi tiết">
+                                <a href="{{ route('admin.returns.show', $req->id) }}" class="btn btn-primary btn-sm mb-0" data-toggle="tooltip" data-original-title="Xem chi tiết">
                                     {{ in_array($req->status, ['resolved', 'rejected']) ? 'Xem' : 'Xử lý' }}
                                 </a>
                             </td>

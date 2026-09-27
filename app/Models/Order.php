@@ -22,6 +22,7 @@ class Order extends Model
         'sub_total',
         'shipping_fee',
         'discount_amount',
+        'wallet_amount_used',
         'total_amount',
         'payment_method',
         'payment_status',

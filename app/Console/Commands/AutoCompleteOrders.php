@@ -17,8 +17,10 @@ class AutoCompleteOrders extends Command
      * Execute the console command.
      */
     public function handle()
-    {
-        $orders = Order::where('order_status', 'shipping')
+        $orders = Order::whereIn('order_status', ['shipping', 'delivered'])
+            ->whereDoesntHave('returnRequest', function ($q) {
+                $q->whereIn('status', ['pending', 'processing']);
+            })
             ->where(function ($query) {
                 $query->where(function ($q) {
                     $q->whereNotNull('shipped_at')

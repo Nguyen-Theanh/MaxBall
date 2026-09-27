@@ -177,6 +177,7 @@ class OrderController extends Controller
                     'confirmed',
                     'processing',
                     'shipping',
+                    'delivered',
                     'cancelled',
                 ]),
             ],
@@ -261,7 +262,11 @@ class OrderController extends Controller
             ],
 
             'shipping' => [
-                'cancelled',
+                'delivered',
+            ],
+
+            'delivered' => [
+                // Không cho hủy khi đã giao hoặc đang giao
             ],
         ];
 
@@ -340,6 +345,10 @@ class OrderController extends Controller
 
         if ($newStatus === 'shipping') {
             $updateData['shipped_at'] = now();
+        } elseif ($newStatus === 'delivered') {
+            if ($order->payment_method === 'cod') {
+                $updateData['payment_status'] = 'paid';
+            }
         }
 
         /*

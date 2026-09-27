@@ -23,6 +23,7 @@
                         <option value="Hàng bị lỗi / hư hỏng" @selected(old('reason') === 'Hàng bị lỗi / hư hỏng')>Hàng bị lỗi / hư hỏng</option>
                         <option value="Giao thiếu hàng" @selected(old('reason') === 'Giao thiếu hàng')>Giao thiếu hàng</option>
                         <option value="Giao sai sản phẩm" @selected(old('reason') === 'Giao sai sản phẩm')>Giao sai sản phẩm</option>
+                        <option value="Chưa nhận được hàng" @selected(old('reason') === 'Chưa nhận được hàng')>Chưa nhận được hàng</option>
                         <option value="Hàng không giống mô tả" @selected(old('reason') === 'Hàng không giống mô tả')>Hàng không giống mô tả</option>
                         <option value="Khác" @selected(old('reason') === 'Khác')>Khác</option>
                     </select>
@@ -87,12 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
             form.reset();
         }
         
-        const type = trigger.dataset.returnType; // 'return' or 'complaint'
-        typeInput.value = type;
+        const type = trigger.dataset.returnType; // 'return' or 'complaint' or 'not_received'
+        const reasonSelect = document.getElementById('customer-return-reason');
         
         if (type === 'return') {
+            typeInput.value = 'return';
             title.textContent = 'Yêu cầu Trả hàng / Hoàn tiền';
+        } else if (type === 'not_received') {
+            typeInput.value = 'complaint';
+            title.textContent = 'Báo cáo chưa nhận được hàng';
+            if (reasonSelect) {
+                reasonSelect.value = 'Chưa nhận được hàng';
+            }
         } else {
+            typeInput.value = 'complaint';
             title.textContent = 'Gửi khiếu nại đơn hàng';
         }
 

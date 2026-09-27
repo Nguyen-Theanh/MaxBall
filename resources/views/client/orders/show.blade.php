@@ -74,6 +74,12 @@
                             <span class="font-medium">-{{ number_format($order->discount_amount, 0, ',', '.') }}đ</span>
                         </div>
                     @endif
+                    @if($order->wallet_amount_used > 0)
+                        <div class="flex justify-between text-blue-600">
+                            <span>Bù trừ từ ví</span>
+                            <span class="font-medium">-{{ number_format($order->wallet_amount_used, 0, ',', '.') }}đ</span>
+                        </div>
+                    @endif
                     <div class="flex justify-between pt-4 border-t">
                         <span class="font-bold text-lg">Tổng cộng</span>
                         <span class="font-black text-2xl text-red-600">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
@@ -94,6 +100,7 @@
                             @if($order->order_status == 'pending') bg-yellow-100 text-yellow-800
                             @elseif(in_array($order->order_status, ['confirmed', 'processing'])) bg-blue-100 text-blue-800
                             @elseif($order->order_status == 'shipping') bg-indigo-100 text-indigo-800
+                            @elseif($order->order_status == 'delivered') bg-teal-100 text-teal-800
                             @elseif($order->order_status == 'completed') bg-green-100 text-green-800
                             @elseif($order->order_status == 'cancelled') bg-red-100 text-red-800
                             @endif
@@ -101,6 +108,7 @@
                             @if($order->order_status == 'pending') Chờ xác nhận
                             @elseif(in_array($order->order_status, ['confirmed', 'processing'])) Đã xác nhận
                             @elseif($order->order_status == 'shipping') Đang giao hàng
+                            @elseif($order->order_status == 'delivered') Đã giao
                             @elseif($order->order_status == 'completed') Hoàn thành
                             @elseif($order->order_status == 'cancelled') Đã hủy
                             @endif
@@ -167,18 +175,37 @@
                         Hủy đơn hàng
                     </button>
                 </div>
-            @elseif($order->order_status == 'shipping')
-                <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST"
-                      data-confirm="Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?"
-                      data-confirm-title="Xác nhận đã nhận hàng"
-                      data-confirm-label="Đã nhận hàng"
-                      data-confirm-variant="success">
-                    @csrf
-                    @method('PUT')
-                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-                        Đã nhận được hàng
-                    </button>
-                </form>
+            @elseif($order->order_status == 'delivered')
+                @if($order->returnRequest)
+                    <div class="flex gap-3">
+                        <span class="px-4 py-2 bg-orange-100 text-orange-800 font-bold rounded-lg">
+                            {{ $order->returnRequest->type_label }}: {{ $order->returnRequest->status_label }}
+                        </span>
+                    </div>
+                @else
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <form action="{{ route('client.orders.confirmReceipt', $order->id) }}" method="POST"
+                              data-confirm="Xác nhận bạn đã nhận được hàng và thanh toán đủ tiền?"
+                              data-confirm-title="Xác nhận đã nhận hàng"
+                              data-confirm-label="Đã nhận hàng"
+                              data-confirm-variant="success">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                                Đã nhận được hàng
+                            </button>
+                        </form>
+                        <button type="button" 
+                                data-customer-return
+                                data-return-type="not_received"
+                                data-order-id="{{ $order->id }}"
+                                data-order-code="{{ $order->order_code }}"
+                                data-action="{{ route('client.orders.return', $order->id) }}"
+                                class="w-full sm:w-auto px-6 py-2.5 border border-gray-400 text-gray-500 font-bold rounded-lg hover:bg-gray-50 transition-colors">
+                            Chưa nhận được hàng
+                        </button>
+                    </div>
+                @endif
             @elseif($order->order_status == 'completed')
                 @if($order->returnRequest)
                     <span class="px-4 py-2 bg-orange-100 text-orange-800 font-bold rounded-lg">

@@ -234,41 +234,10 @@
                                         </span>
 
                                     @else
-                                        @if(
-                                            $order->payment_method == 'cod'
-                                            && $order->order_status == 'shipping'
-                                        )
-                                            <form
-                                                action="{{ route('admin.orders.updatePaymentStatus', $order->id) }}"
-                                                method="POST"
-                                                class="m-0"
-                                            >
-                                                @csrf
-                                                @method('PATCH')
-
-                                                <select
-                                                    name="payment_status"
-                                                    class="form-select form-select-sm"
-                                                    onchange="confirmPaymentAndSubmit(this)"
-                                                >
-                                                    <option
-                                                        value="pending"
-                                                        selected
-                                                    >
-                                                        Chưa thanh toán (COD)
-                                                    </option>
-
-                                                    <option value="paid">
-                                                        Đã thanh toán (COD)
-                                                    </option>
-                                                </select>
-                                            </form>
-                                        @else
-                                            <span class="badge bg-warning text-dark">
-                                                Chưa thanh toán
-                                                ({{ strtoupper($order->payment_method) }})
-                                            </span>
-                                        @endif
+                                        <span class="badge bg-warning text-dark">
+                                            Chưa thanh toán
+                                            ({{ strtoupper($order->payment_method) }})
+                                        </span>
                                     @endif
                                 </td>
 
@@ -355,14 +324,18 @@
                                                     </option>
 
                                                 @elseif($order->order_status == 'shipping')
-                                                    <option
-                                                        value="shipping"
-                                                        selected
-                                                    >
+                                                    <option value="shipping" selected>
                                                         Đang giao hàng
                                                     </option>
 
+                                                    <option value="delivered">
+                                                        Đã giao
+                                                    </option>
 
+                                                @elseif($order->order_status == 'delivered')
+                                                    <option value="delivered" selected>
+                                                        Đã giao
+                                                    </option>
                                                 @endif
                                             </select>
 
@@ -486,12 +459,12 @@ async function confirmAndSubmit(selectElement) {
             confirmLabel: 'Xác nhận đơn',
             variant: 'primary',
         };
-    } else if (status === 'completed') {
+    } else if (status === 'delivered') {
         options = {
-            title: 'Hoàn thành đơn hàng',
+            title: 'Đã giao đơn hàng',
             message:
-                'Xác nhận đơn hàng đã được giao thành công và chuyển sang trạng thái hoàn thành?',
-            confirmLabel: 'Hoàn thành',
+                'Xác nhận đơn hàng đã được giao thành công?',
+            confirmLabel: 'Xác nhận đã giao',
             variant: 'primary',
         };
     } else if (status === 'cancelled') {
