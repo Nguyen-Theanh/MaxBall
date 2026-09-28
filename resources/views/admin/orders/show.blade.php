@@ -54,6 +54,13 @@
                                     Thất bại
                                 </span>
 
+                            @elseif($order->payment_status == 'refunded')
+
+                                <span class="badge bg-secondary px-3 py-2">
+                                    Đã hoàn tiền
+                                    ({{ strtoupper($order->payment_method) }})
+                                </span>
+
                             @else
 
                                 <span class="badge bg-warning text-dark px-3 py-2">
@@ -89,7 +96,7 @@
                             @if(
                                 in_array(
                                     $order->order_status,
-                                    ['completed', 'cancelled']
+                                    ['completed', 'cancelled', 'returned']
                                 )
                             )
 
@@ -99,6 +106,12 @@
 
                                         <span class="badge bg-success px-3 py-2">
                                             Hoàn thành
+                                        </span>
+
+                                    @elseif($order->order_status == 'returned')
+
+                                        <span class="badge bg-secondary px-3 py-2">
+                                            Hoàn hàng
                                         </span>
 
                                     @else
@@ -283,7 +296,7 @@
                         @if(
                             !in_array(
                                 $order->order_status,
-                                ['completed', 'cancelled']
+                                ['completed', 'cancelled', 'returned']
                             )
                         )
 

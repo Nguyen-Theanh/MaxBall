@@ -124,7 +124,7 @@
                         </table>
                     </div>
                     <div class="mt-4">
-                        {{ $walletTransactions->links() }}
+                        {{ $walletTransactions->links('pagination::tailwind') }}
                     </div>
                 @else
                     <div class="text-center py-8 text-gray-500">
@@ -441,6 +441,8 @@
                                             HOÀN THÀNH
                                         @elseif($order->order_status == 'cancelled')
                                             ĐÃ HỦY
+                                        @elseif($order->order_status == 'returned')
+                                            HOÀN HÀNG
                                         @else
                                             {{ $order->order_status }}
                                         @endif
