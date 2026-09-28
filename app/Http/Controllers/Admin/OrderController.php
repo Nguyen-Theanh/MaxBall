@@ -374,32 +374,31 @@ class OrderController extends Controller
             | Hoàn tiền
             |--------------------------------------------------------------------------
             |
-            | Nếu đơn đã thanh toán bằng VietQR hoặc ví
-            | thì hoàn tiền vào ví khách hàng.
+            | Hoàn tiền lại vào ví nếu đơn hàng đã dùng ví để thanh toán
+            | hoặc đã thanh toán thành công qua VietQR.
             |
             */
-            if (
-                $order->payment_status === 'paid'
-                && in_array(
-                    $order->payment_method,
-                    ['vietqr', 'wallet'],
-                    true
-                )
-            ) {
+            $refundAmount = 0;
+
+            if ($order->wallet_amount_used > 0) {
+                $refundAmount += $order->wallet_amount_used;
+            }
+
+            if ($order->payment_status === 'paid' && $order->payment_method === 'vietqr') {
+                $refundAmount += max(0, $order->total_amount - $order->wallet_amount_used);
+            }
+
+            if ($refundAmount > 0) {
                 $user = $order->user;
 
                 if ($user) {
-                    $user->increment(
-                        'wallet_balance',
-                        $order->total_amount
-                    );
+                    $user->increment('wallet_balance', $refundAmount);
 
                     WalletTransaction::create([
                         'user_id' => $user->id,
                         'type' => 'refund',
-                        'amount' => $order->total_amount,
-                        'description' => 'Hoàn tiền do Admin hủy đơn hàng #'
-                            .$order->order_code,
+                        'amount' => $refundAmount,
+                        'description' => 'Hoàn tiền do Admin hủy đơn hàng #' . $order->order_code,
                     ]);
                 }
             }
@@ -425,7 +424,7 @@ class OrderController extends Controller
                 $order->update($updateData);
 
                 // Khôi phục mã giảm giá
-                app(\App\Services\VoucherService::class)->restoreForCancelledOrder($order);
+                app(\App\Services\OrderVoucherService::class)->restoreForCancelledOrder($order);
             } else {
                 $order->update($updateData);
             }

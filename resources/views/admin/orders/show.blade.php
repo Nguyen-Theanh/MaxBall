@@ -659,7 +659,7 @@ document
 
                 options = {
                     title:
-                        'Xác nhận đơn COD',
+                        'Xác nhận đơn hàng',
 
                     message:
                         'Xác nhận đơn và trừ số hàng đang giữ khỏi tồn kho?',

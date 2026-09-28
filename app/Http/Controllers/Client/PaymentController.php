@@ -25,13 +25,13 @@ class PaymentController extends Controller
         $bankId = 'MB'; // MB Bank
         $accountNo = '4007052006';
         $accountName = 'NGUYEN GIA TUAN';
-        $amount = $order->total_amount;
+        $amount = max(0, $order->total_amount - $order->wallet_amount_used);
         $addInfo = $order->order_code; // Nội dung chuyển khoản là mã đơn hàng
 
         // URL tạo mã VietQR động từ vietqr.io
         $qrUrl = "https://img.vietqr.io/image/{$bankId}-{$accountNo}-compact2.png?amount={$amount}&addInfo={$addInfo}&accountName=" . urlencode($accountName);
 
-        return view('client.checkout.payment_qr', compact('order', 'qrUrl', 'accountNo', 'accountName', 'bankId'));
+        return view('client.checkout.payment_qr', compact('order', 'qrUrl', 'accountNo', 'accountName', 'bankId', 'amount'));
     }
 
     /**
@@ -95,20 +95,21 @@ class PaymentController extends Controller
         $orders = Order::where('payment_status', '!=', 'paid')->get();
         
         foreach ($orders as $order) {
-            Log::info("Checking order: {$order->order_code} vs content: {$content}. transferAmount: {$transferAmount}, total_amount: {$order->total_amount}");
+            $remainingAmount = max(0, $order->total_amount - $order->wallet_amount_used);
+            Log::info("Checking order: {$order->order_code} vs content: {$content}. transferAmount: {$transferAmount}, remainingAmount: {$remainingAmount}");
             
             // Kiểm tra xem mã đơn hàng có xuất hiện trong nội dung chuyển khoản không
             if (stripos($content, $order->order_code) !== false) {
                 Log::info("Content matches!");
                 // Kiểm tra xem số tiền chuyển có khớp không (có thể cho phép sai số nhỏ hoặc >=)
-                if ($transferAmount >= $order->total_amount) {
+                if ($transferAmount >= $remainingAmount) {
                     $order->update(['payment_status' => 'paid']);
                     // Note: Stock deduction is deferred to Admin Order Confirmation.
 
                     Log::info("Order {$order->order_code} marked as PAID via SePay.");
                     return response()->json(['success' => true, 'message' => 'Order updated']);
                 } else {
-                    Log::info("Amount mismatch! Transfer: {$transferAmount}, Order Total: {$order->total_amount}");
+                    Log::info("Amount mismatch! Transfer: {$transferAmount}, Order Remaining: {$remainingAmount}");
                 }
             }
         }

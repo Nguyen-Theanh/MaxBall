@@ -453,7 +453,7 @@ async function confirmAndSubmit(selectElement) {
 
     if (status === 'confirmed') {
         options = {
-            title: 'Xác nhận đơn COD',
+            title: 'Xác nhận đơn hàng',
             message:
                 'Xác nhận đơn và trừ số hàng đang giữ khỏi tồn kho?',
             confirmLabel: 'Xác nhận đơn',

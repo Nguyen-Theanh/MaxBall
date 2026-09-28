@@ -310,7 +310,7 @@ class CheckoutController extends Controller
                 
                 'wallet_amount_used' => $walletAmountUsed,
 
-                'total_amount' => $finalTotalAmount,
+                'total_amount' => $totalAmount,
 
                 'payment_method' => $request->payment_method,
 

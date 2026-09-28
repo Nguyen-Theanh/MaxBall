@@ -26,7 +26,13 @@
                 <div class="flex justify-between items-center mb-5">
                     <span class="text-gray-500">Thanh toán:</span>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Đã thanh toán (VietQR)
+                        @if($order->payment_method === 'cod')
+                            Thanh toán COD
+                        @elseif($order->payment_method === 'wallet')
+                            Thanh toán bằng Ví MaxBall
+                        @else
+                            Đã thanh toán (VietQR)
+                        @endif
                     </span>
                 </div>
                 

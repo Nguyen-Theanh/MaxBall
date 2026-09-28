@@ -304,6 +304,27 @@
     </div>
 </div>
 
+<!-- Modal xác nhận thanh toán ví -->
+<div id="wallet-confirm-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 px-4 py-8">
+    <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col">
+        <div class="flex items-center justify-between border-b px-6 py-4 shrink-0">
+            <div>
+                <h2 class="text-xl font-black text-gray-900">Xác nhận thanh toán</h2>
+            </div>
+            <button type="button" id="wallet-confirm-close" class="text-2xl leading-none text-gray-400 hover:text-gray-700">&times;</button>
+        </div>
+
+        <div class="overflow-y-auto p-6">
+            <p id="wallet-confirm-message" class="text-gray-700 font-medium"></p>
+        </div>
+
+        <div class="border-t bg-gray-50 px-6 py-4 shrink-0 flex justify-end gap-3">
+            <button type="button" id="wallet-confirm-cancel" class="rounded-xl px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50">Hủy</button>
+            <button type="button" id="wallet-confirm-submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white bg-red-600 hover:bg-red-700">Đồng ý</button>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -443,19 +464,49 @@
         @endif
 
         const checkoutForm = document.querySelector('form[action="{{ route('client.checkout.store') }}"]');
-        if (checkoutForm) {
+        const walletModal = document.getElementById('wallet-confirm-modal');
+        const walletModalMsg = document.getElementById('wallet-confirm-message');
+        const btnCancel = document.getElementById('wallet-confirm-cancel');
+        const btnClose = document.getElementById('wallet-confirm-close');
+        const btnSubmit = document.getElementById('wallet-confirm-submit');
+        
+        if (checkoutForm && walletModal) {
+            let confirmed = false;
+
+            const closeModal = () => {
+                walletModal.classList.add('hidden');
+                walletModal.classList.remove('flex');
+            };
+
+            btnCancel.addEventListener('click', closeModal);
+            btnClose.addEventListener('click', closeModal);
+            
+            btnSubmit.addEventListener('click', function() {
+                confirmed = true;
+                checkoutForm.submit();
+                closeModal();
+            });
+
             checkoutForm.addEventListener('submit', function(e) {
+                if (confirmed) return;
+                
                 const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
                 const useWalletCheckbox = document.getElementById('use_wallet');
                 
+                let needConfirm = false;
+                
                 if (selectedPayment && selectedPayment.value === 'wallet') {
-                    if (!confirm('Bạn có chắc chắn muốn thanh toán toàn bộ đơn hàng này bằng số dư trong Ví MaxBall không?')) {
-                        e.preventDefault();
-                    }
+                    walletModalMsg.textContent = 'Bạn có chắc chắn muốn thanh toán toàn bộ đơn hàng này bằng số dư trong Ví MaxBall không?';
+                    needConfirm = true;
                 } else if (useWalletCheckbox && useWalletCheckbox.checked) {
-                    if (!confirm('Bạn có chắc chắn muốn sử dụng số dư trong Ví MaxBall để bù trừ thanh toán không?')) {
-                        e.preventDefault();
-                    }
+                    walletModalMsg.textContent = 'Bạn có chắc chắn muốn sử dụng số dư trong Ví MaxBall để bù trừ thanh toán không?';
+                    needConfirm = true;
+                }
+                
+                if (needConfirm) {
+                    e.preventDefault();
+                    walletModal.classList.remove('hidden');
+                    walletModal.classList.add('flex');
                 }
             });
         }
