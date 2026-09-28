@@ -227,12 +227,15 @@
                                             Đã thanh toán
                                             ({{ strtoupper($order->payment_method) }})
                                         </span>
-
+                                    @elseif($order->payment_status == 'refunded')
+                                        <span class="badge bg-secondary">
+                                            Đã hoàn tiền
+                                            ({{ strtoupper($order->payment_method) }})
+                                        </span>
                                     @elseif($order->payment_status == 'failed')
                                         <span class="badge bg-danger">
                                             Thất bại
                                         </span>
-
                                     @else
                                         <span class="badge bg-warning text-dark">
                                             Chưa thanh toán
@@ -245,12 +248,16 @@
                                     @if(
                                         in_array(
                                             $order->order_status,
-                                            ['completed', 'cancelled']
+                                            ['completed', 'cancelled', 'returned']
                                         )
                                     )
                                         @if($order->order_status == 'completed')
                                             <span class="badge bg-success px-2 py-2">
                                                 Hoàn thành
+                                            </span>
+                                        @elseif($order->order_status == 'returned')
+                                            <span class="badge bg-secondary px-2 py-2">
+                                                Hoàn hàng
                                             </span>
                                         @else
                                             <span class="badge bg-danger px-2 py-2">

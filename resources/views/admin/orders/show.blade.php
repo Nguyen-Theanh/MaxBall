@@ -567,6 +567,22 @@
                                     @endif
 
                                     @if($order->wallet_amount_used > 0)
+                                        <tr class="border-top border-dashed border-secondary opacity-50"></tr>
+                                        <tr>
+                                            <td class="fw-bold">
+                                                Tổng tiền:
+                                            </td>
+                                            <td class="text-end fw-bold">
+                                                {{
+                                                    number_format(
+                                                        $order->total_amount,
+                                                        0,
+                                                        ',',
+                                                        '.'
+                                                    )
+                                                }}đ
+                                            </td>
+                                        </tr>
 
                                         <tr>
                                             <td>
@@ -594,7 +610,7 @@
                                     <tr class="border-top">
 
                                         <td class="fs-5 fw-bold">
-                                            Tổng cộng:
+                                            Thành tiền:
                                         </td>
 
                                         <td
@@ -602,14 +618,13 @@
                                         >
                                             {{
                                                 number_format(
-                                                    $order->total_amount,
+                                                    max(0, $order->total_amount - $order->wallet_amount_used),
                                                     0,
                                                     ',',
                                                     '.'
                                                 )
                                             }}đ
                                         </td>
-
                                     </tr>
 
                                 </tbody>

@@ -74,15 +74,21 @@
                             <span class="font-medium">-{{ number_format($order->discount_amount, 0, ',', '.') }}đ</span>
                         </div>
                     @endif
+                    
                     @if($order->wallet_amount_used > 0)
+                        <div class="flex justify-between font-medium text-gray-900 pt-2 border-t border-dashed">
+                            <span>Tổng tiền</span>
+                            <span>{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                        </div>
                         <div class="flex justify-between text-blue-600">
                             <span>Bù trừ từ ví</span>
                             <span class="font-medium">-{{ number_format($order->wallet_amount_used, 0, ',', '.') }}đ</span>
                         </div>
                     @endif
+
                     <div class="flex justify-between pt-4 border-t">
-                        <span class="font-bold text-lg">Tổng cộng</span>
-                        <span class="font-black text-2xl text-red-600">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                        <span class="font-bold text-lg">Thành tiền</span>
+                        <span class="font-black text-2xl text-red-600">{{ number_format(max(0, $order->total_amount - $order->wallet_amount_used), 0, ',', '.') }}đ</span>
                     </div>
                 </div>
             </div>
@@ -103,6 +109,7 @@
                             @elseif($order->order_status == 'delivered') bg-teal-100 text-teal-800
                             @elseif($order->order_status == 'completed') bg-green-100 text-green-800
                             @elseif($order->order_status == 'cancelled') bg-red-100 text-red-800
+                            @elseif($order->order_status == 'returned') bg-gray-100 text-gray-800
                             @endif
                         ">
                             @if($order->order_status == 'pending') Chờ xác nhận
@@ -111,6 +118,7 @@
                             @elseif($order->order_status == 'delivered') Đã giao
                             @elseif($order->order_status == 'completed') Hoàn thành
                             @elseif($order->order_status == 'cancelled') Đã hủy
+                            @elseif($order->order_status == 'returned') Hoàn hàng
                             @endif
                         </span>
                         @if($order->hasActiveReservation() && $order->reservation_expires_at)
@@ -123,9 +131,15 @@
                     <div>
                         <p class="text-xs text-gray-500 uppercase font-bold mb-1">Trạng thái thanh toán</p>
                         <span class="inline-block px-3 py-1 text-sm font-bold uppercase rounded-full
-                            {{ $order->payment_status == 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}
+                            {{ $order->payment_status == 'paid' ? 'bg-green-100 text-green-800' : ($order->payment_status == 'refunded' ? 'bg-gray-100 text-gray-800' : 'bg-yellow-100 text-yellow-800') }}
                         ">
-                            {{ $order->payment_status == 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán' }}
+                            @if($order->payment_status == 'paid')
+                                Đã thanh toán
+                            @elseif($order->payment_status == 'refunded')
+                                Đã hoàn tiền
+                            @else
+                                Chưa thanh toán
+                            @endif
                         </span>
                         <p class="text-sm mt-2 font-medium text-gray-600">
                             Phương thức: {{ strtoupper($order->payment_method) }}
@@ -206,7 +220,7 @@
                         </button>
                     </div>
                 @endif
-            @elseif($order->order_status == 'completed')
+            @elseif(in_array($order->order_status, ['completed', 'returned']))
                 @if($order->returnRequest)
                     <span class="px-4 py-2 bg-orange-100 text-orange-800 font-bold rounded-lg">
                         {{ $order->returnRequest->type_label }}: {{ $order->returnRequest->status_label }}

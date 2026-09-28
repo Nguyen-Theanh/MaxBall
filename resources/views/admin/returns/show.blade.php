@@ -99,8 +99,11 @@
                         
                         <div class="mb-3 d-none" id="refund-amount-group">
                             <label class="form-control-label">Số tiền hoàn (VND) <span class="text-danger">*</span></label>
-                            <input type="number" name="refund_amount" class="form-control" placeholder="Nhập số tiền..." min="0" max="{{ $orderReturn->order->total_amount }}" value="{{ $orderReturn->order->total_amount }}">
-                            <small class="text-muted text-xs">Tối đa: {{ number_format($orderReturn->order->total_amount, 0, ',', '.') }}đ</small>
+                            @php
+                                $maxRefund = max(0, $orderReturn->order->total_amount - $orderReturn->order->shipping_fee);
+                            @endphp
+                            <input type="number" name="refund_amount" class="form-control" placeholder="Nhập số tiền..." min="0" max="{{ $maxRefund }}" value="{{ $maxRefund }}">
+                            <small class="text-muted text-xs">Tối đa: {{ number_format($maxRefund, 0, ',', '.') }}đ (Đã trừ phí giao hàng)</small>
                         </div>
 
                         <div class="mb-4">

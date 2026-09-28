@@ -31,8 +31,8 @@
                                 <p class="font-bold text-gray-900">{{ $order->created_at->format('d/m/Y H:i') }}</p>
                             </div>
                             <div>
-                                <p class="text-xs text-gray-500 uppercase font-bold mb-1">Tổng tiền</p>
-                                <p class="font-black text-red-600">{{ number_format($order->total_amount, 0, ',', '.') }}đ</p>
+                                <p class="text-xs text-gray-500 uppercase font-bold mb-1">Thành tiền</p>
+                                <p class="font-black text-red-600">{{ number_format(max(0, $order->total_amount - $order->wallet_amount_used), 0, ',', '.') }}đ</p>
                             </div>
                         </div>
                         
@@ -43,6 +43,7 @@
                                 @elseif($order->order_status == 'shipping') bg-indigo-100 text-indigo-800
                                 @elseif($order->order_status == 'delivered') bg-teal-100 text-teal-800
                                 @elseif($order->order_status == 'completed') bg-green-100 text-green-800
+                                @elseif($order->order_status == 'returned') bg-gray-100 text-gray-800
                                 @else bg-red-100 text-red-800 @endif
                             ">
                                 @if($order->order_status == 'pending') Chờ xác nhận
@@ -50,6 +51,7 @@
                                 @elseif($order->order_status == 'shipping') Đang giao hàng
                                 @elseif($order->order_status == 'delivered') Đã giao
                                 @elseif($order->order_status == 'completed') Hoàn thành
+                                @elseif($order->order_status == 'returned') Hoàn hàng
                                 @else Đã hủy @endif
                             </span>
                             @if($order->order_status === 'cancelled' && $order->cancellation_reason)
@@ -93,8 +95,14 @@
                     <div class="bg-gray-50 px-6 py-4 border-t flex justify-between items-center">
                         <div class="text-sm">
                             <span class="text-gray-500">Thanh toán:</span>
-                            <span class="font-bold {{ $order->payment_status == 'paid' ? 'text-green-600' : 'text-yellow-600' }}">
-                                {{ $order->payment_status == 'paid' ? 'Đã thanh toán (' . strtoupper($order->payment_method) . ')' : 'Chưa thanh toán (COD)' }}
+                            <span class="font-bold {{ $order->payment_status == 'paid' ? 'text-green-600' : ($order->payment_status == 'refunded' ? 'text-gray-600' : 'text-yellow-600') }}">
+                                @if($order->payment_status == 'paid')
+                                    Đã thanh toán ({{ strtoupper($order->payment_method) }})
+                                @elseif($order->payment_status == 'refunded')
+                                    Đã hoàn tiền ({{ strtoupper($order->payment_method) }})
+                                @else
+                                    Chưa thanh toán ({{ strtoupper($order->payment_method) }})
+                                @endif
                             </span>
                         </div>
                         

@@ -191,22 +191,22 @@ class OrderController extends Controller
         | thì tiền được hoàn vào Ví MaxBall.
         |
         */
-        if (
-            $wasPaid
-            && in_array(
-                $paymentMethod,
-                [
-                    'vietqr',
-                    'wallet',
-                ],
-                true
-            )
-        ) {
+        $refundAmount = 0;
+
+        if ($order->wallet_amount_used > 0) {
+            $refundAmount += $order->wallet_amount_used;
+        }
+
+        if ($wasPaid && $paymentMethod === 'vietqr') {
+            $refundAmount += max(0, $order->total_amount - $order->wallet_amount_used);
+        }
+
+        if ($refundAmount > 0) {
             $user = Auth::user();
 
             $user->increment(
                 'wallet_balance',
-                $order->total_amount
+                $refundAmount
             );
 
             WalletTransaction::create([
@@ -214,7 +214,7 @@ class OrderController extends Controller
 
                 'type' => 'refund',
 
-                'amount' => $order->total_amount,
+                'amount' => $refundAmount,
 
                 'description' => 'Hoàn tiền do khách hàng tự hủy đơn hàng #'
                     .$order->order_code,

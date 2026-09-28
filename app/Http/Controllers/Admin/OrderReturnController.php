@@ -43,10 +43,12 @@ class OrderReturnController extends Controller
             return back()->with('error', 'Yêu cầu này đã được xử lý xong.');
         }
 
+        $maxRefund = max(0, $orderReturn->order->total_amount - $orderReturn->order->shipping_fee);
+
         $validated = $request->validate([
             'status' => ['required', Rule::in(['processing', 'resolved', 'rejected'])],
             'admin_note' => ['nullable', 'string', 'max:1000'],
-            'refund_amount' => ['nullable', 'numeric', 'min:0', 'max:' . $orderReturn->order->total_amount],
+            'refund_amount' => ['nullable', 'numeric', 'min:0', 'max:' . $maxRefund],
         ]);
 
         DB::transaction(function () use ($orderReturn, $validated) {
@@ -66,6 +68,13 @@ class OrderReturnController extends Controller
                     'amount' => $validated['refund_amount'],
                     'description' => ($orderReturn->type === 'return' ? 'Hoàn tiền trả hàng' : 'Đền bù khiếu nại') . ' cho đơn hàng #' . $orderReturn->order->order_code,
                     'status' => 'completed'
+                ]);
+            }
+
+            if ($validated['status'] === 'resolved' && $orderReturn->type === 'return') {
+                $orderReturn->order->update([
+                    'order_status' => 'returned',
+                    'payment_status' => 'refunded'
                 ]);
             }
             

@@ -34,6 +34,7 @@ class AdminDashboardReport
         'shipping' => 'Đang giao',
         'completed' => 'Hoàn thành',
         'cancelled' => 'Đã hủy',
+        'returned' => 'Hoàn hàng',
     ];
 
     public function build(array $filters): array

@@ -33,6 +33,7 @@
         'shipping' => 'bg-cyan-500',
         'completed' => 'bg-emerald-500',
         'cancelled' => 'bg-red-500',
+        'returned' => 'bg-slate-500',
     ];
     $categoryRevenueTotal = max(1, $report['categories']->sum('revenue'));
 @endphp
@@ -322,7 +323,7 @@
                 labels: @json($report['order_statuses']->pluck('label')),
                 datasets: [{
                     data: @json($report['order_statuses']->pluck('count')),
-                    backgroundColor: ['#f59e0b', '#3b82f6', '#06b6d4', '#10b981', '#ef4444'],
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#ef4444', '#64748b'],
                     borderColor: '#ffffff',
                     borderWidth: 3,
                     hoverOffset: 5,

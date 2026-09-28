@@ -485,7 +485,7 @@
                                 <div class="flex flex-wrap items-center justify-end gap-3">
                                     <div class="mr-1">
                                         <span class="text-gray-600">Thành tiền:</span>
-                                        <span class="ml-1 text-xl font-black text-[#d92525]">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                                        <span class="ml-1 text-xl font-black text-[#d92525]">{{ number_format(max(0, $order->total_amount - $order->wallet_amount_used), 0, ',', '.') }}đ</span>
                                     </div>
 
                                     <a href="{{ route('client.orders.show', $order->id) }}" class="rounded border border-gray-900 bg-gray-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-black">
