@@ -912,8 +912,34 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         let useWalletCheckbox = document.getElementById('use_wallet');
+        let labelUseWallet = document.getElementById('label_use_wallet');
+        let paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+
         if (useWalletCheckbox) {
             useWalletCheckbox.addEventListener('change', calculateTotal);
+        }
+        
+        if (paymentRadios.length > 0 && useWalletCheckbox && labelUseWallet) {
+            function toggleWalletCheckbox() {
+                const selected = document.querySelector('input[name="payment_method"]:checked');
+                if (selected && selected.value === 'wallet') {
+                    useWalletCheckbox.disabled = true;
+                    useWalletCheckbox.checked = false;
+                    labelUseWallet.classList.add('opacity-50', 'cursor-not-allowed');
+                    labelUseWallet.classList.remove('cursor-pointer', 'hover:bg-blue-100');
+                } else {
+                    useWalletCheckbox.disabled = false;
+                    labelUseWallet.classList.remove('opacity-50', 'cursor-not-allowed');
+                    labelUseWallet.classList.add('cursor-pointer', 'hover:bg-blue-100');
+                }
+                calculateTotal();
+            }
+
+            paymentRadios.forEach(radio => {
+                radio.addEventListener('change', toggleWalletCheckbox);
+            });
+            
+            toggleWalletCheckbox();
         }
     });
 </script>
